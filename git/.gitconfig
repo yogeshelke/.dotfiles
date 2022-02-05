@@ -1,0 +1,21 @@
+[pull]
+  rebase = true
+[rebase]
+  autoStash = true
+[push]
+  default = current
+[commit]
+ # gpgsign = true
+  template = ~/.gitmessage
+[user]
+  email = yogesh.shelke@fielmann.com
+  name = Yogesh Shelke
+	signingkey = FD86E7809123E9C6
+[credential]
+  helper = store
+[hub]
+  protocol = git
+[init]
+  defaultBranch = main
+[alias]
+	lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
