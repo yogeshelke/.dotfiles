@@ -134,7 +134,7 @@ key_map("n", "<leader>g", [[<Cmd>lua require'telescope.builtin'.grep_string()<CR
 -- grep word under cursor - case-sensitive (exact word) - made for use with Replace All - see <leader>ra
 key_map("n", "<leader>G", [[<Cmd>lua require'telescope.builtin'.grep_string({word_match='-w'})<CR>]], { noremap = true, silent = true })
 -- grep for a string
-key_map("n", "<space>g", [[<Cmd>lua require'telescope-config'.grep_prompt()<CR>]], { noremap = true, silent = true })
+key_map("n", "<#>g", [[<Cmd>lua require'telescope-config'.grep_prompt()<CR>]], { noremap = true, silent = true })
 
 -- open zoxide list
 key_map("n", "<leader>z", ":lua require'telescope'.extensions.zoxide.list{results_title='Z Directories', prompt_title='Z Prompt'}<CR>", { noremap = true, silent = true })

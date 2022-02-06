@@ -109,6 +109,11 @@ _G.packer_plugins = {
     path = "/Users/yogeshshelke/.local/share/nvim/site/pack/packer/start/gruvbox-material",
     url = "https://github.com/sainnhe/gruvbox-material"
   },
+  ["gv.vim"] = {
+    loaded = true,
+    path = "/Users/yogeshshelke/.local/share/nvim/site/pack/packer/start/gv.vim",
+    url = "https://github.com/junegunn/gv.vim"
+  },
   ["indent-blankline.nvim"] = {
     loaded = true,
     path = "/Users/yogeshshelke/.local/share/nvim/site/pack/packer/start/indent-blankline.nvim",
@@ -286,6 +291,11 @@ _G.packer_plugins = {
     path = "/Users/yogeshshelke/.local/share/nvim/site/pack/packer/start/telescope-github.nvim",
     url = "https://github.com/nvim-telescope/telescope-github.nvim"
   },
+  ["telescope-media-files.nvim"] = {
+    loaded = true,
+    path = "/Users/yogeshshelke/.local/share/nvim/site/pack/packer/start/telescope-media-files.nvim",
+    url = "https://github.com/nvim-telescope/telescope-media-files.nvim"
+  },
   ["telescope-repo.nvim"] = {
     loaded = true,
     path = "/Users/yogeshshelke/.local/share/nvim/site/pack/packer/start/telescope-repo.nvim",
@@ -306,10 +316,20 @@ _G.packer_plugins = {
     path = "/Users/yogeshshelke/.local/share/nvim/site/pack/packer/start/toggleterm.nvim",
     url = "https://github.com/akinsho/toggleterm.nvim"
   },
+  ["vim-fugitive"] = {
+    loaded = true,
+    path = "/Users/yogeshshelke/.local/share/nvim/site/pack/packer/start/vim-fugitive",
+    url = "https://github.com/tpope/vim-fugitive"
+  },
   ["vim-kitty"] = {
     loaded = true,
     path = "/Users/yogeshshelke/.local/share/nvim/site/pack/packer/start/vim-kitty",
     url = "https://github.com/fladson/vim-kitty"
+  },
+  ["vim-rhubarb"] = {
+    loaded = true,
+    path = "/Users/yogeshshelke/.local/share/nvim/site/pack/packer/start/vim-rhubarb",
+    url = "https://github.com/tpope/vim-rhubarb"
   },
   vimux = {
     loaded = true,

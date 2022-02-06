@@ -21,7 +21,7 @@ return require("packer").startup(function()
 	use("fladson/vim-kitty") --> kitty syntax highlighting
 	use("jubnzv/mdeval.nvim") --> evaluates code blocks inside markdown, vimwiki, orgmode.nvim and norg docs
 	use("jbyuki/nabla.nvim")
-    use("lewis6991/gitsigns.nvim") -- git decorations implemented purely in lua/teal
+    
 	--> colorschemes
 	use("EdenEast/nightfox.nvim") --> nightfox colorsceme for neovim
 	use("sainnhe/gruvbox-material")
@@ -59,9 +59,14 @@ return require("packer").startup(function()
 	use("cljoly/telescope-repo.nvim")
 	use("AckslD/nvim-neoclip.lua")
 	use("nvim-telescope/telescope-github.nvim")
-
-
+	use("nvim-telescope/telescope-media-files.nvim")
 	
+	--> GIT Plugins
+	use("lewis6991/gitsigns.nvim") -- git decorations implemented purely in lua/teal
+	use("tpope/vim-fugitive")
+	use("tpope/vim-rhubarb")
+	use("junegunn/gv.vim")
+
 end)
 
 
