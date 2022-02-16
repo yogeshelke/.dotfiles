@@ -114,8 +114,7 @@ source <(kubectl completion zsh)
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 # 114 autoload -U +X bashcompinit && bashcompinit
-complete -o nospace -C /usr/local/bin/terraform terraform
-export PATH=“/usr/local/opt/curl/bin:$PATH”
+
 
 # Adding Aias---
 alias kx=kubectx
@@ -134,17 +133,32 @@ source /Users/yogeshshelke/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting/zsh
 source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
 PS1='$(kube_ps1)'$PS1
 
-export KUBE_CONFIG_PATH=$HOME/.kube/config
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+
+
+complete -o nospace -C /usr/local/bin/terraform terraform
+export PATH=“/usr/local/opt/curl/bin:$PATH”
 
 export PATH="$(brew --prefix)/bin/:~/.bin:$PATH"
 export GPG_TTY=$(tty)
 export EDITOR=nvim
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+#
+complete -o nospace -C /usr/local/bin/terraform terraform
+export PATH=“/usr/local/opt/curl/bin:$PATH”
+
+export PATH="$(brew --prefix)/bin/:~/.bin:$PATH"
+export GPG_TTY=$(tty)
+export EDITOR=nvim
+
+
+#export KUBE_CONFIG_PATH=$HOME/.kube/config
+
 
 # Dope Env initialization
-#eval "$(direnv hook zsh)"
-#export PATH="/Users/yogeshshelke/git/dope-env/bin:$PATH"
-#export ENVIRONMENTS="test dev qa prod mgmt"
-#test -f /Users/yogeshshelke/git/dope-env/env.sh && eval "$(/Users/yogeshshelke/git/dope-env/env.sh aliases)"
+eval "$(direnv hook zsh)"
+export PATH="/Users/yogeshshelke/git/dope-env/bin:$PATH"
+export ENVIRONMENTS="test dev qa prod mgmt"
+test -f /Users/yogeshshelke/git/dope-env/env.sh && eval "$(/Users/yogeshshelke/git/dope-env/env.sh aliases)"

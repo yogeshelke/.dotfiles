@@ -16,6 +16,7 @@ require("shade-config")
 require("telescope-config")
 require("truezen-config")
 -- require("mdeval-config")
+require("whichkey-config")
 
 --> tree-sitter and tree-sitter plugins
 require("treesitter-config")

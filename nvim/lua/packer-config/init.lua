@@ -67,6 +67,9 @@ return require("packer").startup(function()
 	use("tpope/vim-rhubarb")
 	use("junegunn/gv.vim")
 
+	--> Diaplays key bindings
+	use "folke/which-key.nvim"
+
 end)
 
 

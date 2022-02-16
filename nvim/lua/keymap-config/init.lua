@@ -31,19 +31,6 @@ key_map('n', '<C-p>', ':BufferPick<CR>', opts) -- Magic buffer-picking mode
 key_map('n', '<leader>bb', ':BufferOrderByBufferNumber<CR>', opts) -- Sort automatically by...
 key_map('n', '<leader>bd', ':BufferOrderByDirectory<CR>', opts)
 key_map('n', '<leader>bl', ':BufferOrderByLanguage<CR>', opts)
--- Wipeout buffer
---                 :BufferWipeout<CR>
--- Close commands
---                 :BufferCloseAllButCurrent<CR>
---                 :BufferCloseBuffersLeft<CR>
---                 :BufferCloseBuffersRight<CR>
-
---> TrueZen mappings <--
-key_map("n", "<leader>za", ":TZAtaraxis<CR>", opts)
-
---> nabla
-key_map("n", "<C-r>", ':lua require("nabla").action()<CR>', opts)
-key_map("n", "<C-p>", ':lua require("nabla").popup()<CR>', opts)
 
 -- TELESCOPE keymaps  --
 
@@ -87,18 +74,15 @@ key_map("n", "#c", [[<Cmd>lua require'telescope-config'.find_configs()<CR>]], { 
 -- registers picker
 key_map("n", "<space>r", [[<Cmd>lua require'telescope.builtin'.registers()<CR>]], { noremap = true, silent = true })
 
-
 -- Search through your Neovim related todos
 key_map("n", "<leader>st", ":lua require'telescope-config'.search_todos()<CR>", { noremap = true, silent = true })
 -- find or create neovim configs
 key_map("n", "<leader>nc", [[<Cmd>lua require'telescope-config'.nvim_config()<CR>]], { noremap = true, silent = true })
 
-
 -- telescope notify history
 key_map("n", "<leader>nh", [[<Cmd>lua require('telescope').extensions.notify.notify({results_title='Notification History', prompt_title='Search Messages'})<CR>]], { noremap = true, silent = true })
 -- telescope-repo
 key_map("n", "<leader>rl", [[<Cmd>lua require'telescope-config'.repo_list()<CR>]], { noremap = true, silent = true })
-
 
 -- show LSP implementations
 key_map("n", "<leader>ti", [[<Cmd>lua require'telescope.builtin'.lsp_implementations()<CR>]], { noremap = true, silent = true })
@@ -106,8 +90,6 @@ key_map("n", "<leader>ti", [[<Cmd>lua require'telescope.builtin'.lsp_implementat
 key_map("n", "<leader>td", [[<Cmd>lua require'telescope.builtin'.lsp_definitions({layout_config = { preview_width = 0.50, width = 0.92 }, path_display = { "shorten" }, results_title='Definitions'})<CR>]], { noremap = true, silent = true })
 -- show LSP diagnostics for all open buffers
 key_map("n", ",d", [[<Cmd>lua require'telescope.builtin'.lsp_workspace_diagnostics()<CR>]], { noremap = true, silent = true })
-
-
 
 -- find files with gitfiles & fallback on find_files
 key_map("n", ",<space>", [[<Cmd>lua require'telescope-config'.project_files()<CR>]], { noremap = true, silent = true })
@@ -140,5 +122,18 @@ key_map("n", "<#>g", [[<Cmd>lua require'telescope-config'.grep_prompt()<CR>]], {
 key_map("n", "<leader>z", ":lua require'telescope'.extensions.zoxide.list{results_title='Z Directories', prompt_title='Z Prompt'}<CR>", { noremap = true, silent = true })
 -- neoclip
 key_map("n", "<C-n>", [[<Cmd>lua require('telescope').extensions.neoclip.plus()<CR>]], { noremap = true, silent = true })
+
+--> TrueZen mappings <--
+key_map("n", "<leader>za", ":TZAtaraxis<CR>", opts)
+
+--> nabla
+-- key_map("n", "<C-r>", ':lua require("nabla").action()<CR>', opts)
+key_map("n", "<C-p>", ':lua require("nabla").popup()<CR>', opts)
+-- Wipeout buffer
+--                 :BufferWipeout<CR>
+-- Close commands
+--                 :BufferCloseAllButCurrent<CR>
+--                 :BufferCloseBuffersLeft<CR>
+--                 :BufferCloseBuffersRight<CR>
 
 -- End Telescope maps
