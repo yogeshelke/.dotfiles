@@ -90,12 +90,14 @@ local mappings = {
   ["q"] = { "<cmd>q!<CR>", "Quit" },
   ["c"] = { "<cmd>Bdelete!<CR>", "Close Buffer" },
   ["h"] = { "<cmd>nohlsearch<CR>", "No Highlight" },
-  ["f"] = {
-    "<cmd>lua require('telescope.builtin').find_files(require('telescope.themes').get_dropdown{previewer = false})<cr>",
-    "Find files",
-  },
+  ["f"] = { "<cmd>Telescope find_files<cr>", "Find files"},
   ["F"] = { "<cmd>Telescope live_grep theme=ivy<cr>", "Find Text" },
   ["P"] = { "<cmd>lua require('telescope').extensions.projects.projects()<cr>", "Projects" },
+
+  b = {
+    name = "Browser",
+    b = { [[<Cmd>lua require('telescope').extensions.bookmarks.bookmarks()<CR>]], "Bookmarks page launch" },
+  },
 
   p = {
     name = "Packer",
@@ -112,64 +114,77 @@ local mappings = {
     j = { "<cmd>lua require 'gitsigns'.next_hunk()<cr>", "Next Hunk" },
     k = { "<cmd>lua require 'gitsigns'.prev_hunk()<cr>", "Prev Hunk" },
     l = { "<cmd>lua require 'gitsigns'.blame_line()<cr>", "Blame" },
-    p = { "<cmd>lua require 'gitsigns'.preview_hunk()<cr>", "Preview Hunk" },
+    P = { "<cmd>lua require 'gitsigns'.preview_hunk()<cr>", "Preview Hunk" },
     r = { "<cmd>lua require 'gitsigns'.reset_hunk()<cr>", "Reset Hunk" },
     R = { "<cmd>lua require 'gitsigns'.reset_buffer()<cr>", "Reset Buffer" },
     s = { "<cmd>lua require 'gitsigns'.stage_hunk()<cr>", "Stage Hunk" },
-    u = {
-      "<cmd>lua require 'gitsigns'.undo_stage_hunk()<cr>",
-      "Undo Stage Hunk",
-    },
+    u = { "<cmd>lua require 'gitsigns'.undo_stage_hunk()<cr>", "Undo Stage Hunk", },
     o = { "<cmd>Telescope git_status<cr>", "Open changed file" },
-    b = { "<cmd>Telescope git_branches<cr>", "Checkout branch" },
-    c = { "<cmd>Telescope git_commits<cr>", "Checkout commit" },
-    d = {
-      "<cmd>Gitsigns diffthis HEAD<cr>",
-      "Diff",
-    },
+    --b = { "<cmd>Telescope git_branches<cr>", "Checkout branch" },
+    --c = { "<cmd>Telescope git_commits<cr>", "Checkout commit" },
+    d = { "<cmd>Gitsigns diffthis HEAD<cr>", "Diff", },
+    n = { [[<Cmd>lua require'telescope-config'.project_files()<CR>]], "Git Files Project" }, -- find files with gitfiles & fallback on find_files
+    b = { [[<Cmd>lua require'telescope.builtin'.git_branches({prompt_title = ' ', results_title='Git Branches'})<CR>]], "Git Branches" }, -- git telescope goodness -- git_branches
+    C = { [[<Cmd>lua require'telescope.builtin'.git_bcommits({prompt_title = '  ', results_title='Git File Commits'})<CR>]], "Git File Commits" }, -- git_bcommits - file/buffer scoped commits to vsp diff
+    c = { [[<Cmd>lua require'telescope.builtin'.git_commits()<CR>]], "Git Commits log" },-- git_commits (log) git log
+    S = { [[<Cmd>lua require'telescope.builtin'.git_status()<CR>]], "Git Status Staging" },-- git_status - <tab> to toggle staging
+    i = { [[<Cmd>lua require'telescope-config'.gh_issues()<CR>]], "Github issues" },-- Github issues
+    p = { [[<Cmd>lua require'telescope-config'.gh_prs()<CR>]], "Github PRs" },-- github PRs
   },
 
   l = {
     name = "LSP",
     a = { "<cmd>lua vim.lsp.buf.code_action()<cr>", "Code Action" },
-    d = {
-      "<cmd>Telescope lsp_document_diagnostics<cr>",
-      "Document Diagnostics",
-    },
-    w = {
-      "<cmd>Telescope lsp_workspace_diagnostics<cr>",
-      "Workspace Diagnostics",
-    },
     f = { "<cmd>lua vim.lsp.buf.formatting()<cr>", "Format" },
     i = { "<cmd>LspInfo<cr>", "Info" },
     I = { "<cmd>LspInstallInfo<cr>", "Installer Info" },
-    j = {
-      "<cmd>lua vim.lsp.diagnostic.goto_next()<CR>",
-      "Next Diagnostic",
-    },
-    k = {
-      "<cmd>lua vim.lsp.diagnostic.goto_prev()<cr>",
-      "Prev Diagnostic",
-    },
+    j = { "<cmd>lua vim.lsp.diagnostic.goto_next()<CR>", "Next Diagnostic", },
+    k = { "<cmd>lua vim.lsp.diagnostic.goto_prev()<cr>", "Prev Diagnostic", },
     l = { "<cmd>lua vim.lsp.codelens.run()<cr>", "CodeLens Action" },
     q = { "<cmd>lua vim.lsp.diagnostic.set_loclist()<cr>", "Quickfix" },
     r = { "<cmd>lua vim.lsp.buf.rename()<cr>", "Rename" },
+    d = { "<cmd>Telescope lsp_document_diagnostics<cr>", "Document Diagnostics", },
+    w = { "<cmd>Telescope lsp_workspace_diagnostics<cr>", "Workspace Diagnostics", },
     s = { "<cmd>Telescope lsp_document_symbols<cr>", "Document Symbols" },
-    S = {
-      "<cmd>Telescope lsp_dynamic_workspace_symbols<cr>",
-      "Workspace Symbols",
-    },
+    S = { "<cmd>Telescope lsp_dynamic_workspace_symbols<cr>", "Workspace Symbols", },
+    t = { [[<Cmd>lua require'telescope.builtin'.lsp_implementations()<CR>]], "lsp implimentation" }, -- show LSP implementations
+    n = { [[<Cmd>lua require'telescope.builtin'.lsp_definitions({layout_config = { preview_width = 0.50, width = 0.92 }, path_display = { "shorten" }, results_title='Definitions'})<CR>]], "lsp definitions" }, -- show LSP definitions
+    n = { [[<Cmd>lua require'telescope.builtin'.lsp_workspace_diagnostics()<CR>]], "lsp workspace diagnostics" }, -- show LSP diagnostics for all open buffers
   },
+
   s = {
-    name = "Search",
-    b = { "<cmd>Telescope git_branches<cr>", "Checkout branch" },
-    c = { "<cmd>Telescope colorscheme<cr>", "Colorscheme" },
-    h = { "<cmd>Telescope help_tags<cr>", "Find Help" },
+    name = "Telescope-Search",
+    B = { "<cmd>Telescope git_branches<cr>", "Checkout branch" },
+    C = { "<cmd>Telescope colorscheme<cr>", "Colorscheme" },
+    r = { "<cmd>Telescope registers<cr>", "Registers" }, -- registers picker
+    g = { "<cmd>Telescope gh run<cr>", "gh Run" }, 
+    H = { [[<Cmd>lua require'telescope.builtin'.help_tags({results_title='Help Results'})<CR>]],"Help Results" },
+    c = { [[<Cmd>lua require'telescope.builtin'.commands({results_title='Commands Results'})<CR>]],"Command Results" },
+    k = { [[<Cmd>lua require'telescope.builtin'.keymaps({results_title='Key Maps Results'})<CR>]],"Key Maps Results" },
+    e = { [[<Cmd>lua require'telescope.builtin'.find_files({find_command={'fd', vim.fn.expand('<cword>')}})<CR>]],"Find Files - Cusror Word" }, -- find files with names that contain cursor word
+    F = { [[<Cmd>lua require'telescope-config'.file_explorer()<CR>]],"File Explorer - $Home" }, -- Explore files starting at $HOME
+    f = { [[<Cmd>lua require'telescope'.extensions.file_browser.file_browser()<CR>]],"File Explorer - PWD" }, -- Browse files from cwd - File Browser
+    o = { [[<Cmd>lua require'telescope.builtin'.oldfiles({results_title='Recent-ish Files'})<CR>]],"Open Recent Files" }, -- Telescope oldfiles
+    b = { [[<Cmd>lua require'telescope.builtin'.buffers({prompt_title = '', results_title='﬘', winblend = 3, layout_strategy = 'vertical', layout_config = { width = 0.40, height = 0.55 }})<CR>]],"Explore Buffers" },
+    m = { [[<Cmd>lua require'telescope.builtin'.marks({results_title='Marks Results'})<CR>]], "Marks Results" },
     M = { "<cmd>Telescope man_pages<cr>", "Man Pages" },
-    r = { "<cmd>Telescope oldfiles<cr>", "Open Recent File" },
-    R = { "<cmd>Telescope registers<cr>", "Registers" },
-    k = { "<cmd>Telescope keymaps<cr>", "Keymaps" },
-    C = { "<cmd>Telescope commands<cr>", "Commands" },
+    n = { [[<Cmd>lua require'telescope-config'.browse_notes()<CR>]], "Notes-Browse" }, -- browse, explore and create notes
+    N = { [[<Cmd>lua require'telescope-config'.find_notes()<CR>]], "Notes-Find" }, -- find notes
+    t = { [[<Cmd>lua require'telescope-config'.find_configs()<CR>]], "Telescope Config" }, -- Find files in config dirs
+    d = { [[<Cmd>lua require'telescope-config'.search_todos()<CR>]], "Nvim ToDo" }, -- Search through your Neovim related todos
+    v = { [[<Cmd>lua require'telescope-config'.nvim_config()<CR>]], "Nvim Config" }, -- find or create neovim configs
+    h = { [[<Cmd>lua require('telescope').extensions.notify.notify({results_title='Notification History', prompt_title='Search Messages'})<CR>]], "Notify History" }, -- telescope notify history
+  },  
+
+  G = {
+    name = "Grep",
+    l = { [[<Cmd>lua require('telescope.builtin').live_grep({grep_open_files=true})<CR>]], "grep open file" }, -- live grep 
+    g = { [[<Cmd>lua require'telescope.builtin'.live_grep()<CR>]], "live grep" },
+    n = { [[<Cmd>lua require'telescope-config'.grep_nvim_src()<CR>]], "grep Nvim" }, -- grep the Neovim source code with word under cursor → cword - just z to Neovim source for other actions
+    w = { [[<Cmd>lua require'telescope.builtin'.grep_string()<CR>]], "grep cursor word" }, -- grep word under cursor
+    W = { [[<Cmd>lua require'telescope.builtin'.grep_string({word_match='-w'})<CR>]], "grep cursor word -cs" }, -- grep word under cursor - case-sensitive (exact word) - made for use with Replace All - see <leader>ra
+    p = { [[<Cmd>lua require'telescope-config'.grep_prompt()<CR>]], "grep prompt" }, -- grep for a string on prompt
+    n = { [[<Cmd>lua require'telescope-config'.grep_notes()<CR>]], "grep notes" }, -- grep for a string in notes
   },
 
   t = {
