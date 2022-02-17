@@ -79,22 +79,44 @@ local opts = {
   nowait = true, -- use `nowait` when creating keymaps
 }
 
+local vopts = {
+  mode = "v", -- VISUAL mode
+  prefix = "<leader>",
+  buffer = nil, -- Global mappings. Specify a buffer number for buffer local mappings
+  silent = true, -- use `silent` when creating keymaps
+  noremap = true, -- use `noremap` when creating keymaps
+  nowait = true, -- use `nowait` when creating keymaps
+}
+
+ -- NOTE: Prefer using : over <cmd> as the latter avoids going back in normal-mode.
+    -- see https://neovim.io/doc/user/map.html#:map-cmd
+local vmappings = {
+  ["/"] = { "<ESC><CMD>lua require('Comment.api').toggle_linewise_op(vim.fn.visualmode())<CR>", "Comment" },
+} 
+
 local mappings = {
   ["a"] = { "<cmd>Alpha<cr>", "Alpha" },
-  ["b"] = {
-    "<cmd>lua require('telescope.builtin').buffers(require('telescope.themes').get_dropdown{previewer = false})<cr>",
-    "Buffers",
-  },
-  ["e"] = { "<cmd>NvimTreeToggle<cr>", "Explorer" },
   ["w"] = { "<cmd>w!<CR>", "Save" },
   ["q"] = { "<cmd>q!<CR>", "Quit" },
+  ["/"] = { "<cmd>lua require('Comment.api').toggle_current_linewise()<CR>", "Comment" },
+  ["e"] = { "<cmd>NvimTreeToggle<cr>", "Explorer" },
   ["c"] = { "<cmd>Bdelete!<CR>", "Close Buffer" },
   ["h"] = { "<cmd>nohlsearch<CR>", "No Highlight" },
   ["f"] = { "<cmd>Telescope find_files<cr>", "Find files"},
   ["F"] = { "<cmd>Telescope live_grep theme=ivy<cr>", "Find Text" },
   ["P"] = { "<cmd>lua require('telescope').extensions.projects.projects()<cr>", "Projects" },
 
-  b = {
+  ["b"] = { 
+    name = "Buffer",
+    b = { [[<cmd>lua require('telescope.builtin').buffers(require('telescope.themes').get_dropdown{previewer = false})<cr>]], "Browse Buffers" },
+    c = { ":BufferClose<CR>", "Close Buffer" }, -- Close buffer
+    p = { ":BufferPick<CR>", "Pick Buffer" }, -- Magic buffer-picking mode
+    n = { ":BufferOrderByBufferNumber<CR>", "Buffer Order By Number" }, -- Sort automatically by buffer number
+    d = { ":BufferOrderByDirectory<CR>", "Buffer Order By Directory" }, -- Sort automatically by directory
+    l = { ":BufferOrderByLanguage<CR>", "Buffer Order By Language" }, -- Sort automatically by Language
+  }, 
+
+  B = {
     name = "Browser",
     b = { [[<Cmd>lua require('telescope').extensions.bookmarks.bookmarks()<CR>]], "Bookmarks page launch" },
   },
@@ -201,3 +223,4 @@ local mappings = {
 
 which_key.setup(setup)
 which_key.register(mappings, opts)
+which_key.register(vmappings, vopts)

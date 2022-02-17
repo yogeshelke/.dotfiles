@@ -5,13 +5,10 @@ vim.g.mapleader = " " -- leader key
 
 --> nvim tree mappings <--
 key_map("n", "<leader>e", ":NvimTreeToggle<CR>", opts)
-key_map("n", "<leader>we", ":NvimTreeFocus<CR>", opts)
-
-
+key_map("n", "<A-e>", ":NvimTreeFocus<CR>", opts)
 --> barbar mappings <--
 --No default mappings are provided, here is an example. 
 --It is recommended to use the BufferClose command to close buffers instead of bdelete because it will not mess your window layout.
---
 key_map('n', '<A-,>', ':BufferPrevious<CR>', opts) -- Move to previous/next
 key_map('n', '<A-.>', ':BufferNext<CR>', opts)
 key_map('n', '<A-<>', ':BufferMovePrevious<CR>', opts) -- Re-order to previous/next
@@ -26,33 +23,33 @@ key_map('n', '<A-7>', ':BufferGoto 7<CR>', opts)
 key_map('n', '<A-8>', ':BufferGoto 8<CR>', opts)
 key_map('n', '<A-9>', ':BufferGoto 9<CR>', opts)
 key_map('n', '<A-0>', ':BufferLast<CR>', opts)
-key_map('n', '<A-c>', ':BufferClose<CR>', opts) -- Close buffer
-key_map('n', '<C-p>', ':BufferPick<CR>', opts) -- Magic buffer-picking mode
-key_map('n', '<leader>bb', ':BufferOrderByBufferNumber<CR>', opts) -- Sort automatically by...
-key_map('n', '<leader>bd', ':BufferOrderByDirectory<CR>', opts)
-key_map('n', '<leader>bl', ':BufferOrderByLanguage<CR>', opts)
-
-
-
 -- open zoxide list
 key_map("n", "<leader>z", ":lua require'telescope'.extensions.zoxide.list{results_title='Z Directories', prompt_title='Z Prompt'}<CR>", { noremap = true, silent = true })
 -- neoclip
 key_map("n", "<C-n>", [[<Cmd>lua require('telescope').extensions.neoclip.plus()<CR>]], { noremap = true, silent = true })
-
 --> TrueZen mappings <--
 key_map("n", "<leader>za", ":TZAtaraxis<CR>", opts)
-
 --> nabla
 -- key_map("n", "<C-r>", ':lua require("nabla").action()<CR>', opts)
 key_map("n", "<C-p>", ':lua require("nabla").popup()<CR>', opts)
+
+
+
+
+
+
+
+-- key_map('n', '<A-c>', ':BufferClose<CR>', opts) -- Close buffer
+-- key_map('n', '<C-p>', ':BufferPick<CR>', opts) -- Magic buffer-picking mode
+-- key_map('n', '<leader>bb', ':BufferOrderByBufferNumber<CR>', opts) -- Sort automatically by...
+-- key_map('n', '<leader>bd', ':BufferOrderByDirectory<CR>', opts)
+-- key_map('n', '<leader>bl', ':BufferOrderByLanguage<CR>', opts)
 -- Wipeout buffer
 --                 :BufferWipeout<CR>
 -- Close commands
 --                 :BufferCloseAllButCurrent<CR>
 --                 :BufferCloseBuffersLeft<CR>
 --                 :BufferCloseBuffersRight<CR>
-
-
 -- -- TELESCOPE keymaps  --
 -- key_map("n", "<leader>ff", ":Telescope find_files<cr>", opts)
 -- key_map("n", "<leader>fg", ":Telescope live_grep<cr>", opts)
