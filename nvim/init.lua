@@ -17,6 +17,7 @@ require("telescope-config")
 require("truezen-config")
 -- require("mdeval-config")
 require("whichkey-config")
+--require("dashboard-config")
 
 --> tree-sitter and tree-sitter plugins
 require("treesitter-config")
@@ -29,7 +30,6 @@ require("lsp-config.null-ls")
 
 -- git modules
 require("gitsigns-config")
-
 --vim.cmd('colorscheme nord')
 
 

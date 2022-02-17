@@ -54,6 +54,8 @@ brew "grep"
 brew "helm", link: false
 # Deploy Kubernetes Helm Charts
 brew "helmfile"
+# Improved top (interactive process viewer)
+brew "htop"
 # Lightweight and flexible command-line JSON processor
 brew "jq"
 # Kubernetes CLI To Manage Your Clusters In Style!
@@ -66,6 +68,10 @@ brew "kubernetes-cli"
 brew "kube-ps1"
 # Tool that can switch between kubectl contexts easily and create aliases
 brew "kubectx"
+# Simple terminal UI for git commands
+brew "lazygit"
+# NCurses Disk Usage
+brew "ncdu"
 # Ambitious Vim-fork focused on extensibility and agility
 brew "neovim"
 # Platform built on V8 to build network applications
@@ -88,6 +94,8 @@ brew "stern"
 brew "stow"
 # Terraform version manager inspired by rbenv
 brew "tfenv"
+# Linter for Terraform files
+brew "tflint"
 # Terragrunt version manager inspired by tfenv
 brew "tgenv"
 # Display directories as trees (with optional color/HTML output)

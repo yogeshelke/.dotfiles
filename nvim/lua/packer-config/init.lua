@@ -21,7 +21,13 @@ return require("packer").startup(function()
 	use("fladson/vim-kitty") --> kitty syntax highlighting
 	use("jubnzv/mdeval.nvim") --> evaluates code blocks inside markdown, vimwiki, orgmode.nvim and norg docs
 	use("jbyuki/nabla.nvim")
-    
+        -- Start screen
+	use ("glepnir/dashboard-nvim")
+			-- config = function()
+			--   require("~/.config/nvim/lua/dashboard-config/init.lua").config()
+			-- end,
+			-- disable = not config.enabled.dashboard,
+	  
 	--> colorschemes
 	use("EdenEast/nightfox.nvim") --> nightfox colorsceme for neovim
 	use("sainnhe/gruvbox-material")
