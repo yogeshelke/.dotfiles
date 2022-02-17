@@ -2,6 +2,7 @@
 require("packer-config")
 require("options")
 require("keymap-config")
+require("keymap-config.vscdkeymap")
 require("autopairs-config")
 require("lualine-config")
 require("barbar-config")
@@ -18,6 +19,7 @@ require("truezen-config")
 -- require("mdeval-config")
 require("whichkey-config")
 --require("dashboard-config")
+
 
 --> tree-sitter and tree-sitter plugins
 require("treesitter-config")

@@ -34,43 +34,43 @@ key_map("n", "<leader>za", ":TZAtaraxis<CR>", opts)
 key_map("n", "<C-p>", ':lua require("nabla").popup()<CR>', opts)
 
 
--- -- Normal --
--- -- Better window navigation
--- keymap("n", "<C-h>", "<C-w>h", opts)
--- keymap("n", "<C-j>", "<C-w>j", opts)
--- keymap("n", "<C-k>", "<C-w>k", opts)
--- keymap("n", "<C-l>", "<C-w>l", opts)
+-- Normal --
+-- Better window navigation
+-- key_map("n", "<C-h>", "<C-w>h", opts)
+-- key_map("n", "<C-j>", "<C-w>j", opts)
+-- key_map("n", "<C-k>", "<C-w>k", opts)
+-- key_map("n", "<C-l>", "<C-w>l", opts)
 
--- -- Resize with arrows
--- keymap("n", "<C-Up>", ":resize -2<CR>", opts)
--- keymap("n", "<C-Down>", ":resize +2<CR>", opts)
--- keymap("n", "<C-Left>", ":vertical resize -2<CR>", opts)
--- keymap("n", "<C-Right>", ":vertical resize +2<CR>", opts)
+-- Resize with arrows
+key_map("n", "<C-h>", ":resize -2<CR>", opts)
+key_map("n", "<C-l>", ":resize +2<CR>", opts)
+key_map("n", "<C-k>", ":vertical resize -2<CR>", opts)
+key_map("n", "<C-j>", ":vertical resize +2<CR>", opts)
 
--- -- Move text up and down
--- keymap("n", "<A-j>", "<Esc>:m .+1<CR>==gi", opts)
--- keymap("n", "<A-k>", "<Esc>:m .-2<CR>==gi", opts)
+-- Move text up and down
+key_map("n", "<A-j>", "<Esc>:m .+1<CR>==gi", opts)
+key_map("n", "<A-k>", "<Esc>:m .-2<CR>==gi", opts)
 
--- -- Insert --
--- -- Press jk fast to enter
--- keymap("i", "jk", "<ESC>", opts)
+-- Insert --
+-- Press jk fast to enter
+key_map("i", "jk", "<ESC>", opts)
 
--- -- Visual --
--- -- Stay in indent mode
--- keymap("v", "<", "<gv", opts)
--- keymap("v", ">", ">gv", opts)
+-- Visual --
+-- Stay in indent mode
+key_map("v", "<", "<gv", opts)
+key_map("v", ">", ">gv", opts)
 
--- -- Move text up and down
--- keymap("v", "<A-j>", ":m .+1<CR>==", opts)
--- keymap("v", "<A-k>", ":m .-2<CR>==", opts)
--- keymap("v", "p", '"_dP', opts)
+-- Move text up and down
+key_map("v", "<A-j>", ":m .+1<CR>==", opts)
+key_map("v", "<A-k>", ":m .-2<CR>==", opts)
+key_map("v", "p", '"_dP', opts)
 
--- -- Visual Block --
--- -- Move text up and down
--- keymap("x", "J", ":move '>+1<CR>gv-gv", opts)
--- keymap("x", "K", ":move '<-2<CR>gv-gv", opts)
--- keymap("x", "<A-j>", ":move '>+1<CR>gv-gv", opts)
--- keymap("x", "<A-k>", ":move '<-2<CR>gv-gv", opts)
+-- Visual Block --
+-- Move text up and down
+key_map("x", "J", ":move '>+1<CR>gv-gv", opts)
+key_map("x", "K", ":move '<-2<CR>gv-gv", opts)
+key_map("x", "<A-j>", ":move '>+1<CR>gv-gv", opts)
+key_map("x", "<A-k>", ":move '<-2<CR>gv-gv", opts)
 
 
 
@@ -87,7 +87,7 @@ key_map("n", "<C-p>", ':lua require("nabla").popup()<CR>', opts)
 --                 :BufferCloseAllButCurrent<CR>
 --                 :BufferCloseBuffersLeft<CR>
 --                 :BufferCloseBuffersRight<CR>
--- -- TELESCOPE keymaps  --
+-- -- TELESCOPE key_maps  --
 -- key_map("n", "<leader>ff", ":Telescope find_files<cr>", opts)
 -- key_map("n", "<leader>fg", ":Telescope live_grep<cr>", opts)
 -- key_map("n", "<leader>fb", ":Telescope buffers<cr>", opts)
@@ -101,7 +101,7 @@ key_map("n", "<C-p>", ':lua require("nabla").popup()<CR>', opts)
 -- key_map("n", ",h", [[<Cmd>lua require'telescope.builtin'.help_tags({results_title='Help Results'})<CR>]], { noremap = true, silent = true })
 -- -- open available commands & run it
 -- key_map("n", ",c", [[<Cmd>lua require'telescope.builtin'.commands({results_title='Commands Results'})<CR>]], { noremap = true, silent = true })
--- -- Open Keymaps
+-- -- Open key_maps
 -- key_map("n", ",k", [[<Cmd>lua require'telescope.builtin'.keymaps({results_title='Key Maps Results'})<CR>]], { noremap = true, silent = true })
 
 -- -- find files with names that contain cursor word
