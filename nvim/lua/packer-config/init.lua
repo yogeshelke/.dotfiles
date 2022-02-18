@@ -66,6 +66,7 @@ return require("packer").startup(function()
 	use("AckslD/nvim-neoclip.lua")
 	use("nvim-telescope/telescope-github.nvim")
 	use("nvim-telescope/telescope-media-files.nvim")
+	use("nvim-telescope/telescope-project.nvim")
 	
 	--> GIT Plugins
 	use("lewis6991/gitsigns.nvim") -- git decorations implemented purely in lua/teal
