@@ -23,7 +23,7 @@
     "MMMN                                     ,0XXXK,      .KXXXXXXXXXXl        'OXXk            XXXX",
     "MMMN                     ...        .':d0XXXXx.      .0XXXXXXXXX0'           kXXl           XXXX",
     "MMMN                     .0XXXKKKKXXXXXXXXXk,       'KXXXXXXXXXx.            .KXK.          XXXX",
-    "MMMN                      .OXXXXXXXXXXXXXK:        oXXXXXXXXXXl               OXX:          XXXX",
+    "MMMN          .           .OXXXXXXXXXXXXXK:        oXXXXXXXXXXl               OXX:          XXXX",
     "MMMN          ,.           .dXXXXXXXXXXXXXXkl;',;oKXXXXXXXXXk.                OXXd          XXXX",
     "MMMN          co             .o0XXXXXXXXXXXXXXXXXXXXXXXXXXO;                 'XXXk          XXXX",
     "MMMN          oX'               .';:cc:clxKXXXXXX0ccccc:,.                   kXXXO          XXXX",
