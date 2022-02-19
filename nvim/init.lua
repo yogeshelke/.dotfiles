@@ -30,6 +30,14 @@ require("lsp-config.language-servers")
 require("lsp-config.lspsaga")
 require("lsp-config.completion")
 require("lsp-config.null-ls")
+require("cmp-config")
+
+-- require("lspnew-config")
+-- require("lspnew-config.handlers")
+-- require("lspnew-config.lsp-installer")
+-- require("lspnew-config.null-ls")
+--require("lspnew-config.settings.jsonls")
+--require("lspnew-config.settings.sumneko_lua")
 
 -- git modules
 require("gitsigns-config")
