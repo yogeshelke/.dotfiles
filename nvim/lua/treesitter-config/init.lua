@@ -28,13 +28,16 @@ parser_configs.norg_table = {
 require("nvim-treesitter.configs").setup({
 	--> parsers <--
 	ensure_installed = {
-		"c",
+		"hcl",
 		"css",
 		"python",
 		"bash",
 		"javascript",
 		"lua",
 		"typescript",
+		"yaml",
+		"json",
+		"go",
 	},
 	sync_install = false,
 	highlight = {

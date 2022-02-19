@@ -21,8 +21,20 @@ return require("packer").startup(function()
 	use("fladson/vim-kitty") --> kitty syntax highlighting
 	use("jubnzv/mdeval.nvim") --> evaluates code blocks inside markdown, vimwiki, orgmode.nvim and norg docs
 	use("jbyuki/nabla.nvim")
-        -- Start screen
-	use ("glepnir/dashboard-nvim")
+	use("lewis6991/impatient.nvim") --> Casche based loading for faster NVIM performance
+	use {"glepnir/dashboard-nvim",
+	cmd = {
+		"Dashboard",
+		"DashboardChangeColorscheme",
+		"DashboardFindFile",
+		"DashboardFindHistory",
+		"DashboardFindWord",
+		"DashboardNewFile",
+		"DashboardJumpMarks",
+		"SessionLoad",
+		"SessionSave"
+	  },
+	}
 			-- config = function()
 			--   require("~/.config/nvim/lua/dashboard-config/init.lua").config()
 			-- end,
