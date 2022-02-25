@@ -122,6 +122,7 @@ alias kn=kubens
 alias kc=kubectl
 alias tf=terraform
 alias tg=terragrunt
+alias lvim=/Users/yogeshshelke/.local/bin/lvim
 
 setopt HIST_IGNORE_ALL_DUPS
 
@@ -154,7 +155,7 @@ export GPG_TTY=$(tty)
 export EDITOR=nvim
 
 
-#export KUBE_CONFIG_PATH=$HOME/.kube/config
+# export KUBE_CONFIG_PATH=$HOME/.kube/config
 
 
 # Dope Env initialization
