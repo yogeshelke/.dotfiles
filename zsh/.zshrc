@@ -12,8 +12,9 @@ export ZSH="/Users/yogeshshelke/.oh-my-zsh"
 # load a random theme each time oh-my-zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themesi
-ZSH_THEME="robbyrussell"
+# ZSH_THEME="robbyrussell"
 ZSH_THEME="powerlevel10k/powerlevel10k"
+# ZSH_THEME="spaceship"
 
 # Set list of themes to pick from when loading at random
 # Setting this variable when ZSH_THEME=random will cause zsh to load
@@ -82,12 +83,9 @@ fzf
 git
 github
 zsh-autosuggestions
-#zsh-syntex-hilighting
+# zsh-syntax-highlighting
 )
 
-source $ZSH/oh-my-zsh.sh
-source /usr/local/etc/autojump.sh
-source <(kubectl completion zsh)
 # User configuration
 
 # export MANPATH="/usr/local/man:$MANPATH"
@@ -123,10 +121,16 @@ alias kc=kubectl
 alias tf=terraform
 alias tg=terragrunt
 alias lvim=/Users/yogeshshelke/.local/bin/lvim
+alias yvim=/Users/yogeshshelke/.local/bin/lvim
+alias awsp='source _awsp ; aws sso login'
+# alias alo='aws sso login'
 
 setopt HIST_IGNORE_ALL_DUPS
 
+source $ZSH/oh-my-zsh.sh
+source /usr/local/etc/autojump.sh
 source <(kubectl completion zsh)
+
 ax() { aws-vault exec “$@“; }
 
 source /Users/yogeshshelke/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
@@ -137,29 +141,25 @@ PS1='$(kube_ps1)'$PS1
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
+#source for asdf
+. /usr/local/opt/asdf/libexec/asdf.sh 
 
+complete -o nospace -C /usr/local/bin/t erraform terraform
 
-complete -o nospace -C /usr/local/bin/terraform terraform
+#PATH
 export PATH=“/usr/local/opt/curl/bin:$PATH”
-
 export PATH="$(brew --prefix)/bin/:~/.bin:$PATH"
 export GPG_TTY=$(tty)
-export EDITOR=nvim
+export EDITOR=vim
 
-#
-complete -o nospace -C /usr/local/bin/terraform terraform
-export PATH=“/usr/local/opt/curl/bin:$PATH”
-
-export PATH="$(brew --prefix)/bin/:~/.bin:$PATH"
-export GPG_TTY=$(tty)
-export EDITOR=nvim
-
-
-# export KUBE_CONFIG_PATH=$HOME/.kube/config
+export KUBE_CONFIG_PATH=$HOME/.kube/config
+export AWS_CONFIG_FILE=$HOME/.aws/config
+export AWS_SHARED_CREDENTIALS_FILE=$HOME/.aws/sso/cache
 
 
 # Dope Env initialization
-eval "$(direnv hook zsh)"
-export PATH="/Users/yogeshshelke/git/dope-env/bin:$PATH"
-export ENVIRONMENTS="test dev qa prod mgmt"
-test -f /Users/yogeshshelke/git/dope-env/env.sh && eval "$(/Users/yogeshshelke/git/dope-env/env.sh aliases)"
+# eval "$(direnv hook zsh)"
+# export PATH="/Users/yogeshshelke/git/dope-env/bin:$PATH"
+# export ENVIRONMENTS="test dev qa prod mgmt"
+# test -f /Users/yogeshshelke/git/dope-env/env.sh && eval "$(/Users/yogeshshelke/git/dope-env/env.sh aliases)"
+# export PATH="/usr/local/opt/kubernetes-cli@1.22/bin:$PATH"
