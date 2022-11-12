@@ -152,7 +152,9 @@ export PATH="$(brew --prefix)/bin/:~/.bin:$PATH"
 export GPG_TTY=$(tty)
 export EDITOR=vim
 
-export KUBE_CONFIG_PATH=$HOME/.kube/config
+# export KUBE_CONFIG_PATH=$HOME/.kube/config
+export KUBECONFIG=$(echo $(ls ~/.kube/config*) | awk '{ gsub(/ /,":");print}')
+export KUBE_CONFIG_PATHS=$KUBECONFIG
 export AWS_CONFIG_FILE=$HOME/.aws/config
 export AWS_SHARED_CREDENTIALS_FILE=$HOME/.aws/sso/cache
 
