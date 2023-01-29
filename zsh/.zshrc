@@ -147,6 +147,7 @@ PS1='$(kube_ps1)'$PS1
 complete -o nospace -C /usr/local/bin/t erraform terraform
 
 #PATH
+export PATH="${PATH}:${HOME}/.krew/bin"
 export PATH=“/usr/local/opt/curl/bin:$PATH”
 export PATH="$(brew --prefix)/bin/:~/.bin:$PATH"
 export GPG_TTY=$(tty)
@@ -165,3 +166,4 @@ export AWS_SHARED_CREDENTIALS_FILE=$HOME/.aws/sso/cache
 # export ENVIRONMENTS="test dev qa prod mgmt"
 # test -f /Users/yogeshshelke/git/dope-env/env.sh && eval "$(/Users/yogeshshelke/git/dope-env/env.sh aliases)"
 # export PATH="/usr/local/opt/kubernetes-cli@1.22/bin:$PATH"
+export PATH="/usr/local/opt/libpq/bin:$PATH"
