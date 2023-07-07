@@ -5,6 +5,7 @@ tap "homebrew/cask"
 tap "homebrew/cask-fonts"
 tap "homebrew/core"
 tap "little-angry-clouds/my-brews"
+tap "romkatv/powerlevel10k"
 # Interpreted, interactive, object-oriented programming language
 brew "python@3.11"
 # Automate deployment, configuration, and upgrading
@@ -179,6 +180,8 @@ brew "zsh"
 brew "derailed/popeye/popeye"
 # Helm version manager inspired by tfenv
 brew "little-angry-clouds/my-brews/helmenv", link: false
+# A Zsh Theme
+brew "romkatv/powerlevel10k/powerlevel10k"
 # Command-line helper for the 1Password password manager
 cask "1password-cli", args: { appdir: "/Applications" }
 # View, print, and comment on PDF documents
