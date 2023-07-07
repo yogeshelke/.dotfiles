@@ -78,12 +78,13 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(
 aws
-#colored-man.pages
+colored-man-pages
 fzf
 git
 github
 zsh-autosuggestions
-# zsh-syntax-highlighting
+zsh-output-highlighting
+zsh-syntax-highlighting
 )
 
 # User configuration
@@ -147,6 +148,7 @@ PS1='$(kube_ps1)'$PS1
 complete -o nospace -C /usr/local/bin/t erraform terraform
 
 #PATH
+export PATH="${PATH}:${HOME}/.local/bin"
 export PATH="${PATH}:${HOME}/.krew/bin"
 export PATH=“/usr/local/opt/curl/bin:$PATH”
 export PATH="$(brew --prefix)/bin/:~/.bin:$PATH"

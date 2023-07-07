@@ -5,18 +5,26 @@ tap "homebrew/cask"
 tap "homebrew/cask-fonts"
 tap "homebrew/core"
 tap "little-angry-clouds/my-brews"
-# Command-line interface for SQLite
-brew "sqlite"
+# Interpreted, interactive, object-oriented programming language
+brew "python@3.11"
 # Automate deployment, configuration, and upgrading
 brew "ansible"
 # Plugin manager for zsh, inspired by oh-my-zsh and vundle
 brew "antigen"
+# New file format for still image compression
+brew "jpeg-xl"
+# Codec library for encoding and decoding AV1 video streams
+brew "aom"
+# Cryptography and SSL/TLS Toolkit
+brew "openssl@3", link: false
 # Extendable version manager with support for Ruby, Node.js, Erlang & more
 brew "asdf"
 # Interpreted, interactive, object-oriented programming language
 brew "python@3.10"
 # Shell extension to jump to frequently used directories
 brew "autojump"
+# Text processing system for reStructuredText
+brew "docutils"
 # Official Amazon AWS command-line interface
 brew "awscli"
 # Bourne-Again SHell, a UNIX command interpreter
@@ -29,14 +37,16 @@ brew "libgit2"
 brew "rust"
 # Cargo subcommand for displaying when Rust dependencies are out of date
 brew "cargo-outdated"
+# C/C++ and Java libraries for Unicode and globalization
+brew "icu4c"
 # Platform built on V8 to build network applications
-brew "node"
+brew "node@18"
+# Tool to build, change, and version infrastructure
+brew "terraform"
 # Cloud Development Kit for Terraform
-brew "cdktf", link: false
+brew "cdktf"
 # Cross-platform make
 brew "cmake"
-# Open source suite of directory software
-brew "openldap"
 # Get a file from an HTTP, HTTPS or FTP server
 brew "curl"
 # Load/unload environment variables based on $PWD
@@ -65,14 +75,16 @@ brew "unbound"
 brew "gnutls"
 # GNU Pretty Good Privacy (PGP) package
 brew "gnupg"
+# Image manipulation
+brew "netpbm"
+# Library to render SVG files using Cairo
+brew "librsvg"
 # Graph visualization software from AT&T and Bell Labs
 brew "graphviz"
 # GNU grep, egrep and fgrep
 brew "grep"
-# Kubernetes package manager
-brew "helm"
-# Deploy Kubernetes Helm Charts
-brew "helmfile"
+# Convert source code to formatted text with syntax highlighting
+brew "highlight"
 # Improved top (interactive process viewer)
 brew "htop"
 # Convert JPG images to ASCII
@@ -91,24 +103,42 @@ brew "krew"
 brew "kube-ps1"
 # Tool that can switch between kubectl contexts easily and create aliases
 brew "kubectx"
+# Validate Kubernetes configuration files, supports multiple Kubernetes versions
+brew "kubeval"
 # Simple terminal UI for git commands
 brew "lazygit"
 # Postgres C API library
 brew "libpq"
 # Interpreted, interactive, object-oriented programming language
 brew "python@3.9"
+# C library SSHv1/SSHv2 client and server protocols
+brew "libssh"
+# Utility for directing compilation
+brew "make"
+# MongoDB Shell to connect, configure, query, and work with your MongoDB database
+brew "mongosh"
 # NCurses Disk Usage
 brew "ncdu"
 # Ambitious Vim-fork focused on extensibility and agility
 brew "neovim"
+# Port scanning utility for large networks
+brew "nmap"
+# Platform built on V8 to build network applications
+brew "node"
+# Highly capable, feature-rich programming language
+brew "perl"
 # Python dependency management tool
-brew "pipenv"
+brew "pipenv", link: false
 # Emulator for x86 and PowerPC
 brew "qemu"
 # Tool for managing OCI containers and pods
 brew "podman"
+# Tool for creating isolated virtual python environments
+brew "virtualenv", link: false
 # Framework for managing multi-language pre-commit hooks
 brew "pre-commit"
+# Password generator
+brew "pwgen"
 # Search tool like grep and The Silver Searcher
 brew "ripgrep"
 # Rust toolchain installer
@@ -121,6 +151,8 @@ brew "spaceship"
 brew "stern"
 # Organize software neatly under a single directory tree (e.g. /usr/local)
 brew "stow"
+# User interface to the TELNET protocol
+brew "telnet"
 # Tool to generate documentation from Terraform modules
 brew "terraform-docs"
 # Terraform version manager inspired by rbenv
@@ -131,12 +163,16 @@ brew "tflint"
 brew "tfsec"
 # Terragrunt version manager inspired by tfenv
 brew "tgenv"
+# Code-search similar to ack
+brew "the_silver_searcher"
 # Display directories as trees (with optional color/HTML output)
 brew "tree"
 # Internet file retriever
 brew "wget"
 # JavaScript package manager
 brew "yarn"
+# Pluggable terminal workspace, with terminal multiplexer as the base feature
+brew "zellij"
 # UNIX shell (command interpreter)
 brew "zsh"
 # A Kubernetes Cluster sanitizer and linter.
@@ -171,6 +207,8 @@ cask "pycharm-ce"
 cask "rectangle"
 # Tool to reverse the direction of scrolling
 cask "scroll-reverser"
+# Screenshot measurement and annotation tool
+cask "shottr"
 # Team communication and collaboration software
 cask "slack"
 # Development environment
@@ -181,3 +219,23 @@ cask "virtualbox"
 cask "virtualbox-extension-pack"
 # Open-source code editor
 cask "visual-studio-code"
+vscode "arcticicestudio.nord-visual-studio-code"
+vscode "ban.troff"
+vscode "DavidAnson.vscode-markdownlint"
+vscode "eamodio.gitlens"
+vscode "foxundermoon.shell-format"
+vscode "github.vscode-github-actions"
+vscode "golang.go"
+vscode "hashicorp.hcl"
+vscode "hashicorp.terraform"
+vscode "mads-hartmann.bash-ide-vscode"
+vscode "ms-azuretools.vscode-docker"
+vscode "ms-kubernetes-tools.vscode-kubernetes-tools"
+vscode "ms-python.isort"
+vscode "ms-python.python"
+vscode "ms-vscode-remote.remote-containers"
+vscode "ms-vsliveshare.vsliveshare"
+vscode "redhat.vscode-yaml"
+vscode "sumneko.lua"
+vscode "timonwong.shellcheck"
+vscode "vscodevim.vim"
