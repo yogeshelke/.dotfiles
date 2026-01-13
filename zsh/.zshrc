@@ -118,12 +118,13 @@ zsh-syntax-highlighting
 # Adding Aias---
 alias kx=kubectx
 alias kn=kubens
-alias kc=kubectl
+alias k=kubectl
 alias tf=terraform
 alias tg=terragrunt
 alias lvim=/Users/yogeshshelke/.local/bin/lvim
 alias yvim=/Users/yogeshshelke/.local/bin/lvim
 alias awsp='source _awsp ; aws sso login'
+alias z='zellij --layout ~/.config/zellij_layout/terraform_proj.kdl'
 # alias alo='aws sso login'
 
 setopt HIST_IGNORE_ALL_DUPS
@@ -145,13 +146,23 @@ PS1='$(kube_ps1)'$PS1
 #source for asdf
 . /usr/local/opt/asdf/libexec/asdf.sh 
 
-complete -o nospace -C /usr/local/bin/t erraform terraform
+complete -o nospace -C /usr/local/bin/terraform terraform
+complete -o default -F __start_kubectl k
+
 
 #PATH
 export PATH="${PATH}:${HOME}/.local/bin"
 export PATH="${PATH}:${HOME}/.krew/bin"
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 export PATH=“/usr/local/opt/curl/bin:$PATH”
-export PATH="$(brew --prefix)/bin/:~/.bin:$PATH"
+export PATH="/usr/local/opt/libpq/bin:$PATH"
+export PATH="/usr/local/sbin:$PATH"
+export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
+export PATH="/Users/yogeshshelke/kafka_2.13-3.9.1/bin:$PATH"
+
+export CLASSPATH="/Users/yogeshshelke/kafka_2.13-3.9.1/bin/aws-msk-iam-auth-1.1.8-all.jar"
+# export PATH="$(brew --prefix)/bin/:~/.bin:$PATH"
+
 export GPG_TTY=$(tty)
 export EDITOR=vim
 
@@ -160,12 +171,23 @@ export KUBECONFIG=$(echo $(ls ~/.kube/config*) | awk '{ gsub(/ /,":");print}')
 export KUBE_CONFIG_PATHS=$KUBECONFIG
 export AWS_CONFIG_FILE=$HOME/.aws/config
 export AWS_SHARED_CREDENTIALS_FILE=$HOME/.aws/sso/cache
+export XDG_CONFIG_HOME=$HOME/.config
+export LANG=en_US.UTF-8
+export LANGUAGE=en_US.UTF-8
 
-
+export MSK_dev_broker='b-1.shared.i8s74f.c4.kafka.eu-central-1.amazonaws.com:9098,b-2.shared.i8s74f.c4.kafka.eu-central-1.amazonaws.com:9098,b-3.shared.i8s74f.c4.kafka.eu-central-1.amazonaws.com:9098'
+export MSK_qa_broker='b-1.shared.kw7opy.c3.kafka.eu-central-1.amazonaws.com:9098,b-2.shared.kw7opy.c3.kafka.eu-central-1.amazonaws.com:9098,b-3.shared.kw7opy.c3.kafka.eu-central-1.amazonaws.com:9098'
+export MSK_prod_broker='b-1.shared.na86z2.c2.kafka.eu-central-1.amazonaws.com:9098,b-2.shared.na86z2.c2.kafka.eu-central-1.amazonaws.com:9098,b-3.shared.na86z2.c2.kafka.eu-central-1.amazonaws.com:9098'
+export MSK_test_broker='b-1.shared.wtytpj.c4.kafka.eu-central-1.amazonaws.com:9098,b-2.shared.wtytpj.c4.kafka.eu-central-1.amazonaws.com:9098,b-3.shared.wtytpj.c4.kafka.eu-central-1.amazonaws.com:9098'
 # Dope Env initialization
 # eval "$(direnv hook zsh)"
 # export PATH="/Users/yogeshshelke/git/dope-env/bin:$PATH"
 # export ENVIRONMENTS="test dev qa prod mgmt"
 # test -f /Users/yogeshshelke/git/dope-env/env.sh && eval "$(/Users/yogeshshelke/git/dope-env/env.sh aliases)"
 # export PATH="/usr/local/opt/kubernetes-cli@1.22/bin:$PATH"
-export PATH="/usr/local/opt/libpq/bin:$PATH"
+
+# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+fpath=(/Users/yogeshshelke/.docker/completions $fpath)
+autoload -Uz compinit
+compinit
+# End of Docker CLI completions
