@@ -181,6 +181,40 @@ if [ -f "$DOTFILES_DIR/iterm2/com.googlecode.iterm2.plist" ]; then
 fi
 
 ###############################################################################
+# Setup Zellij configuration
+###############################################################################
+info "Setting up Zellij configuration..."
+
+# Create Zellij config directories
+mkdir -p "$HOME/.config/zellij"
+mkdir -p "$HOME/.config/zellij_layout"
+
+# Backup and link main config if it exists
+if [ -f "$DOTFILES_DIR/zellij/config.kdl" ]; then
+    if [ -f "$HOME/.config/zellij/config.kdl" ] && [ ! -L "$HOME/.config/zellij/config.kdl" ]; then
+        warning "Backing up existing Zellij config"
+        mv "$HOME/.config/zellij/config.kdl" "$HOME/.config/zellij/config.kdl.backup"
+    fi
+    ln -sf "$DOTFILES_DIR/zellij/config.kdl" "$HOME/.config/zellij/config.kdl"
+    success "Linked Zellij config"
+fi
+
+# Link Zellij layouts
+if [ -d "$DOTFILES_DIR/zellij/layouts" ]; then
+    for layout in "$DOTFILES_DIR/zellij/layouts"/*.kdl; do
+        if [ -f "$layout" ]; then
+            layout_name=$(basename "$layout")
+            if [ -f "$HOME/.config/zellij_layout/$layout_name" ] && [ ! -L "$HOME/.config/zellij_layout/$layout_name" ]; then
+                warning "Backing up existing Zellij layout: $layout_name"
+                mv "$HOME/.config/zellij_layout/$layout_name" "$HOME/.config/zellij_layout/$layout_name.backup"
+            fi
+            ln -sf "$layout" "$HOME/.config/zellij_layout/$layout_name"
+            success "Linked Zellij layout: $layout_name"
+        fi
+    done
+fi
+
+###############################################################################
 # macOS System Preferences (Optional)
 ###############################################################################
 info "Would you like to apply recommended macOS system preferences? (y/n)"

@@ -11,6 +11,7 @@ My personal macOS dotfiles for quick system setup and configuration management.
 - **Powerlevel10k**: Terminal theme configuration
 - **VSCode/Cursor**: Editor settings and keybindings
 - **iTerm2**: Terminal emulator preferences
+- **Zellij**: Terminal multiplexer configuration and layouts
 - **Bootstrap Script**: Automated setup for new machines
 
 ## 🎯 Quick Start
@@ -45,6 +46,11 @@ ln -sf ~/.dotfiles/nvim ~/.config/nvim
 ln -sf ~/.dotfiles/powerlevel10k/.p10k.zsh ~/.p10k.zsh
 ln -sf ~/.dotfiles/vscode/settings.json ~/Library/Application\ Support/Code/User/settings.json
 
+# Setup Zellij
+mkdir -p ~/.config/zellij ~/.config/zellij_layout
+ln -sf ~/.dotfiles/zellij/config.kdl ~/.config/zellij/config.kdl
+ln -sf ~/.dotfiles/zellij/layouts/*.kdl ~/.config/zellij_layout/
+
 # Copy iTerm2 preferences
 cp ~/.dotfiles/iterm2/com.googlecode.iterm2.plist ~/Library/Preferences/
 ```
@@ -67,6 +73,10 @@ cp ~/.dotfiles/iterm2/com.googlecode.iterm2.plist ~/Library/Preferences/
 ├── vscode/
 │   ├── settings.json           # VSCode/Cursor settings
 │   └── keybindings.json        # Custom keybindings (if any)
+├── zellij/
+│   ├── config.kdl              # Zellij main config
+│   └── layouts/                # Zellij layout files
+│       └── terraform_proj.kdl  # Terraform project layout
 └── iterm2/
     └── com.googlecode.iterm2.plist  # iTerm2 preferences
 ```
@@ -88,6 +98,8 @@ cp ~/.gitconfig ./git/.gitconfig
 cp ~/.p10k.zsh ./powerlevel10k/.p10k.zsh
 cp ~/Library/Application\ Support/Code/User/settings.json ./vscode/settings.json
 cp ~/Library/Preferences/com.googlecode.iterm2.plist ./iterm2/
+cp ~/.config/zellij/config.kdl ./zellij/config.kdl
+cp ~/.config/zellij_layout/*.kdl ./zellij/layouts/
 
 # Commit and push
 git add .
