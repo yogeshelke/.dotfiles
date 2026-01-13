@@ -1,0 +1,45 @@
+{
+    "redhat.telemetry.enabled": true,
+    "terminal.integrated.fontFamily": "MesloLGS NF",
+    "terminal.integrated.scrollback": 1500,
+    "gitlens.defaultTimeFormat": null,
+    "gitlens.defaultDateShortFormat": null,
+    "gitlens.defaultDateFormat": null,
+    "gitlens.defaultDateLocale": null,
+    "diffEditor.ignoreTrimWhitespace": false,
+    "githubPullRequests.pullBranch": "never",
+    "yaml.format.bracketSpacing": false,
+    "yaml.format.enable": false,
+    "html.format.enable": false,
+    "window.nativeTabs": true,
+    "window.openFilesInNewWindow": "default",
+    "editor.fontLigatures": false,
+    "files.insertFinalNewline": true,
+    "workbench.colorTheme": "Nord",
+    "terminal.integrated.autoReplies": {},
+    "editor.accessibilitySupport": "off",
+    "files.autoSave": "onFocusChange",
+    "vs-kubernetes": {
+        "vscode-kubernetes.helm-path-mac": "/Users/yogeshshelke/.vs-kubernetes/tools/helm/darwin-arm64/helm"
+    },
+    "editor.formatOnSave": true,
+    "[dockercompose]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 2,
+        "editor.autoIndent": "advanced",
+        "editor.quickSuggestions": {
+            "other": true,
+            "comments": false,
+            "strings": true
+        },
+        "editor.defaultFormatter": "redhat.vscode-yaml"
+    },
+    "[github-actions-workflow]": {
+        "editor.defaultFormatter": "redhat.vscode-yaml"
+    },
+    "github.copilot.nextEditSuggestions.enabled": true,
+    "chat.tools.terminal.autoApprove": {
+        "git pull": true,
+        "git merge": true
+    }
+}

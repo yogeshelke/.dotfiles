@@ -175,10 +175,6 @@ export XDG_CONFIG_HOME=$HOME/.config
 export LANG=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8
 
-export MSK_dev_broker='b-1.shared.i8s74f.c4.kafka.eu-central-1.amazonaws.com:9098,b-2.shared.i8s74f.c4.kafka.eu-central-1.amazonaws.com:9098,b-3.shared.i8s74f.c4.kafka.eu-central-1.amazonaws.com:9098'
-export MSK_qa_broker='b-1.shared.kw7opy.c3.kafka.eu-central-1.amazonaws.com:9098,b-2.shared.kw7opy.c3.kafka.eu-central-1.amazonaws.com:9098,b-3.shared.kw7opy.c3.kafka.eu-central-1.amazonaws.com:9098'
-export MSK_prod_broker='b-1.shared.na86z2.c2.kafka.eu-central-1.amazonaws.com:9098,b-2.shared.na86z2.c2.kafka.eu-central-1.amazonaws.com:9098,b-3.shared.na86z2.c2.kafka.eu-central-1.amazonaws.com:9098'
-export MSK_test_broker='b-1.shared.wtytpj.c4.kafka.eu-central-1.amazonaws.com:9098,b-2.shared.wtytpj.c4.kafka.eu-central-1.amazonaws.com:9098,b-3.shared.wtytpj.c4.kafka.eu-central-1.amazonaws.com:9098'
 # Dope Env initialization
 # eval "$(direnv hook zsh)"
 # export PATH="/Users/yogeshshelke/git/dope-env/bin:$PATH"
