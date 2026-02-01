@@ -130,6 +130,18 @@ if $VERIFY_ONLY; then
     info "Running in verify-only mode..."
 fi
 
+# Pre-cache sudo credentials for brew cask installations (skip for verify/fix-symlinks)
+if ! $VERIFY_ONLY && ! $FIX_SYMLINKS; then
+    # Only prompt for sudo if we have a terminal
+    if [ -t 0 ]; then
+        info "Some installations may require admin privileges..."
+        if sudo -v 2>/dev/null; then
+            # Keep sudo alive in background
+            while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+        fi
+    fi
+fi
+
 ###############################################################################
 # Detect Architecture
 ###############################################################################
