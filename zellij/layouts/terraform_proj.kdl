@@ -2,6 +2,7 @@
 
 
 layout {
+    cwd "~/git"
     pane split_direction="vertical" {
         pane size="65%"
         pane split_direction="horizontal" {
@@ -10,7 +11,7 @@ layout {
                 start_suspended false
             }
             pane command="lazygit" {
-                start_suspended false
+                start_suspended true
             }
         }
     }

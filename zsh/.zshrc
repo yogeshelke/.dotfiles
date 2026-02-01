@@ -1,189 +1,104 @@
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console output (such as commands
+# that call compinit) must go after this block.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
 
+##### HISTORY #####
 HISTSIZE=1000000
 SAVEHIST=1000000
+setopt HIST_IGNORE_ALL_DUPS
 
-# If you come from bash you might have to change your $PATH.
-# export PATH=$HOME/bin:/usr/local/bin:$PATH
+##### HOMEBREW (MUST BE FIRST) #####
+if [[ $(uname -m) == 'arm64' ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+    HOMEBREW_PREFIX="/opt/homebrew"
+else
+    eval "$(/usr/local/bin/brew shellenv)"
+    HOMEBREW_PREFIX="/usr/local"
+fi
 
-# Path to your oh-my-zsh installation.
-export ZSH="/Users/yogeshshelke/.oh-my-zsh"
-
-# Set name of the theme to load --- if set to "random", it will
-# load a random theme each time oh-my-zsh is loaded, in which case,
-# to know which specific one was loaded, run: echo $RANDOM_THEME
-# See https://github.com/ohmyzsh/ohmyzsh/wiki/Themesi
-# ZSH_THEME="robbyrussell"
+##### OH-MY-ZSH #####
+export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="powerlevel10k/powerlevel10k"
-# ZSH_THEME="spaceship"
 
-# Set list of themes to pick from when loading at random
-# Setting this variable when ZSH_THEME=random will cause zsh to load
-# a theme from this variable instead of looking in $ZSH/themes/
-# If set to an empty array, this variable will have no effect.
-# ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
-
-# Uncomment the following line to use case-sensitive completion.
-# CASE_SENSITIVE="true"
-
-# Uncomment the following line to use hyphen-insensitive completion.
-# Case-sensitive completion must be off. _ and - will be interchangeable.
-# HYPHEN_INSENSITIVE="true"
-
-# Uncomment one of the following lines to change the auto-update behavior
-# zstyle ':omz:update' mode disabled  # disable automatic updates
-# zstyle ':omz:update' mode auto      # update automatically without asking
-# zstyle ':omz:update' mode reminder  # just remind me to update when it's time
-
-# Uncomment the following line to change how often to auto-update (in days).
-# zstyle ':omz:update' frequency 13
-
-# Uncomment the following line if pasting URLs and other text is messed up.
-# DISABLE_MAGIC_FUNCTIONS="true"
-
-# Uncomment the following line to disable colors in ls.
-# DISABLE_LS_COLORS="true"
-
-# Uncomment the following line to disable auto-setting terminal title.
-# DISABLE_AUTO_TITLE="true"
-
-# Uncomment the following line to enable command auto-correction.
-# ENABLE_CORRECTION="true"
-
-# Uncomment the following line to display red dots whilst waiting for completion.
-# You can also set it to another string to have that shown instead of the default red dots.
-# e.g. COMPLETION_WAITING_DOTS="%F{yellow}waiting...%f"
-# Caution: this setting can cause issues with multiline prompts in zsh < 5.7.1 (see #5765)
-# COMPLETION_WAITING_DOTS="true"
-
-# Uncomment the following line if you want to disable marking untracked files
-# under VCS as dirty. This makes repository status check for large repositories
-# much, much faster.
-# DISABLE_UNTRACKED_FILES_DIRTY="true"
-
-# Uncomment the following line if you want to change the command execution time
-# stamp shown in the history command output.
-# You can set one of the optional three formats:
-# "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
-# or set a custom format using the strftime function format specifications,
-# see 'man strftime' for details.
-# HIST_STAMPS="mm/dd/yyyy"
-
-# Would you like to use another custom folder than $ZSH/custom?
-# ZSH_CUSTOM=/path/to/new-custom-folder
-
-# Which plugins would you like to load?
-# Standard plugins can be found in $ZSH/plugins/
-# Custom plugins may be added to $ZSH_CUSTOM/plugins/
-# Example format: plugins=(rails git textmate ruby lighthouse)
-# Add wisely, as too many plugins slow down shell startup.
 plugins=(
-aws
-colored-man-pages
-fzf
-git
-github
-zsh-autosuggestions
-zsh-output-highlighting
-zsh-syntax-highlighting
+  aws
+  fzf
+  git
+  colored-man-pages
+  zsh-autosuggestions
+  zsh-syntax-highlighting
 )
 
-# User configuration
+source $ZSH/oh-my-zsh.sh
 
-# export MANPATH="/usr/local/man:$MANPATH"
-
-# You may need to manually set your language environment
-# export LANG=en_US.UTF-8
-
-# Preferred editor for local and remote sessions
-# if [[ -n $SSH_CONNECTION ]]; then
-#   export EDITOR='vim'
-# else
-#   export EDITOR='mvim'
-# fi
-
-# Compilation flags
-# export ARCHFLAGS="-arch x86_64"
-
-# Set personal aliases, overriding those provided by oh-my-zsh libs,
-# plugins, and themes. Aliases can be placed here, though oh-my-zsh
-# users are encouraged to define aliases within the ZSH_CUSTOM folder.
-# For a full list of active aliases, run `alias`.
-#
-# Example aliases
-# alias zshconfig="mate ~/.zshrc"
-# alias ohmyzsh="mate ~/.oh-my-zsh"
-# 114 autoload -U +X bashcompinit && bashcompinit
-
-
-# Adding Aias---
+##### ALIASES #####
 alias kx=kubectx
 alias kn=kubens
 alias k=kubectl
 alias tf=terraform
 alias tg=terragrunt
-alias lvim=/Users/yogeshshelke/.local/bin/lvim
-alias yvim=/Users/yogeshshelke/.local/bin/lvim
+alias lvim="$HOME/.local/bin/lvim"
+alias yvim="$HOME/.local/bin/lvim"
 alias awsp='source _awsp ; aws sso login'
 alias z='zellij --layout ~/.config/zellij_layout/terraform_proj.kdl'
-# alias alo='aws sso login'
+alias k9s-update-skin='curl -o ~/.config/k9s/skins/nord.yaml https://raw.githubusercontent.com/derailed/k9s/master/skins/nord.yaml && echo "Nord skin updated"'
 
-setopt HIST_IGNORE_ALL_DUPS
+##### TOOLING #####
+source "$HOMEBREW_PREFIX/etc/autojump.sh"
+source "$HOMEBREW_PREFIX/opt/asdf/libexec/asdf.sh"
+# kube-ps1 not needed - powerlevel10k has native kubecontext segment (see ~/.p10k.zsh)
+# source "$HOMEBREW_PREFIX/opt/kube-ps1/share/kube-ps1.sh"
 
-source $ZSH/oh-my-zsh.sh
-source /usr/local/etc/autojump.sh
-source <(kubectl completion zsh)
+# kubectl completions - cached for faster startup
+# Old (slower): source <(kubectl completion zsh)
+ZSH_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
+[[ -d "$ZSH_CACHE_DIR" ]] || mkdir -p "$ZSH_CACHE_DIR"
+if [[ ! -f "$ZSH_CACHE_DIR/kubectl.zsh" ]] || [[ $(which kubectl) -nt "$ZSH_CACHE_DIR/kubectl.zsh" ]]; then
+    kubectl completion zsh > "$ZSH_CACHE_DIR/kubectl.zsh"
+fi
+source "$ZSH_CACHE_DIR/kubectl.zsh"
 
-ax() { aws-vault exec “$@“; }
+##### COMPLETIONS #####
+# Optimized compinit - only rebuild cache once per day
+# Old (slower):
+# autoload -Uz compinit
+# compinit
+autoload -Uz compinit
+if [[ -n ~/.zcompdump(#qN.mh+24) ]]; then
+    compinit
+else
+    compinit -C
+fi
 
-source /Users/yogeshshelke/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+##### PATH (minimal & ordered) #####
+export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.krew/bin:$PATH"
+export PATH="$HOMEBREW_PREFIX/opt/openjdk/bin:$PATH"
+export PATH="$HOME/kafka_2.13-3.9.1/bin:$PATH"
 
-source "/usr/local/opt/kube-ps1/share/kube-ps1.sh"
-PS1='$(kube_ps1)'$PS1
+##### JAVA / KAFKA #####
+export CLASSPATH="$HOME/kafka_2.13-3.9.1/bin/aws-msk-iam-auth-1.1.8-all.jar"
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-
-#source for asdf
-. /usr/local/opt/asdf/libexec/asdf.sh 
-
-complete -o nospace -C /usr/local/bin/terraform terraform
-complete -o default -F __start_kubectl k
-
-
-#PATH
-export PATH="${PATH}:${HOME}/.local/bin"
-export PATH="${PATH}:${HOME}/.krew/bin"
-export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
-export PATH=“/usr/local/opt/curl/bin:$PATH”
-export PATH="/usr/local/opt/libpq/bin:$PATH"
-export PATH="/usr/local/sbin:$PATH"
-export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
-export PATH="/Users/yogeshshelke/kafka_2.13-3.9.1/bin:$PATH"
-
-export CLASSPATH="/Users/yogeshshelke/kafka_2.13-3.9.1/bin/aws-msk-iam-auth-1.1.8-all.jar"
-# export PATH="$(brew --prefix)/bin/:~/.bin:$PATH"
-
+##### ENV #####
 export GPG_TTY=$(tty)
 export EDITOR=vim
-
-# export KUBE_CONFIG_PATH=$HOME/.kube/config
-export KUBECONFIG=$(echo $(ls ~/.kube/config*) | awk '{ gsub(/ /,":");print}')
-export KUBE_CONFIG_PATHS=$KUBECONFIG
-export AWS_CONFIG_FILE=$HOME/.aws/config
-export AWS_SHARED_CREDENTIALS_FILE=$HOME/.aws/sso/cache
-export XDG_CONFIG_HOME=$HOME/.config
 export LANG=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8
+export XDG_CONFIG_HOME="$HOME/.config"
 
-# Dope Env initialization
-# eval "$(direnv hook zsh)"
-# export PATH="/Users/yogeshshelke/git/dope-env/bin:$PATH"
-# export ENVIRONMENTS="test dev qa prod mgmt"
-# test -f /Users/yogeshshelke/git/dope-env/env.sh && eval "$(/Users/yogeshshelke/git/dope-env/env.sh aliases)"
-# export PATH="/usr/local/opt/kubernetes-cli@1.22/bin:$PATH"
+##### KUBERNETES #####
+export KUBECONFIG=$(echo $(ls ~/.kube/config*) | awk '{ gsub(/ /,":");print}')
+export KUBE_CONFIG_PATHS=$KUBECONFIG
 
-# The following lines have been added by Docker Desktop to enable Docker CLI completions.
-fpath=(/Users/yogeshshelke/.docker/completions $fpath)
-autoload -Uz compinit
-compinit
-# End of Docker CLI completions
+##### AWS #####
+export AWS_CONFIG_FILE="$HOME/.aws/config"
+export AWS_SHARED_CREDENTIALS_FILE="$HOME/.aws/sso/cache"
+
+##### POWERLEVEL10K #####
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+# Note: zsh-syntax-highlighting is loaded via Oh-My-Zsh plugins above
+

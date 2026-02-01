@@ -1,6 +1,6 @@
 {
     "redhat.telemetry.enabled": true,
-    "terminal.integrated.fontFamily": "MesloLGS NF",
+    "terminal.integrated.fontFamily": "MesloLGS NF, MesloLGS Nerd Font, monospace",
     "terminal.integrated.scrollback": 1500,
     "gitlens.defaultTimeFormat": null,
     "gitlens.defaultDateShortFormat": null,
@@ -15,7 +15,6 @@
     "window.openFilesInNewWindow": "default",
     "editor.fontLigatures": false,
     "files.insertFinalNewline": true,
-    "workbench.colorTheme": "Nord",
     "terminal.integrated.autoReplies": {},
     "editor.accessibilitySupport": "off",
     "files.autoSave": "onFocusChange",
@@ -41,5 +40,7 @@
     "chat.tools.terminal.autoApprove": {
         "git pull": true,
         "git merge": true
-    }
+    },
+    "workbench.colorTheme": "Nord",
+    "terminal.integrated.lineHeight": 1.1
 }
