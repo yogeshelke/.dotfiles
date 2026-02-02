@@ -460,6 +460,7 @@ verify_all_symlinks() {
         "$HOME/.config/zellij_layout/terraform_proj.kdl:$DOTFILES_DIR/zellij/layouts/terraform_proj.kdl"
         "$HOME/Library/Application Support/Cursor/User/settings.json:$DOTFILES_DIR/cursor/settings.json"
         "$HOME/Library/Application Support/Cursor/User/keybindings.json:$DOTFILES_DIR/cursor/keybindings.json"
+        "$HOME/Library/Application Support/Code/User/settings.json:$DOTFILES_DIR/vscode/settings.json"
     )
     
     for entry in "${symlinks[@]}"; do
