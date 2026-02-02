@@ -88,3 +88,12 @@ nvim/plugin/packer_compiled.lua
 NOTES.md
 PRIVATE.md
 TODO.private.md
+
+# Cursor MCP config (contains API tokens)
+cursor/mcp.json
+**/mcp.json
+!cursor/mcp.json.template
+
+# Zsh history (may contain sensitive commands)
+# Review and clean before pushing: zsh/.zsh_history
+zsh/.zsh_history

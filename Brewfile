@@ -157,6 +157,7 @@ cask "microsoft-auto-update"    # Microsoft update tool
 cask "microsoft-office"         # Office suite
 cask "microsoft-teams"          # Microsoft Teams
 cask "pycharm-ce"               # Python IDE
+cask "rectangle"                # Window management (move/resize)
 cask "scroll-reverser"          # Reverse scroll direction
 cask "vagrant"                  # Development environment
 cask "visual-studio-code"       # Code editor

@@ -1,4 +1,10 @@
 {
+    // Keep sidebar/explorer visible
+    "workbench.sideBar.location": "left",
+    "workbench.activityBar.location": "default",
+    "zenMode.hideActivityBar": false,
+    "zenMode.hideSideBar": false,
+    "zenMode.fullScreen": false,
     "redhat.telemetry.enabled": true,
     "terminal.integrated.fontFamily": "MesloLGS NF, MesloLGS Nerd Font, monospace",
     "terminal.integrated.scrollback": 1500,
@@ -19,9 +25,6 @@
     "terminal.integrated.autoReplies": {},
     "editor.accessibilitySupport": "off",
     "files.autoSave": "onFocusChange",
-    "vs-kubernetes": {
-        "vscode-kubernetes.helm-path-mac": "/Users/yogeshshelke/.vs-kubernetes/tools/helm/darwin-arm64/helm"
-    },
     "editor.formatOnSave": true,
     "[dockercompose]": {
         "editor.insertSpaces": true,

@@ -238,6 +238,16 @@ if [ -f "$DOTFILES_DIR/zsh/.zshrc" ]; then
     create_symlink "$DOTFILES_DIR/zsh/.zshrc" "$HOME/.zshrc"
 fi
 
+# Create symlink for .zsh_history (if exists in dotfiles)
+# Note: This file is in .gitignore - contains command history
+if [ -f "$DOTFILES_DIR/zsh/.zsh_history" ]; then
+    create_symlink "$DOTFILES_DIR/zsh/.zsh_history" "$HOME/.zsh_history"
+elif [ ! -f "$HOME/.zsh_history" ]; then
+    # Create empty history file in dotfiles if neither exists
+    touch "$DOTFILES_DIR/zsh/.zsh_history"
+    create_symlink "$DOTFILES_DIR/zsh/.zsh_history" "$HOME/.zsh_history"
+fi
+
 # Create symlink for Powerlevel10k configuration
 if [ -f "$DOTFILES_DIR/powerlevel10k/.p10k.zsh" ]; then
     create_symlink "$DOTFILES_DIR/powerlevel10k/.p10k.zsh" "$HOME/.p10k.zsh"
@@ -290,6 +300,35 @@ if [ -f "$DOTFILES_DIR/vscode/keybindings.json" ]; then
     create_symlink "$DOTFILES_DIR/vscode/keybindings.json" "$VSCODE_USER_DIR/keybindings.json"
 fi
 fi # end VERIFY_ONLY/FIX_SYMLINKS check for VSCode configuration
+
+###############################################################################
+# Setup Cursor IDE configuration
+###############################################################################
+if ! $VERIFY_ONLY; then
+info "Setting up Cursor IDE configuration..."
+
+CURSOR_USER_DIR="$HOME/Library/Application Support/Cursor/User"
+mkdir -p "$CURSOR_USER_DIR"
+mkdir -p "$HOME/.cursor"
+
+# Link Cursor settings.json
+if [ -f "$DOTFILES_DIR/cursor/settings.json" ]; then
+    create_symlink "$DOTFILES_DIR/cursor/settings.json" "$CURSOR_USER_DIR/settings.json"
+fi
+
+# Link Cursor keybindings.json
+if [ -f "$DOTFILES_DIR/cursor/keybindings.json" ]; then
+    create_symlink "$DOTFILES_DIR/cursor/keybindings.json" "$CURSOR_USER_DIR/keybindings.json"
+fi
+
+# Copy mcp.json template if mcp.json doesn't exist (don't overwrite existing tokens)
+if [ -f "$DOTFILES_DIR/cursor/mcp.json.template" ] && [ ! -f "$HOME/.cursor/mcp.json" ]; then
+    cp "$DOTFILES_DIR/cursor/mcp.json.template" "$HOME/.cursor/mcp.json"
+    warning "Created ~/.cursor/mcp.json from template - please add your API tokens"
+elif [ -f "$HOME/.cursor/mcp.json" ]; then
+    success "mcp.json already exists (preserving your tokens)"
+fi
+fi # end VERIFY_ONLY check for Cursor configuration
 
 ###############################################################################
 # Setup iTerm2 configuration
@@ -411,6 +450,7 @@ verify_all_symlinks() {
     # Check each symlink
     local symlinks=(
         "$HOME/.zshrc:$DOTFILES_DIR/zsh/.zshrc"
+        "$HOME/.zsh_history:$DOTFILES_DIR/zsh/.zsh_history"
         "$HOME/.p10k.zsh:$DOTFILES_DIR/powerlevel10k/.p10k.zsh"
         "$HOME/.gitconfig:$DOTFILES_DIR/git/.gitconfig"
         "$HOME/.config/nvim:$DOTFILES_DIR/nvim"
@@ -418,6 +458,8 @@ verify_all_symlinks() {
         "$HOME/.config/k9s/skins/nord.yaml:$DOTFILES_DIR/k9s/skins/nord.yaml"
         "$HOME/.config/zellij/config.kdl:$DOTFILES_DIR/zellij/config.kdl"
         "$HOME/.config/zellij_layout/terraform_proj.kdl:$DOTFILES_DIR/zellij/layouts/terraform_proj.kdl"
+        "$HOME/Library/Application Support/Cursor/User/settings.json:$DOTFILES_DIR/cursor/settings.json"
+        "$HOME/Library/Application Support/Cursor/User/keybindings.json:$DOTFILES_DIR/cursor/keybindings.json"
     )
     
     for entry in "${symlinks[@]}"; do

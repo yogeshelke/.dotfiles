@@ -1,0 +1,43 @@
+{
+  "mcpServers": {
+    "jira": {
+      "command": "/opt/homebrew/bin/npx",
+      "args": [
+        "-y",
+        "@aashari/mcp-server-atlassian-jira"
+      ],
+      "env": {
+        "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+        "ATLASSIAN_SITE_NAME": "YOUR_SITE_NAME",
+        "ATLASSIAN_USER_EMAIL": "your.email@company.com",
+        "ATLASSIAN_API_TOKEN": "YOUR_ATLASSIAN_API_TOKEN"
+      }
+    },
+    "confluence": {
+      "command": "/opt/homebrew/bin/npx",
+      "args": [
+        "-y",
+        "@aashari/mcp-server-atlassian-confluence"
+      ],
+      "env": {
+        "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+        "ATLASSIAN_SITE_NAME": "YOUR_SITE_NAME",
+        "ATLASSIAN_USER_EMAIL": "your.email@company.com",
+        "ATLASSIAN_API_TOKEN": "YOUR_ATLASSIAN_API_TOKEN"
+      }
+    },
+    "slack": {
+      "command": "/opt/homebrew/bin/npx",
+      "args": [
+        "-y",
+        "slack-mcp-server"
+      ],
+      "env": {
+        "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+        "SLACK_MCP_XOXC_TOKEN": "YOUR_SLACK_XOXC_TOKEN",
+        "SLACK_MCP_XOXD_TOKEN": "YOUR_SLACK_XOXD_TOKEN",
+        "SLACK_MCP_ADD_MESSAGE_TOOL": "true"
+      }
+    }
+  }
+}
