@@ -279,6 +279,12 @@ mkdir -p "$HOME/.config"
 if [ -d "$DOTFILES_DIR/nvim" ]; then
     create_symlink "$DOTFILES_DIR/nvim" "$HOME/.config/nvim"
 fi
+
+# Create symlink for LunarVim configuration
+if [ -d "$DOTFILES_DIR/config/lvim" ]; then
+    mkdir -p "$HOME/.config"
+    create_symlink "$DOTFILES_DIR/config/lvim" "$HOME/.config/lvim"
+fi
 fi # end VERIFY_ONLY check for Neovim configuration
 
 ###############################################################################
@@ -454,6 +460,7 @@ verify_all_symlinks() {
         "$HOME/.p10k.zsh:$DOTFILES_DIR/powerlevel10k/.p10k.zsh"
         "$HOME/.gitconfig:$DOTFILES_DIR/git/.gitconfig"
         "$HOME/.config/nvim:$DOTFILES_DIR/nvim"
+        "$HOME/.config/lvim:$DOTFILES_DIR/config/lvim"
         "$HOME/.config/k9s/config.yaml:$DOTFILES_DIR/k9s/config.yaml"
         "$HOME/.config/k9s/skins/nord.yaml:$DOTFILES_DIR/k9s/skins/nord.yaml"
         "$HOME/.config/zellij/config.kdl:$DOTFILES_DIR/zellij/config.kdl"

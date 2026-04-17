@@ -43,5 +43,7 @@
         "git merge": true
     },
     "workbench.colorTheme": "Nord",
-    "terminal.integrated.lineHeight": 1.1
+    "terminal.integrated.lineHeight": 1.1,
+    "atlascode.rovodev.showEntitlementNotifications": false,
+    "chat.viewSessions.orientation": "stacked"
 }

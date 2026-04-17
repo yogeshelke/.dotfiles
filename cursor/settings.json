@@ -18,6 +18,7 @@
     "yaml.format.bracketSpacing": false,
     "yaml.format.enable": false,
     "html.format.enable": false,
+    "window.title": "${rootName}",
     "window.nativeTabs": true,
     "window.openFilesInNewWindow": "default",
     "editor.fontLigatures": false,
