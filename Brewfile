@@ -56,6 +56,7 @@ brew "python@3.10"              # Python 3.10
 brew "python@3.9"               # Python 3.9
 brew "pipenv"                   # Python dependency management
 brew "openjdk"                  # Java Development Kit
+brew "openjdk@21"               # Java 21 LTS
 brew "perl"                     # Perl programming language
 
 ###############################################################################
@@ -131,6 +132,8 @@ brew "telnet"                   # TELNET client
 ###############################################################################
 brew "gnupg"                    # GNU Privacy Guard (GPG)
 brew "pwgen"                    # Password generator
+brew "p7zip"                    # 7-Zip (7z) archiver 
+brew "sevenzip"                 # 7-Zip archiver (newer)
 
 ###############################################################################
 # Utilities
@@ -147,6 +150,7 @@ brew "bash"                     # Bourne-Again Shell
 # Casks - Applications
 ###############################################################################
 cask "1password-cli"            # 1Password CLI
+cask "adobe-acrobat-reader"     # PDF viewer
 cask "alfred"                   # Application launcher
 cask "aws-vault-binary"         # AWS credential storage
 cask "docker-desktop"           # Docker Desktop
