@@ -79,6 +79,12 @@ This document certifies that all Cursor skills in this configuration meet **100%
 | iac-implementer.md | Infrastructure-as-code implementation | ✅ |
 | verifier.md | Security and compliance verification | ✅ |
 
+### Hooks System (1 hook)
+
+| Hook | Purpose | Integration |
+|------|---------|-------------|
+| terraform-fmt.sh | Auto-format .tf files after edits | ✅ |
+
 ## Key Achievements
 
 ### 🎯 **Anthropic Best Practice Implementation**

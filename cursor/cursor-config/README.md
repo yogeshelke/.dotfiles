@@ -8,6 +8,7 @@ This directory contains my personalized Cursor IDE configuration that gets symli
 - `rules/` - Coding standards and guardrails  
 - `commands/` - Workflow automation commands
 - `agents/` - Multi-agent infrastructure workflow system (planner, orchestrator, implementer, verifier)
+- `hooks/` - Cursor IDE event hooks and automation scripts
 - `.cursorignore` - Files to ignore in Cursor
 - `.cursorindexignore` - Files to exclude from indexing
 
@@ -73,6 +74,10 @@ This configuration implements a team of specialist agents for AWS Cloud Platform
 - `terraform.mdc` - Terraform best practices
 - `github-actions.mdc` - GitHub Actions patterns
 - `plan-standards.mdc` - Planning and documentation standards
+
+## Hooks Overview
+
+- `terraform-fmt.sh` - Auto-format .tf files after edits using terraform fmt
 
 ## Installation
 
