@@ -50,7 +50,9 @@ This document certifies that all Cursor skills in this configuration meet **100%
 - **Performance criteria**: Clear targets and measurement methods
 - **Validation script**: Automated compliance checking available
 
-## Skills Inventory (11 skills)
+## Configuration Inventory
+
+### Skills (11 skills)
 
 | Skill | Version | Category | Compliance Score |
 |-------|---------|----------|------------------|
@@ -67,6 +69,15 @@ This document certifies that all Cursor skills in this configuration meet **100%
 | envoy-gateway | 2.0.0 | networking | 100% ✅ |
 
 **Overall Compliance: 100% ✅**
+
+### Multi-Agent System (4 agents)
+
+| Agent | Purpose | Integration |
+|-------|---------|-------------|
+| planner.md | Infrastructure planning and requirements analysis | ✅ |
+| orchestrator.md | Task orchestration and dependency management | ✅ |
+| iac-implementer.md | Infrastructure-as-code implementation | ✅ |
+| verifier.md | Security and compliance verification | ✅ |
 
 ## Key Achievements
 

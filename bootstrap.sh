@@ -346,6 +346,11 @@ if [ -d "$DOTFILES_DIR/cursor/cursor-config" ]; then
         create_symlink "$DOTFILES_DIR/cursor/cursor-config/commands" "$HOME/.cursor/commands"
     fi
     
+    # Link custom agents
+    if [ -d "$DOTFILES_DIR/cursor/cursor-config/agents" ]; then
+        create_symlink "$DOTFILES_DIR/cursor/cursor-config/agents" "$HOME/.cursor/agents"
+    fi
+    
     # Link ignore files
     if [ -f "$DOTFILES_DIR/cursor/cursor-config/.cursorignore" ]; then
         create_symlink "$DOTFILES_DIR/cursor/cursor-config/.cursorignore" "$HOME/.cursor/.cursorignore"
@@ -501,6 +506,7 @@ verify_all_symlinks() {
         "$HOME/.cursor/skills:$DOTFILES_DIR/cursor/cursor-config/skills"
         "$HOME/.cursor/rules:$DOTFILES_DIR/cursor/cursor-config/rules"
         "$HOME/.cursor/commands:$DOTFILES_DIR/cursor/cursor-config/commands"
+        "$HOME/.cursor/agents:$DOTFILES_DIR/cursor/cursor-config/agents"
         "$HOME/.cursor/.cursorignore:$DOTFILES_DIR/cursor/cursor-config/.cursorignore"
         "$HOME/.cursor/.cursorindexignore:$DOTFILES_DIR/cursor/cursor-config/.cursorindexignore"
         "$HOME/Library/Application Support/Code/User/settings.json:$DOTFILES_DIR/vscode/settings.json"

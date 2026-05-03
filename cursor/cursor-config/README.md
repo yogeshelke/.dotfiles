@@ -5,8 +5,9 @@ This directory contains my personalized Cursor IDE configuration that gets symli
 ## Structure
 
 - `skills/` - Custom domain-specific skills (AWS, Terraform, K8s, etc.)
-- `rules/` - Coding standards, guardrails, and agent orchestration
-- `commands/` - Agent personas and utility commands
+- `rules/` - Coding standards and guardrails  
+- `commands/` - Workflow automation commands
+- `agents/` - Multi-agent infrastructure workflow system (planner, orchestrator, implementer, verifier)
 - `.cursorignore` - Files to ignore in Cursor
 - `.cursorindexignore` - Files to exclude from indexing
 
