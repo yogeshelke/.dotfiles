@@ -1,0 +1,46 @@
+---
+description: Plan file standards - enforces status header on all .plan.md files
+globs: "**/*.plan.md"
+alwaysApply: false
+---
+# Plan File Standards
+
+Every `.plan.md` file must include a **plan log header** immediately after the YAML frontmatter and before the main heading.
+
+## Plan Log Header Format
+
+```markdown
+> **Plan** | `<plan-name>`
+> **Status** | `<status>` | **Priority** | `<priority>`
+> **Created** | `<YYYY-MM-DD>` | **Updated** | `<YYYY-MM-DD>`
+> **Author** | `<author>` | **Environment** | `<environments>`
+> **PR/Ticket** | `<link or —>` | **Rollback** | `<Yes/No/N/A>`
+```
+
+## Status Lifecycle
+
+| Status | Meaning |
+|--------|---------|
+| `Draft` | Plan created, still being designed or edited |
+| `In Review` | Submitted for peer/team review |
+| `Approved` | Reviewed and approved for execution |
+| `In Progress` | Actively being executed |
+| `Completed` | All tasks finished and verified |
+| `On Hold` | Paused due to blocker or external dependency |
+| `Cancelled` | Plan abandoned, will not be executed |
+| `Rolled Back` | Was applied but changes were reverted |
+
+## Priority Levels
+
+| Priority | Use when |
+|----------|----------|
+| `P1 - Critical` | Production outage, security vulnerability |
+| `P2 - High` | Blocking work, time-sensitive changes |
+| `P3 - Medium` | Planned work, scheduled changes |
+| `P4 - Low` | Nice-to-have, cleanup, optimization |
+
+## Rules
+- Always set status when creating or updating a plan
+- Update the `Updated` date on every status change
+- Move status forward: Draft → In Review → Approved → In Progress → Completed
+- Add PR/Ticket link once available

@@ -1,0 +1,40 @@
+---
+description: Terraform coding standards and conventions
+globs: "**/*.tf,**/*.tfvars,**/*.tftest.hcl"
+alwaysApply: false
+---
+# Terraform Standards
+
+## File Organization
+- `main.tf` for primary resources, `variables.tf` for inputs, `outputs.tf` for outputs, `versions.tf` for provider requirements
+- Group related resources in descriptively named files (e.g., `vpc.tf`, `eks.tf`, `rds_clusters.tf`)
+- Use `locals.tf` for computed values and environment-specific mappings
+
+## Naming
+- snake_case for all resource names, variables, outputs, and locals
+- Descriptive prefixes: `aws_security_group.eks_nodes` not `aws_security_group.sg1`
+- Boolean variables: use `enable_` or `is_` prefix (e.g., `enable_monitoring`)
+
+## Variables
+- Always set `description` and `type` on every variable
+- Use `validation` blocks for input constraints
+- Provide `default` values where sensible; require explicit input for environment-specific values
+- Mark secrets with `sensitive = true`
+
+## Resources
+- Prefer `for_each` over `count` (stable keys vs fragile indices)
+- Use `moved` blocks for refactoring instead of `terraform state mv`
+- Set `lifecycle.prevent_destroy` on critical resources (databases, S3 buckets)
+- Use `lifecycle.ignore_changes` for externally managed attributes
+- Pin module versions: `version = "~> 5.0"` or `?ref=v1.0.0`
+
+## State
+- Remote backend (S3 + DynamoDB) with encryption enabled
+- Separate state files per environment and layer
+- Never commit `.tfstate` files
+
+## Code Quality
+- Run `terraform fmt` before committing
+- Run `terraform validate` in CI
+- Run `checkov` or `tfsec` for security scanning
+- Always review `terraform plan` output before any apply

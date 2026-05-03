@@ -327,6 +327,37 @@ if [ -f "$DOTFILES_DIR/cursor/keybindings.json" ]; then
     create_symlink "$DOTFILES_DIR/cursor/keybindings.json" "$CURSOR_USER_DIR/keybindings.json"
 fi
 
+# Link custom Cursor configuration
+if [ -d "$DOTFILES_DIR/cursor/cursor-config" ]; then
+    info "Linking custom Cursor configuration..."
+    
+    # Link custom skills
+    if [ -d "$DOTFILES_DIR/cursor/cursor-config/skills" ]; then
+        create_symlink "$DOTFILES_DIR/cursor/cursor-config/skills" "$HOME/.cursor/skills"
+    fi
+    
+    # Link custom rules  
+    if [ -d "$DOTFILES_DIR/cursor/cursor-config/rules" ]; then
+        create_symlink "$DOTFILES_DIR/cursor/cursor-config/rules" "$HOME/.cursor/rules"
+    fi
+    
+    # Link custom commands
+    if [ -d "$DOTFILES_DIR/cursor/cursor-config/commands" ]; then
+        create_symlink "$DOTFILES_DIR/cursor/cursor-config/commands" "$HOME/.cursor/commands"
+    fi
+    
+    # Link ignore files
+    if [ -f "$DOTFILES_DIR/cursor/cursor-config/.cursorignore" ]; then
+        create_symlink "$DOTFILES_DIR/cursor/cursor-config/.cursorignore" "$HOME/.cursor/.cursorignore"
+    fi
+    
+    if [ -f "$DOTFILES_DIR/cursor/cursor-config/.cursorindexignore" ]; then
+        create_symlink "$DOTFILES_DIR/cursor/cursor-config/.cursorindexignore" "$HOME/.cursor/.cursorindexignore"
+    fi
+    
+    success "Custom Cursor configuration linked"
+fi
+
 # Copy mcp.json template if mcp.json doesn't exist (don't overwrite existing tokens)
 if [ -f "$DOTFILES_DIR/cursor/mcp.json.template" ] && [ ! -f "$HOME/.cursor/mcp.json" ]; then
     cp "$DOTFILES_DIR/cursor/mcp.json.template" "$HOME/.cursor/mcp.json"
@@ -467,6 +498,11 @@ verify_all_symlinks() {
         "$HOME/.config/zellij_layout/terraform_proj.kdl:$DOTFILES_DIR/zellij/layouts/terraform_proj.kdl"
         "$HOME/Library/Application Support/Cursor/User/settings.json:$DOTFILES_DIR/cursor/settings.json"
         "$HOME/Library/Application Support/Cursor/User/keybindings.json:$DOTFILES_DIR/cursor/keybindings.json"
+        "$HOME/.cursor/skills:$DOTFILES_DIR/cursor/cursor-config/skills"
+        "$HOME/.cursor/rules:$DOTFILES_DIR/cursor/cursor-config/rules"
+        "$HOME/.cursor/commands:$DOTFILES_DIR/cursor/cursor-config/commands"
+        "$HOME/.cursor/.cursorignore:$DOTFILES_DIR/cursor/cursor-config/.cursorignore"
+        "$HOME/.cursor/.cursorindexignore:$DOTFILES_DIR/cursor/cursor-config/.cursorindexignore"
         "$HOME/Library/Application Support/Code/User/settings.json:$DOTFILES_DIR/vscode/settings.json"
     )
     

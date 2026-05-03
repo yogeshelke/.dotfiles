@@ -1,0 +1,33 @@
+# Large directories not useful for code intelligence
+.terraform/
+node_modules/
+vendor/
+dist/
+build/
+
+# State and plan files (large, binary-like)
+*.tfstate
+*.tfstate.backup
+*.tfplan
+
+# Cursor internals
+.cursor/extensions/
+.cursor/snapshots/
+.cursor/plugins/
+.cursor/ai-tracking/
+.cursor/projects/
+
+# Lock files
+.terraform.lock.hcl
+package-lock.json
+yarn.lock
+
+# Binary and media
+*.zip
+*.tar.gz
+*.png
+*.jpg
+*.gif
+*.ico
+*.woff
+*.woff2

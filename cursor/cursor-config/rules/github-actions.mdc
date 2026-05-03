@@ -1,0 +1,45 @@
+---
+description: GitHub Actions workflow standards and security practices
+globs: "**/.github/workflows/*.yml,**/.github/workflows/*.yaml,**/.github/actions/**/action.yml"
+alwaysApply: false
+---
+# GitHub Actions Standards
+
+## Security
+- Pin all third-party actions to full commit SHA, not tags
+- Set minimum `permissions` on every workflow; never use default (write-all)
+- Use OIDC (`id-token: write`) for AWS/cloud auth; avoid stored long-lived credentials
+- Never interpolate untrusted input in `run:` blocks (e.g., `${{ github.event.issue.body }}`)
+- Avoid `pull_request_target` with `actions/checkout` on PR head
+- Use environment-scoped secrets for production credentials
+
+## Workflow Structure
+- One workflow per concern (CI, deploy, release)
+- Use `concurrency` groups to prevent duplicate runs
+- Set `timeout-minutes` on all jobs (default 360 min is too long)
+- Use `cancel-in-progress: true` on PR workflows
+- Add `if: github.ref == 'refs/heads/main'` guards on deploy jobs
+
+## Reusable Workflows
+- Extract shared logic into reusable workflows (`workflow_call`)
+- Pass secrets explicitly or use `secrets: inherit`
+- Keep nesting under 4 levels
+- Use composite actions for reusable step sequences
+
+## CI Best Practices
+- Run lint, test, and build as parallel jobs
+- Cache dependencies with `actions/cache` or built-in setup caching
+- Use matrix strategy for multi-version testing
+- Upload artifacts for build outputs; download in deploy jobs
+- Use `needs:` to express job dependencies
+
+## Deployments
+- Use GitHub Environments with protection rules for staging/production
+- Require reviewers for production deployments
+- Deploy via reusable workflow with environment as input
+- Use `environment.url` to link deployment status to live URL
+
+## Maintenance
+- Add Dependabot config for `github-actions` package ecosystem
+- Review and audit third-party actions quarterly
+- Use `gh run list` and `gh run view` for workflow debugging

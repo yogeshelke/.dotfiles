@@ -1,0 +1,45 @@
+---
+description: EKS operational best practices for cluster management and workloads
+globs: 
+alwaysApply: false
+---
+# EKS Best Practices
+
+## Cluster Configuration
+- Use private API server endpoint; restrict public access to VPN/bastion CIDRs if enabled
+- Enable control plane logging: API server, audit, authenticator
+- Use EKS Access Entries (not aws-auth ConfigMap) for IAM-to-RBAC mapping
+- Pin EKS add-on versions; upgrade alongside cluster
+
+## Node Management
+- Use Karpenter for dynamic scaling with consolidation enabled
+- Prefer Graviton (ARM) instances for cost-performance (20-40% savings)
+- Use Spot instances for fault-tolerant workloads
+- Set appropriate instance types per workload: compute-optimized, memory-optimized
+- Enable prefix delegation for high pod density
+
+## Workload Standards
+- Set resource `requests` and `limits` on all containers
+- Use `topologySpreadConstraints` to distribute pods across AZs
+- Configure PodDisruptionBudgets on all production deployments
+- Run containers as non-root with read-only root filesystem
+- Use dedicated ServiceAccounts with IRSA per workload
+
+## Networking
+- Use AWS Load Balancer Controller for ALB/NLB management
+- Set target type to `ip` for direct pod routing
+- Enable Network Policies (VPC CNI built-in) with default deny
+- Use VPC endpoints for ECR, S3, STS, and other AWS services
+
+## Upgrades
+- Upgrade one minor version at a time
+- Sequence: control plane → managed add-ons → data plane → self-managed add-ons
+- Check API deprecations before upgrading
+- Test upgrades in non-production first
+- Back up cluster state with Velero before upgrade
+
+## Observability
+- Deploy Datadog agent (DaemonSet + Cluster Agent) for metrics, logs, traces
+- Enable Orchestrator Explorer for Kubernetes resource visibility
+- Use unified service tagging (`env`, `service`, `version`) on all workloads
+- Alert on node NotReady, pod CrashLoopBackOff, and HPA max replicas

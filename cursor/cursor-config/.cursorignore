@@ -1,0 +1,40 @@
+# Dependencies and build artifacts
+node_modules/
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+*.tfplan
+
+# Secrets and credentials
+.env
+.env.*
+*.pem
+*.key
+credentials.json
+**/secrets/
+
+# IDE and OS
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Cursor internals
+.cursor/extensions/
+.cursor/snapshots/
+.cursor/plugins/
+.cursor/ai-tracking/
+.cursor/projects/
+
+# Logs
+*.log
+crash.log
+
+# Binary and media files
+*.zip
+*.tar.gz
+*.exe
+*.dll
+*.so
+*.dylib

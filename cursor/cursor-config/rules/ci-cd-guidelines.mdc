@@ -1,0 +1,45 @@
+---
+description: CI/CD pipeline guidelines for infrastructure and application delivery
+globs: 
+alwaysApply: false
+---
+# CI/CD Guidelines
+
+## Pipeline Principles
+- Every change goes through a pull request; no direct pushes to main
+- CI runs on every PR: lint, validate, test, security scan
+- CD only triggers on merge to main (or release branch)
+- Deployments are automated but gated: require approval for production
+- Pipelines must be reproducible and idempotent
+
+## Infrastructure Pipeline (Terraform)
+- PR triggers: `terraform fmt -check`, `terraform validate`, `terraform plan`, `checkov`/`tfsec`
+- Post plan output as PR comment for reviewer visibility
+- Apply only after PR approval and merge
+- Use separate pipelines per environment/layer
+- Never auto-apply to production without human approval
+
+## Application Pipeline
+- Build → Test → Scan → Push Image → Deploy Staging → Deploy Production
+- Tag images with git SHA (not `latest`)
+- Push images to ECR; use immutable tags
+- Run security scans (Trivy, Snyk) on container images
+- Use rolling deployments with health checks
+
+## Environment Promotion
+- Staging deploys automatically on merge to main
+- Production deploys require GitHub Environment approval
+- Use the same image/artifact across all environments; only config differs
+- Never rebuild artifacts for production; promote the staging-tested artifact
+
+## Secrets Management
+- Use OIDC for cloud credentials in CI/CD; no stored access keys
+- Store application secrets in AWS Secrets Manager
+- Inject secrets at runtime, never bake into images
+- Rotate CI/CD credentials on a schedule
+
+## Rollback
+- Application: revert the PR or redeploy previous image tag
+- Infrastructure: revert Terraform code and re-apply
+- Database: use migration rollback scripts; never drop in production
+- Document rollback procedures in runbooks

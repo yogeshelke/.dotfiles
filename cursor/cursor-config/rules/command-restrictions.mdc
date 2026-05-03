@@ -1,0 +1,174 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Cursor Rules - Command Restrictions
+
+## DO NOT execute or suggest these commands:
+
+### Terraform Commands
+- NEVER run `terraform apply` commands
+- NEVER suggest `terraform apply` in terminal commands
+- Only suggest `terraform plan`, `terraform validate`, `terraform fmt`, and other read-only/non-destructive commands
+
+### Helm Commands
+- NEVER run `helm install` commands
+- NEVER run `helm upgrade` commands
+- NEVER suggest `helm install` or `helm upgrade` in terminal commands
+- Only suggest `helm list`, `helm get`, `helm template`, `helm lint`, and other read-only/non-destructive commands
+
+### Kubernetes (kubectl) Commands
+- NEVER run `kubectl apply` commands
+- NEVER run `kubectl create` commands
+- NEVER run `kubectl delete` commands
+- NEVER run `kubectl edit` commands
+- NEVER run `kubectl set` commands
+- NEVER run `kubectl patch` commands
+- NEVER run `kubectl replace` commands
+- NEVER run `kubectl scale` commands
+- NEVER run `kubectl rollout` commands that modify state
+- NEVER suggest any kubectl commands that modify cluster state
+- Only suggest read-only kubectl commands like:
+  - `kubectl get`
+  - `kubectl describe`
+  - `kubectl logs`
+  - `kubectl exec` (for debugging only, with explicit user request)
+  - `kubectl top`
+  - `kubectl api-resources`
+  - `kubectl explain`
+
+### AWS CLI Commands
+- NEVER run `aws ec2 terminate-instances`
+- NEVER run `aws ec2 stop-instances` (unless explicitly requested)
+- NEVER run `aws ec2 delete-*` commands (delete-volume, delete-snapshot, delete-vpc, etc.)
+- NEVER run `aws s3 rm` or `aws s3 rb` (remove/delete bucket) commands
+- NEVER run `aws s3api delete-bucket` commands
+- NEVER run `aws iam delete-*` commands (delete-user, delete-role, delete-policy, etc.)
+- NEVER run `aws iam detach-*` commands
+- NEVER run `aws rds delete-db-instance` or `aws rds delete-db-cluster`
+- NEVER run `aws eks delete-cluster` or `aws eks delete-nodegroup`
+- NEVER run `aws autoscaling delete-*` commands
+- NEVER run `aws elbv2 delete-*` commands
+- NEVER run `aws cloudformation delete-stack` or `aws cloudformation update-stack`
+- NEVER run `aws secretsmanager delete-secret`
+- NEVER run `aws kms schedule-key-deletion` or `aws kms delete-*`
+- NEVER run `aws dynamodb delete-table`
+- NEVER run `aws route53 delete-*` commands
+- NEVER run `aws acm delete-certificate`
+- NEVER run `aws ecr delete-repository` or `aws ecr batch-delete-image`
+- NEVER run `aws lambda delete-function`
+- NEVER run `aws apigateway delete-*` commands
+- NEVER run `aws cloudwatch delete-*` commands (except log groups with explicit request)
+- NEVER run `aws logs delete-log-group` (unless explicitly requested)
+- NEVER run any `aws * delete-*` or `aws * remove-*` commands without explicit user request
+- Only suggest read-only AWS CLI commands like:
+  - `aws ec2 describe-*`
+  - `aws s3 ls` or `aws s3 cp` (for copying, not deleting)
+  - `aws iam get-*` or `aws iam list-*`
+  - `aws rds describe-*`
+  - `aws eks describe-*`
+  - `aws cloudformation describe-stacks` or `aws cloudformation get-template`
+  - `aws secretsmanager get-secret-value` (with caution for sensitive data)
+  - `aws sts get-caller-identity`
+  - `aws configure list`
+
+### Docker Commands
+- NEVER run `docker rm` or `docker rm -f` commands
+- NEVER run `docker rmi` or `docker rmi -f` commands
+- NEVER run `docker prune` commands (`docker system prune`, `docker volume prune`, etc.)
+- NEVER run `docker kill` commands
+- NEVER run `docker stop` commands (unless explicitly requested for debugging)
+- NEVER run `docker network rm` commands
+- NEVER run `docker volume rm` commands
+- NEVER run `docker compose down` or `docker compose rm` commands
+- Only suggest read-only Docker commands like:
+  - `docker ps`
+  - `docker images`
+  - `docker logs`
+  - `docker inspect`
+  - `docker stats`
+  - `docker exec` (for debugging only, with explicit user request)
+  - `docker compose ps` or `docker compose logs`
+
+### Git Commands
+- NEVER run `git push --force` or `git push -f` commands
+- NEVER run `git push --force-with-lease` (unless explicitly requested)
+- NEVER run `git reset --hard` commands
+- NEVER run `git clean -fd` or `git clean -fdx` commands
+- NEVER run `git branch -D` or `git branch --delete --force` commands
+- NEVER run `git tag -d` commands
+- NEVER run `git remote remove` commands
+- NEVER run `git filter-branch` or `git filter-repo` commands
+- NEVER run `git gc --aggressive` or `git gc --prune=now`
+- Only suggest safe Git commands like:
+  - `git status`
+  - `git log`
+  - `git diff`
+  - `git show`
+  - `git branch` (list only)
+  - `git tag` (list only)
+  - `git fetch`
+  - `git pull` (with caution, warn about conflicts)
+
+### CloudFormation Commands
+- NEVER run `aws cloudformation delete-stack` commands
+- NEVER run `aws cloudformation update-stack` commands
+- NEVER run `aws cloudformation create-stack` commands
+- Only suggest read-only commands like:
+  - `aws cloudformation describe-stacks`
+  - `aws cloudformation get-template`
+  - `aws cloudformation describe-stack-events`
+  - `aws cloudformation validate-template`
+
+### Ansible Commands (if used)
+- NEVER run `ansible-playbook` with `--check` disabled on production
+- NEVER run `ansible` ad-hoc commands that modify state
+- Always suggest `--check` (dry-run) mode first
+- Only suggest read-only commands like:
+  - `ansible-inventory --list`
+  - `ansible-doc`
+  - `ansible --version`
+
+### Database Commands
+- NEVER run `DROP DATABASE` or `DROP TABLE` SQL commands
+- NEVER run `TRUNCATE TABLE` commands
+- NEVER run `DELETE FROM` commands without WHERE clause
+- NEVER run `ALTER TABLE DROP COLUMN` commands
+- NEVER run database backup restore commands that overwrite existing data
+- Only suggest read-only SQL commands like:
+  - `SELECT` queries
+  - `SHOW` commands
+  - `DESCRIBE` or `EXPLAIN` commands
+  - `SHOW CREATE TABLE`
+
+### System/OS Commands
+- NEVER run `rm -rf` commands (especially on root directories)
+- NEVER run `sudo rm -rf` commands
+- NEVER run `chmod 777` or other overly permissive chmod commands
+- NEVER run `chown` commands that change ownership of system files
+- NEVER run `systemctl stop` or `systemctl disable` on critical services
+- NEVER run `kill -9` or `killall` commands
+- NEVER run `dd` commands (disk destroyer)
+- NEVER run `mkfs` or `fdisk` commands
+- NEVER run `iptables -F` or firewall flushing commands
+- Only suggest safe commands like:
+  - `ls`, `cat`, `grep`, `find` (read-only)
+  - `ps`, `top`, `htop` (monitoring)
+  - `df`, `du` (disk usage)
+  - `netstat`, `ss` (network info)
+
+### CI/CD Pipeline Commands
+- NEVER run commands that trigger production deployments directly
+- NEVER run commands that bypass approval gates
+- NEVER run commands that modify GitHub Actions workflows in production
+- Always suggest reviewing changes through PRs first
+
+## General Guidelines
+- When asked to run infrastructure changes, suggest reviewing the changes first
+- Always prefer dry-run or plan commands over actual apply/install/upgrade commands
+- Warn the user if they request destructive operations
+- Focus on helping with code changes, configuration files, and read-only operations
+- For AWS CLI: Always suggest using `--dry-run` flag when available
+- For destructive operations: Require explicit user confirmation and suggest alternatives
+- When in doubt, suggest the read-only/safe alternative command

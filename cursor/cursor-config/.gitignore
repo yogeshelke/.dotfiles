@@ -1,0 +1,31 @@
+# Never commit these (system managed)
+skills-cursor/
+projects/
+extensions/
+snapshots/
+plugins/
+plans/
+ai-tracking/
+
+# System files  
+ide_state.json
+unified_repo_list.json
+blocklist
+argv.json
+
+# Sensitive files
+mcp.json
+
+# Temporary files
+*.tmp
+*.log
+*.cache
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

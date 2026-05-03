@@ -1,0 +1,53 @@
+---
+description: Context engineering for focused, resumable agent work across sessions
+globs: 
+alwaysApply: true
+---
+# Context Engineering
+
+Keep the agent's working context **small, high-signal, and resumable**. Prefer retrieval over carrying everything.
+
+## What to Carry vs. Fetch
+
+### Always carry (keep in context)
+- **Goal**: one sentence describing the objective
+- **Constraints**: environment, blast radius, what NOT to touch
+- **Current plan**: 3-7 steps max (reference the plan file if it exists)
+- **Current state**: what's done, what's blocked, what's next
+- **Critical identifiers**: resource names, ARNs, file paths, error messages (verbatim)
+
+### Never carry (fetch when needed)
+- Entire Terraform files or Helm charts "just in case"
+- Full command output without a specific reason
+- Repeated restatements of requirements already captured in a plan
+- Large JSON/YAML blobs that can be re-read from disk
+
+## Retrieval Strategy
+1. **Search** for the smallest set of relevant files
+2. **Read** only the sections needed (use line ranges for large files)
+3. **Cite** exact file paths and line numbers in reasoning
+
+## Session Continuity
+
+### After completing a milestone (plan approved, module implemented, review done):
+- Update the plan status header if a `.plan.md` file exists
+- Summarize what was done and what's next in 3-5 bullet points
+- Note any decisions made and why
+
+### When resuming work:
+- Read the relevant `.plan.md` file for context
+- Check plan status header for current state
+- Read only the files needed for the next task
+- Don't reload the entire codebase
+
+## Context Reset Triggers (start a fresh chat when):
+- Moving from planning to implementation
+- Switching to a completely different task or repo
+- Context window is cluttered with long tool output
+- Debugging a different issue than originally discussed
+
+## Guardrails
+- Never paste secrets, tokens, or credentials into context
+- Prefer file paths and resource names over copying full content
+- If carrying more than ~200 lines of context, you're carrying too much
+- When in doubt, fetch from disk rather than assume from memory
