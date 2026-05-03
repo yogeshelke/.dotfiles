@@ -9,14 +9,22 @@ alwaysApply: true
 
 ### Terraform Commands
 - NEVER run `terraform apply` commands
-- NEVER suggest `terraform apply` in terminal commands
-- Only suggest `terraform plan`, `terraform validate`, `terraform fmt`, and other read-only/non-destructive commands
+- NEVER run `terraform destroy` commands
+- NEVER run `terraform state rm` commands (removes resources from state)
+- NEVER run `terraform state mv` commands (without explicit user approval)
+- NEVER run `terraform taint` or `terraform untaint` commands (forces resource recreation)
+- NEVER run `terraform force-unlock` commands (without explicit user approval)
+- NEVER run `terraform import` commands (without explicit user approval)
+- NEVER suggest `terraform apply` or `terraform destroy` in terminal commands
+- Only suggest `terraform plan`, `terraform validate`, `terraform fmt`, `terraform show`, `terraform output`, `terraform state list`, `terraform state show`, `terraform providers`, `terraform graph`, and other read-only/non-destructive commands
 
 ### Helm Commands
 - NEVER run `helm install` commands
 - NEVER run `helm upgrade` commands
-- NEVER suggest `helm install` or `helm upgrade` in terminal commands
-- Only suggest `helm list`, `helm get`, `helm template`, `helm lint`, and other read-only/non-destructive commands
+- NEVER run `helm delete` or `helm uninstall` commands
+- NEVER run `helm rollback` commands (unless explicitly requested with specific revision)
+- NEVER suggest `helm install`, `helm upgrade`, `helm delete`, or `helm uninstall` in terminal commands
+- Only suggest `helm list`, `helm get`, `helm template`, `helm lint`, `helm show`, `helm status`, `helm history`, and other read-only/non-destructive commands
 
 ### Kubernetes (kubectl) Commands
 - NEVER run `kubectl apply` commands
@@ -27,7 +35,12 @@ alwaysApply: true
 - NEVER run `kubectl patch` commands
 - NEVER run `kubectl replace` commands
 - NEVER run `kubectl scale` commands
-- NEVER run `kubectl rollout` commands that modify state
+- NEVER run `kubectl drain` commands (evicts all pods from a node)
+- NEVER run `kubectl cordon` or `kubectl uncordon` commands (marks nodes un/schedulable)
+- NEVER run `kubectl taint` commands
+- NEVER run `kubectl label` commands that modify node/namespace labels
+- NEVER run `kubectl annotate` commands that modify critical resources
+- NEVER run `kubectl rollout` commands that modify state (restart, undo, pause, resume)
 - NEVER suggest any kubectl commands that modify cluster state
 - Only suggest read-only kubectl commands like:
   - `kubectl get`
@@ -37,6 +50,9 @@ alwaysApply: true
   - `kubectl top`
   - `kubectl api-resources`
   - `kubectl explain`
+  - `kubectl auth can-i`
+  - `kubectl cluster-info`
+  - `kubectl version`
 
 ### AWS CLI Commands
 - NEVER run `aws ec2 terminate-instances`
@@ -158,11 +174,66 @@ alwaysApply: true
   - `df`, `du` (disk usage)
   - `netstat`, `ss` (network info)
 
+### ArgoCD Commands
+- NEVER run `argocd app sync` commands (triggers deployment)
+- NEVER run `argocd app delete` commands
+- NEVER run `argocd app set` commands that modify application config
+- NEVER run `argocd app actions run` commands
+- NEVER run `argocd proj delete` commands
+- Only suggest read-only ArgoCD commands like:
+  - `argocd app get`
+  - `argocd app list`
+  - `argocd app diff`
+  - `argocd app history`
+  - `argocd app manifests`
+  - `argocd proj list`
+
+### Velero Commands
+- NEVER run `velero restore create` commands (can overwrite cluster state)
+- NEVER run `velero backup delete` commands
+- NEVER run `velero schedule delete` commands
+- Only suggest read-only Velero commands like:
+  - `velero backup get`
+  - `velero backup describe`
+  - `velero backup logs`
+  - `velero restore get`
+  - `velero schedule get`
+
+### eksctl Commands
+- NEVER run `eksctl delete cluster` commands
+- NEVER run `eksctl delete nodegroup` commands
+- NEVER run `eksctl scale nodegroup` commands
+- NEVER run `eksctl create` commands (without explicit user approval)
+- NEVER run `eksctl drain nodegroup` commands
+- Only suggest read-only eksctl commands like:
+  - `eksctl get cluster`
+  - `eksctl get nodegroup`
+  - `eksctl get addon`
+  - `eksctl utils describe-stacks`
+
+### AWS Credentials & Config
+- NEVER run `aws configure set` commands (can overwrite profiles)
+- NEVER run `aws configure delete-profile` commands
+- NEVER run `aws sso logout --no-verify-ssl` or modify SSO config programmatically
+- Only suggest safe credential commands like:
+  - `aws sts get-caller-identity`
+  - `aws configure list`
+  - `aws configure list-profiles`
+  - `aws sso login`
+
 ### CI/CD Pipeline Commands
 - NEVER run commands that trigger production deployments directly
 - NEVER run commands that bypass approval gates
 - NEVER run commands that modify GitHub Actions workflows in production
 - Always suggest reviewing changes through PRs first
+
+## Piped Command Restrictions
+- NEVER pipe output into destructive commands (e.g., `helm template | kubectl apply -f -`)
+- NEVER pipe `terraform plan` output into `terraform apply`
+- NEVER pipe `kustomize build` into `kubectl apply`
+- NEVER use `xargs` with destructive commands (e.g., `kubectl get pods | xargs kubectl delete`)
+- If a pipe chain includes ANY restricted command, the entire chain is restricted
+- Safe piped commands: piping into `grep`, `jq`, `yq`, `wc`, `sort`, `head`, `tail`, `less`
 
 ## General Guidelines
 - When asked to run infrastructure changes, suggest reviewing the changes first
@@ -172,3 +243,5 @@ alwaysApply: true
 - For AWS CLI: Always suggest using `--dry-run` flag when available
 - For destructive operations: Require explicit user confirmation and suggest alternatives
 - When in doubt, suggest the read-only/safe alternative command
+- NEVER run any command autonomously -- always present the command and wait for user approval
+- When multiple commands are needed, present them as a numbered list for user to approve step by step

@@ -1,0 +1,52 @@
+---
+description: Interactive gate - enforces human approval at every stage across all agents
+globs: 
+alwaysApply: true
+---
+# Interactive Gate
+
+All agent personas operate under strict interactive control. No autonomous actions on infrastructure, clusters, or repositories.
+
+## Hard Stops (ALWAYS pause and ask before proceeding)
+
+### Code & Git
+- Before creating, modifying, or deleting any file -- present the change and wait for approval
+- Before running `git add`, `git commit`, `git push`, or `git tag`
+- Before creating a pull request or merging
+- Before switching branches
+
+### Infrastructure
+- Before running ANY terraform, helm, kubectl, argocd, eksctl, or velero command
+- Before modifying any file in a production-related path
+- Before changing any CI/CD workflow file
+
+### Environment Boundaries
+- NEVER make changes to production environments without explicit written confirmation
+- NEVER push directly to `main` or `master` branches
+- NEVER modify EKS clusters, AWS resources, or Kubernetes state directly
+- NEVER trigger CI/CD pipelines or deployments
+
+## Interaction Protocol
+
+### At Each Stage
+1. **Present** -- show what you plan to do (files to create/edit, commands to run)
+2. **Explain** -- why this action is needed and what it affects
+3. **Wait** -- do not proceed until user says "yes", "proceed", "go ahead", or equivalent
+4. **Confirm** -- after completing the action, summarize what was done
+
+### Between Agents
+- When suggesting a handoff to another agent (e.g., architect -> iac-dev), explain why
+- User must explicitly invoke the next agent via its slash command
+- Never auto-switch agent personas
+
+### Multi-Step Work
+- Break work into logical milestones (plan, implement module 1, implement module 2, review)
+- Pause at each milestone boundary for user confirmation
+- Present a progress summary before asking to continue
+
+## What IS Allowed Without Asking
+- Reading files from the codebase
+- Searching the codebase (grep, glob, semantic search)
+- Analyzing code and presenting findings
+- Generating plans, diagrams, and recommendations (in chat output)
+- Running read-only commands: `terraform validate`, `terraform fmt -check`, `kubectl get`, `git status`, `git diff`

@@ -1,0 +1,43 @@
+---
+description: Agent orchestrator - routes tasks to specialist agents based on task type
+globs: 
+alwaysApply: true
+---
+# Agent Orchestrator
+
+This project uses a team of specialist agents for cloud platform engineering. Each agent has a specific role and is invoked via slash commands.
+
+## Available Agents
+
+| Command | Agent | Role |
+|---------|-------|------|
+| `/architect` | AWS Cloud Architect | Design, specs, plans. Never writes code. |
+| `/k8s-expert` | Kubernetes Expert | Analysis and recommendations. Read-only. |
+| `/iac-dev` | IaC Developer | Writes Terraform, Helm, YAML, scripts. |
+| `/reviewer` | Security Reviewer | Reviews PRs and code. Read-only. |
+| `/platform-tester` | Platform Tester | Writes and runs tests. Confirms before executing. |
+| `/devops` | DevOps Engineer | CI/CD pipelines, monitoring, deployments. |
+
+## Routing Suggestions
+
+When the user describes a task without invoking a specific agent, suggest the appropriate one:
+
+- **Architecture / design / "how should we..."** → Suggest `/architect`
+- **Kubernetes / EKS / pods / nodes / manifests analysis** → Suggest `/k8s-expert`
+- **Write Terraform / Helm / YAML / implement / code** → Suggest `/iac-dev`
+- **Review / PR / security audit / check code** → Suggest `/reviewer`
+- **Test / validate / coverage / TDD** → Suggest `/platform-tester`
+- **CI/CD / GitHub Actions / deploy / monitor / Datadog** → Suggest `/devops`
+- **Progress check / status** → Use `/check-progress` (standalone utility)
+
+## Rules
+- Never auto-switch agents -- only suggest and let the user invoke
+- One agent persona active at a time
+- All agents inherit `command-restrictions.mdc` and `interactive-gate.mdc`
+- All agents follow `context-engineering.mdc` for session management
+- When a task spans multiple agents, suggest a handoff sequence:
+  1. `/architect` designs the plan
+  2. `/iac-dev` implements the code
+  3. `/reviewer` reviews the changes
+  4. `/platform-tester` validates with tests
+  5. `/devops` handles CI/CD and monitoring

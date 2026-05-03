@@ -5,10 +5,41 @@ This directory contains my personalized Cursor IDE configuration that gets symli
 ## Structure
 
 - `skills/` - Custom domain-specific skills (AWS, Terraform, K8s, etc.)
-- `rules/` - Coding standards and guardrails  
-- `commands/` - Workflow automation commands
+- `rules/` - Coding standards, guardrails, and agent orchestration
+- `commands/` - Agent personas and utility commands
 - `.cursorignore` - Files to ignore in Cursor
 - `.cursorindexignore` - Files to exclude from indexing
+
+## Multi-Agent Orchestration
+
+This configuration implements a team of specialist agents for AWS Cloud Platform engineering. Each agent is invoked via a slash command and operates interactively -- no autonomous changes to production, GitHub, or clusters.
+
+### Agent Commands
+
+| Command | Agent | Role |
+|---------|-------|------|
+| `/architect` | AWS Cloud Architect | High-level design, specs, plans. Never writes code. |
+| `/k8s-expert` | Kubernetes Expert | Analysis and recommendations. Read-only, no admin rights. |
+| `/iac-dev` | IaC Developer | Writes Terraform, Helm, YAML, Python, Shell scripts. |
+| `/reviewer` | Security Reviewer | Reviews PRs with security-first mindset. Read-only. |
+| `/platform-tester` | Platform Tester | Writes/runs tests, enforces TDD. Confirms before executing. |
+| `/devops` | DevOps Engineer | CI/CD pipelines (GitHub Actions), monitoring (Datadog). |
+
+### Utility Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/check-progress` | Progress tracking, quality fixes, status summary |
+
+### Typical Workflow
+
+```
+/architect  -->  design & plan
+/iac-dev    -->  implement the plan
+/reviewer   -->  security review
+/platform-tester  -->  validate with tests
+/devops     -->  CI/CD & monitoring
+```
 
 ## Skills Overview
 
@@ -28,41 +59,30 @@ This directory contains my personalized Cursor IDE configuration that gets symli
 
 ## Rules Overview
 
-- `aws-security.mdc` - AWS security guardrails
+### Always Active
 - `command-restrictions.mdc` - Safety restrictions for destructive operations
+- `interactive-gate.mdc` - Enforces human approval at every stage
+- `orchestrator.mdc` - Routes tasks to appropriate specialist agents
 - `context-engineering.mdc` - Context management best practices
+- `aws-security.mdc` - AWS security guardrails
+
+### File-Scoped
 - `eks-best-practices.mdc` - EKS operational guidelines
 - `ci-cd-guidelines.mdc` - CI/CD pipeline guidelines
 - `terraform.mdc` - Terraform best practices
 - `github-actions.mdc` - GitHub Actions patterns
 - `plan-standards.mdc` - Planning and documentation standards
 
-## Commands Overview
-
-- `check-progress.md` - Progress tracking and milestone checking
-- `self-review.md` - Code and infrastructure review checklist
-- `kube-deploy-checklist.md` - Kubernetes deployment validation
-- `review-security.md` - Security audit and compliance checks
-- `plan-aws-infra.md` - AWS infrastructure planning workflow
-
 ## Installation
 
 These configurations are automatically symlinked by the dotfiles bootstrap script.
 
-## Best Practices Applied
+## Safety Guarantees
 
-This configuration follows Anthropic's best practices for skills:
-- ✅ Specific trigger phrases for accurate skill activation
-- ✅ Progressive disclosure for large skills (AWS, Terraform)
-- ✅ Semantic versioning and proper metadata
-- ✅ Negative trigger conditions to prevent conflicts
-- ✅ Troubleshooting sections for complex workflows
-- ✅ Security guardrails and safety restrictions
-
-## Usage
-
-After installation, skills activate automatically based on your requests:
-- Ask about "AWS VPC setup" → aws skill activates
-- Mention "terraform plan" → terraform skill provides guidance
-- Say "pr workflow" → git-pr-workflow automates PR creation
-- Request "infrastructure changes" → ask-clarifying-questions ensures safety
+All agents operate under these constraints:
+- No autonomous changes to production environments
+- No direct pushes to GitHub (all changes via PRs)
+- No modifications to EKS clusters or AWS resources
+- No destructive commands (terraform apply, kubectl apply, helm install)
+- Human approval required at every stage
+- Piped command chains blocked if they include any restricted command
