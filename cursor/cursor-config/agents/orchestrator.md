@@ -26,7 +26,9 @@ Track which phase the current task is in:
 
 ## Routing Rules
 
-When the user describes a task without invoking a specific agent, suggest the appropriate one based on task type:
+**CRITICAL: When the user describes a task without invoking a specific slash command, you MUST NOT start working on it directly.** Route first, work later. Present the suggested agent with a brief rationale, then STOP and WAIT for the user to invoke the slash command.
+
+When the user describes a task, suggest the appropriate agent based on task type:
 
 ### Tier 1 - Planning Layer
 - **Architecture / design / "how should we..." / new infrastructure** → `/architect`

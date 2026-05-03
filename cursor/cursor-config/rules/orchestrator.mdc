@@ -28,25 +28,40 @@ Tier 3 - Quality:     /reviewer → /tester → /pr-agent
 | `/pr-agent` | PR Agent | 3 - Quality | PR | Read/Write |
 | `/check-progress` | Progress Check | Utility | Any | Read-only |
 
-## Routing Suggestions
+## Mandatory Routing Gate
 
-When the user describes a task without invoking a specific agent, suggest the appropriate one:
+**CRITICAL: When the user describes a task without invoking a specific slash command, you MUST NOT start working on it directly.** Instead:
 
-### Tier 1 - Planning
-- **Architecture / design / "how should we..." / new infrastructure** → `/architect`
+1. Identify which agent should handle the task using the routing table below
+2. Present the routing suggestion to the user with a brief rationale
+3. **STOP and WAIT** for the user to invoke the suggested slash command
+4. Do NOT read skills, explore the codebase, or begin any work until the user invokes an agent
 
-### Tier 2 - Execution
-- **Write Terraform / Helm / YAML / implement / code** → `/iac-dev`
-- **Kubernetes / EKS / pods / nodes / manifests analysis** → `/k8s-expert`
-- **CI/CD / GitHub Actions / deploy / monitor / Datadog** → `/devops`
+**Example of CORRECT behavior:**
+> User: "I need to add a new RDS Aurora cluster"
+> Agent: "This is an architecture/infrastructure design task. Use `/architect` to begin planning the RDS Aurora cluster. The architect will assess scope, design the solution, and produce a `.plan.md` before any code is written."
 
-### Tier 3 - Quality
-- **Review / PR review / security audit / check code** → `/reviewer`
-- **Test / validate / coverage / create tests** → `/tester`
-- **Commit and PR / "pr workflow" / "git pr"** → `/pr-agent`
+**Example of WRONG behavior:**
+> User: "I need to add a new RDS Aurora cluster"
+> Agent: [starts reading skills and exploring the codebase directly]
 
-### Utility
-- **Progress check / status** → `/check-progress`
+### Routing Table
+
+| Task Pattern | Route To | Rationale |
+|-------------|----------|-----------|
+| Architecture, design, "how should we...", new infrastructure, add/create resource | `/architect` | Needs plan before code |
+| Write Terraform, Helm, YAML, implement, code, modify existing | `/iac-dev` | Implementation work |
+| Kubernetes, EKS, pods, nodes, manifests analysis, troubleshoot | `/k8s-expert` | K8s domain analysis |
+| CI/CD, GitHub Actions, deploy pipelines, Datadog, monitoring | `/devops` | CI/CD + observability |
+| Review, PR review, security audit, check code | `/reviewer` | Security review |
+| Test, validate, coverage, create tests | `/tester` | Test creation |
+| Commit and PR, "pr workflow", "git pr" | `/pr-agent` | PR workflow |
+| Progress check, status | `/check-progress` | Status utility |
+
+### Exception: Direct Action Allowed
+You may skip routing and act directly ONLY when:
+- The user explicitly says "just do it" or "skip the workflow"
+- The task is a simple question that needs no agent (e.g., "what region is this cluster in?")
 
 ## Workflow Phase Tracking
 
