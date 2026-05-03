@@ -1,43 +1,86 @@
 ---
-description: Agent orchestrator - routes tasks to specialist agents based on task type
+description: Agent orchestrator - routes tasks to specialist agents based on task type, tracks workflow phases
 globs: 
 alwaysApply: true
 ---
 # Agent Orchestrator
 
-This project uses a team of specialist agents for cloud platform engineering. Each agent has a specific role and is invoked via slash commands.
+This project uses a layered team of specialist agents for cloud platform engineering. Each agent has a specific role, tier, and phase in the workflow. Agents are defined in `agents/` and invoked via slash commands in `commands/`.
+
+## Three-Tier Architecture
+
+```
+Tier 1 - Planning:    /architect → plan-reviewer → USER approval
+Tier 2 - Execution:   /iac-dev | /k8s-expert | /devops
+Tier 3 - Quality:     /reviewer → /tester → /pr-agent
+```
 
 ## Available Agents
 
-| Command | Agent | Role |
-|---------|-------|------|
-| `/architect` | AWS Cloud Architect | Design, specs, plans. Never writes code. |
-| `/k8s-expert` | Kubernetes Expert | Analysis and recommendations. Read-only. |
-| `/iac-dev` | IaC Developer | Writes Terraform, Helm, YAML, scripts. |
-| `/reviewer` | Security Reviewer | Reviews PRs and code. Read-only. |
-| `/platform-tester` | Platform Tester | Writes and runs tests. Confirms before executing. |
-| `/devops` | DevOps Engineer | CI/CD pipelines, monitoring, deployments. |
+| Command | Agent | Tier | Phase | Mode |
+|---------|-------|------|-------|------|
+| `/architect` | AWS Cloud Architect | 1 - Plan | Plan | Read-only |
+| `/iac-dev` | IaC Developer | 2 - Build | Build | Read/Write |
+| `/k8s-expert` | Kubernetes Expert | 2 - Build | Build | Read-only |
+| `/devops` | DevOps Engineer | 2 - Build | Build | Read/Write |
+| `/reviewer` | Security Reviewer | 3 - Quality | Review | Read-only |
+| `/tester` | Platform Tester | 3 - Quality | Test | Read/Write |
+| `/pr-agent` | PR Agent | 3 - Quality | PR | Read/Write |
+| `/check-progress` | Progress Check | Utility | Any | Read-only |
 
 ## Routing Suggestions
 
 When the user describes a task without invoking a specific agent, suggest the appropriate one:
 
-- **Architecture / design / "how should we..."** → Suggest `/architect`
-- **Kubernetes / EKS / pods / nodes / manifests analysis** → Suggest `/k8s-expert`
-- **Write Terraform / Helm / YAML / implement / code** → Suggest `/iac-dev`
-- **Review / PR / security audit / check code** → Suggest `/reviewer`
-- **Test / validate / coverage / TDD** → Suggest `/platform-tester`
-- **CI/CD / GitHub Actions / deploy / monitor / Datadog** → Suggest `/devops`
-- **Progress check / status** → Use `/check-progress` (standalone utility)
+### Tier 1 - Planning
+- **Architecture / design / "how should we..." / new infrastructure** → `/architect`
+
+### Tier 2 - Execution
+- **Write Terraform / Helm / YAML / implement / code** → `/iac-dev`
+- **Kubernetes / EKS / pods / nodes / manifests analysis** → `/k8s-expert`
+- **CI/CD / GitHub Actions / deploy / monitor / Datadog** → `/devops`
+
+### Tier 3 - Quality
+- **Review / PR review / security audit / check code** → `/reviewer`
+- **Test / validate / coverage / create tests** → `/tester`
+- **Commit and PR / "pr workflow" / "git pr"** → `/pr-agent`
+
+### Utility
+- **Progress check / status** → `/check-progress`
+
+## Workflow Phase Tracking
+
+The standard workflow follows these phases:
+
+1. **Plan**: `/architect` designs → plan-reviewer reviews → user approves
+2. **Build**: `/iac-dev` implements (with `/k8s-expert` or `/devops` as needed)
+3. **Review**: `/reviewer` performs security audit
+4. **Test**: `/tester` creates test scripts (optional, skip for trivial changes)
+5. **PR**: `/pr-agent` commits, pushes, creates PR, notifies Slack
+
+### Handoff Sequence
+When a task spans multiple agents, suggest the next agent:
+
+| Completing Agent | Suggest Next | When |
+|-----------------|-------------|------|
+| `/architect` | plan-reviewer → user | Plan created |
+| User approves | `/iac-dev` | Plan approved |
+| `/iac-dev` | `/reviewer` | Code written |
+| `/k8s-expert` | `/iac-dev` or `/reviewer` | Analysis complete |
+| `/devops` | `/reviewer` | Workflows written |
+| `/reviewer` | `/tester` or `/pr-agent` | Review complete |
+| `/tester` | `/pr-agent` | Tests created |
+
+### Common Shortcuts
+- **Quick fix**: `/iac-dev` → `/reviewer` → `/pr-agent` (skip architect for small changes)
+- **Analysis only**: `/k8s-expert` or `/reviewer` alone (no code changes)
+- **CI/CD work**: `/architect` → `/devops` → `/reviewer` → `/pr-agent`
 
 ## Rules
+
 - Never auto-switch agents -- only suggest and let the user invoke
 - One agent persona active at a time
 - All agents inherit `command-restrictions.mdc` and `interactive-gate.mdc`
 - All agents follow `context-engineering.mdc` for session management
-- When a task spans multiple agents, suggest a handoff sequence:
-  1. `/architect` designs the plan
-  2. `/iac-dev` implements the code
-  3. `/reviewer` reviews the changes
-  4. `/platform-tester` validates with tests
-  5. `/devops` handles CI/CD and monitoring
+- Agent personas are defined in `agents/` -- commands are thin wrappers
+- Reference the active `.plan.md` file when coordinating between phases
