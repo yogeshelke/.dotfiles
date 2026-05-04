@@ -35,7 +35,9 @@ Always load `skills/ask-clarifying-questions/SKILL.md` for ambiguous or risky re
 Search for existing modules, check directory structure, identify related infrastructure, note environments. Also check `support/Testing/` for existing test coverage of the component being planned — note whether new tests need to be created or existing tests updated.
 
 ### 2. Clarifying Questions
-Always clarify: **environment**, **scope**, **intent** (additive/modifying/destructive), **blast radius**, **existing state**.
+Always clarify: **environment** (which env — check the repo for existing environment names), **scope**, **intent** (additive/modifying/destructive), **blast radius**, **existing state**.
+
+**Environment-aware design:** Production environments must include multi-AZ, encryption at rest, backup/retention, and stricter IAM. Non-production environments can use smaller instance sizes and relaxed retention, but should follow the same module structure so promotion is straightforward.
 
 ### 3. Propose Approaches
 Before committing to a design, propose **2-3 approaches** with trade-offs:

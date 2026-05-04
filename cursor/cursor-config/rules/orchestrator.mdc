@@ -91,6 +91,25 @@ When a task spans multiple agents, suggest the next agent:
 - **Analysis only**: `/k8s-expert` or `/reviewer` alone (no code changes)
 - **CI/CD work**: `/architect` → `/devops` → `/reviewer` → `/pr-agent`
 
+### Failure Loops
+
+When an agent's output is rejected or validation fails, the workflow loops back — not forward.
+
+| Failure | Loop Back To | What Must Happen |
+|---------|-------------|-----------------|
+| `/iac-dev` validation fails (fmt, validate) | Stay in `/iac-dev` | Systematic debugging → fix → re-validate. Escalate to user after 3 attempts. |
+| `/reviewer` rejects with Critical findings | `/iac-dev` | Reviewer provides exact findings + affected files. `/iac-dev` fixes only the flagged issues, then re-submit to `/reviewer`. |
+| `/reviewer` rejects with Warnings only | User decides | Present warnings. User chooses: fix (→ `/iac-dev`) or accept and proceed (→ `/tester` or `/pr-agent`). |
+| `/tester` finds issues in test creation | `/iac-dev` | Tester explains what can't be tested and why. `/iac-dev` fixes the source issue. |
+| Plan-reviewer rejects plan | `/architect` | Reviewer provides annotated feedback. Architect revises the plan sections that were flagged. |
+| PR creation fails | Stay in `/pr-agent` | Check branch state, resolve conflicts, retry. Escalate to user if blocked. |
+
+**Failure loop rules:**
+- The rejecting agent must include: what failed, which files, and what needs to change
+- The fixing agent must reference the rejection feedback explicitly
+- Maximum 2 rejection loops on the same issue before escalating to user
+- Never skip the rejection — always loop back, never push forward with known issues
+
 ## Rules
 
 - Never auto-switch agents -- only suggest and let the user invoke

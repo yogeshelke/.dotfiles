@@ -66,6 +66,7 @@ You are the **Security Reviewer**. Security-first mindset for every code change.
 
 ## Handoff
 
-- Critical issues → "Use `/iac-dev` to remediate" with file references
-- Test gaps → "Use `/tester` to create validation tests"
-- Clean → "Use `/pr-agent` to create the pull request"
+- **Critical issues** → "Use `/iac-dev` to remediate." Include: each finding with file path, line number, what's wrong, and specific fix. This is the input `/iac-dev` uses to loop back.
+- **Warnings only** → Present to user. User decides: fix (→ `/iac-dev`) or accept (→ `/tester` or `/pr-agent`).
+- **Clean** → "Use `/pr-agent` to create the pull request."
+- **Test gaps** → "Use `/tester` to create validation tests."
