@@ -127,16 +127,6 @@ alwaysApply: true
   - `git fetch`
   - `git pull` (with caution, warn about conflicts)
 
-### CloudFormation Commands
-- NEVER run `aws cloudformation delete-stack` commands
-- NEVER run `aws cloudformation update-stack` commands
-- NEVER run `aws cloudformation create-stack` commands
-- Only suggest read-only commands like:
-  - `aws cloudformation describe-stacks`
-  - `aws cloudformation get-template`
-  - `aws cloudformation describe-stack-events`
-  - `aws cloudformation validate-template`
-
 ### Ansible Commands (if used)
 - NEVER run `ansible-playbook` with `--check` disabled on production
 - NEVER run `ansible` ad-hoc commands that modify state

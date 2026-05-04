@@ -1,0 +1,81 @@
+---
+description: Verification gate - prevents agents from claiming success without fresh evidence
+globs: 
+alwaysApply: true
+---
+
+# Verification Gate
+
+Every agent must provide **fresh evidence** before claiming work is complete, passing, or ready for handoff. Claims without evidence are forbidden.
+
+## The Rule
+
+```
+NO COMPLETION CLAIMS WITHOUT RUNNING VERIFICATION AND SHOWING OUTPUT
+```
+
+If you haven't run the verification command **in this response**, you cannot claim it passes.
+
+## Before Claiming Anything
+
+1. **IDENTIFY** — What **read-only** command proves this claim?
+2. **RUN** — Execute it fresh (not from memory). Only non-destructive commands — NEVER `terraform apply/plan`, `helm install/upgrade`, `kubectl apply`, or anything that modifies state. Stick to the agent's allowed verification commands listed below.
+3. **READ** — Full output, check exit code, count failures
+4. **VERIFY** — Does output confirm the claim?
+   - If NO → State actual status with evidence
+   - If YES → State claim WITH evidence
+5. **ONLY THEN** — Make the claim
+
+## What Each Agent Must Verify
+
+| Agent | Before claiming "done" | Allowed verification (read-only only) |
+|-------|----------------------|----------------------|
+| `/iac-dev` | Code is ready | `terraform fmt -check`, `terraform validate`, show file list |
+| `/reviewer` | Review passed | Show checklist results with Pass/Fail per item, `terraform fmt -check` |
+| `/tester` | Tests created | Show file tree, `bash -n <script>` syntax check |
+| `/pr-agent` | PR created | Show PR URL from `gh` output, `git status`, `git log --oneline -1` |
+| `/devops` | Workflows ready | YAML syntax validation, `actionlint` if available |
+| `/k8s-expert` | Analysis complete | `kubectl get/describe` outputs that support findings |
+| `/architect` | Plan complete | Show `.plan.md` path and task count |
+
+**NEVER run as verification:** `terraform plan/apply/destroy`, `helm install/upgrade`, `kubectl apply/create/delete`, `aws` CLI commands that create/modify/delete resources (e.g., `aws ec2 run-instances`, `aws s3 rm`, `aws rds create-*`, `aws iam create-*`), or any state-modifying command. Read-only AWS CLI (`aws sts get-caller-identity`, `aws s3 ls`, `aws ec2 describe-*`) is allowed only with user approval. All destructive/modifying commands require explicit user approval per `interactive-gate.mdc` and `command-restrictions.mdc`.
+
+## Red Flags — STOP and Verify
+
+You are about to violate this rule if you catch yourself:
+
+- Using **"should"**, **"probably"**, **"seems to"**, or **"looks correct"**
+- Saying **"Done!"**, **"Great!"**, **"Perfect!"** before running verification
+- About to hand off without showing evidence
+- Trusting that a previous run is still valid
+- Saying "I've fixed it" without re-running validation
+- Claiming "all checks pass" without showing the output
+
+## Evidence Format
+
+Always present verification evidence in a clear block:
+
+```
+### Verification Evidence
+- Command: `terraform validate`
+- Exit code: 0
+- Output: Success! The configuration is valid.
+- Files changed: [list]
+- Claim: ✅ Terraform configuration is valid
+```
+
+## Handoff Gate
+
+Before suggesting the next agent in the workflow, confirm:
+
+1. Your own verification passed (with evidence shown above)
+2. You've listed all files created or modified
+3. You've stated the next phase and which agent handles it
+
+```
+### Handoff
+- Phase complete: Build ✅
+- Files modified: `modules/rds/main.tf`, `modules/rds/variables.tf`, `modules/rds/outputs.tf`
+- Verification: terraform validate ✅, terraform fmt ✅
+- Next: Use `/reviewer` for security review
+```

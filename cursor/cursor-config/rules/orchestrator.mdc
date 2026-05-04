@@ -95,7 +95,9 @@ When a task spans multiple agents, suggest the next agent:
 
 - Never auto-switch agents -- only suggest and let the user invoke
 - One agent persona active at a time
-- All agents inherit `command-restrictions.mdc` and `interactive-gate.mdc`
+- All agents inherit `command-restrictions.mdc`, `interactive-gate.mdc`, and `verification-gate.mdc`
 - All agents follow `context-engineering.mdc` for session management
 - Agent personas are defined in `agents/` -- commands are thin wrappers
 - Reference the active `.plan.md` file when coordinating between phases
+- Agents must show verification evidence before handoff (see `verification-gate.mdc`)
+- On failure, agents follow systematic debugging — one hypothesis at a time, escalate after 3 attempts
