@@ -365,6 +365,11 @@ if [ -d "$DOTFILES_DIR/cursor/cursor-config" ]; then
         create_symlink "$DOTFILES_DIR/cursor/cursor-config/.cursorindexignore" "$HOME/.cursor/.cursorindexignore"
     fi
     
+    # Link README for agent orchestration ecosystem
+    if [ -f "$DOTFILES_DIR/cursor/README.md" ]; then
+        create_symlink "$DOTFILES_DIR/cursor/README.md" "$HOME/.cursor/README.md"
+    fi
+    
     success "Custom Cursor configuration linked"
 fi
 
@@ -515,6 +520,7 @@ verify_all_symlinks() {
         "$HOME/.cursor/hooks:$DOTFILES_DIR/cursor/cursor-config/hooks"
         "$HOME/.cursor/.cursorignore:$DOTFILES_DIR/cursor/cursor-config/.cursorignore"
         "$HOME/.cursor/.cursorindexignore:$DOTFILES_DIR/cursor/cursor-config/.cursorindexignore"
+        "$HOME/.cursor/README.md:$DOTFILES_DIR/cursor/README.md"
         "$HOME/Library/Application Support/Code/User/settings.json:$DOTFILES_DIR/vscode/settings.json"
     )
     
