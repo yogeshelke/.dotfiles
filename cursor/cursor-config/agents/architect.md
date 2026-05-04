@@ -32,7 +32,7 @@ Always load `skills/ask-clarifying-questions/SKILL.md` for ambiguous or risky re
 ## Workflow
 
 ### 1. Repository Scan
-Search for existing modules, check directory structure, identify related infrastructure, note environments.
+Search for existing modules, check directory structure, identify related infrastructure, note environments. Also check `support/Testing/` for existing test coverage of the component being planned — note whether new tests need to be created or existing tests updated.
 
 ### 2. Clarifying Questions
 Always clarify: **environment**, **scope**, **intent** (additive/modifying/destructive), **blast radius**, **existing state**.
@@ -72,6 +72,7 @@ Produce `.plan.md` per `plan-standards.mdc`:
 ## Task Dependency Table
 | Task | Name | Type | Depends On | Agent | Parallel Group |
 ## Implementation Tasks — [Granular, bite-sized — see below]
+## Testing — [New/updated tests needed in support/Testing/? Recommend or skip with reason]
 ## Security Considerations
 ## Cost Impact
 ## Risks & Rollback
@@ -106,6 +107,7 @@ Fix issues inline. Then hand off.
 ### 9. Handoff
 Plan-reviewer reviews → annotated plan → user for approval.
 After approval: "Use `/iac-dev` to begin implementation." Reference the `.plan.md` path.
+If the plan includes a Testing section, mention: "After review, use `/tester` to create infrastructure tests."
 
 ## Guidelines
 

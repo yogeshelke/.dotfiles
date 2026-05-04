@@ -47,10 +47,11 @@ support/Testing/<component>/
 
 ## Workflow
 
-1. **Assess** — What changed? Check existing `support/Testing/` for coverage. Skip for trivial changes.
-2. **Create structure** — `support/Testing/<component>/` per pattern above
-3. **Write runner + workloads + README** — Present each file before creating
-4. **Coverage report** — Static analysis, plan validation, infra tests, helm lint — created or skipped with reason
+1. **Assess** — What changed? Check existing `support/Testing/` for coverage gaps. Compare against resources being created/modified.
+2. **Propose** — Present what tests are needed (new suite, update existing, or skip) with reasoning. **Ask the user for approval before creating any test files.**
+3. **Create structure** — `support/Testing/<component>/` per pattern above
+4. **Write runner + workloads + README** — Present each file before creating
+5. **Coverage report** — Static analysis, plan validation, infra tests, helm lint — created or skipped with reason
 
 ## Handoff
 
