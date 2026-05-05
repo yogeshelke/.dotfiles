@@ -1,40 +1,128 @@
 ---
 name: karpenter
 description: >-
-  Karpenter node provisioning reference for EKS cluster autoscaling and node lifecycle management. 
-  Use when user mentions "Karpenter", "node provisioning", "cluster autoscaling", "NodePool", 
-  "EC2NodeClass", "node scaling", "spot instances", or asks about EKS node management, 
-  cost optimization, or automatic scaling.
+  Karpenter decision system for EKS node provisioning and autoscaling. Use for NodePool design,
+  instance selection, disruption strategy, scheduling interaction, and cost optimization.
+  Do NOT use for general EKS config (use eks skill) or K8s scheduling concepts (use kubernetes skill).
 metadata:
   author: SHELYOG
-  version: 2.0.0
+  version: 4.0.0
   category: kubernetes
-  updated: 2026-05-03
+  updated: 2026-05-05
 ---
-# Karpenter Comprehensive Reference
+# Karpenter Decision Engine
 
-Use this skill when working with Karpenter node autoscaling on EKS, including NodePool configuration, capacity planning, and cost optimization.
+Decision rules for node provisioning and autoscaling. Not reference material.
 
-## Architecture
+- EKS cluster config → `skills/eks/`
+- K8s scheduling → `skills/kubernetes/`
+- This file answers: **how to configure NodePools, select instances, and manage node lifecycle**
 
-### How Karpenter Works
-1. Watches for unschedulable pods (Pending due to insufficient resources)
-2. Evaluates pod scheduling constraints (requests, selectors, affinities, tolerations)
-3. Groups compatible pods and computes optimal node configuration
-4. Launches EC2 instances directly via the AWS Fleet API (bypasses ASGs)
-5. Binds pods to new nodes
-6. Continuously optimizes by consolidating or replacing underutilized nodes
+## Interaction Model
+- This skill defines **node-level** decisions (NodePool, EC2NodeClass, instance selection, disruption)
+- Pod scheduling (affinity, topology spread) → `kubernetes` skill
+- EKS cluster setup (VPC CNI, add-ons) → `eks` skill
+- Spot vs on-demand architecture choice → `aws` skill (cost section)
+- Terraform provisioning of Karpenter → `terraform` skill
 
-### Components
-- **Karpenter Controller** - Runs as a Deployment in the cluster
-- **Webhooks** - Validates and defaults Karpenter resources
-- **NodePool** - Defines scheduling constraints and limits
-- **EC2NodeClass** - AWS-specific node configuration
-- **NodeClaim** - Represents a single node request (managed automatically)
+---
 
-## NodePool Configuration
+## Execution Model
 
-### Resource Requirements
+Karpenter is **constraint-driven**, not configuration-driven:
+- NodePool defines **possibilities** (allowed instances, limits, policies)
+- Pod defines **requirements** (requests, selectors, affinity, topology)
+- Karpenter selects a **feasible, available, cost-efficient** instance (not guaranteed globally cheapest — uses price-capacity-optimized for Spot)
+- NodePool + Pod constraints combine → overly strict combinations cause scheduling failure
+
+**How it works**:
+- Primarily reacts to individual pending pods; grouping is opportunistic, not guaranteed
+- Node size determined by requests of unschedulable pods (aggregation may occur but is not guaranteed)
+- Initial provisioning may be suboptimal — consolidation optimizes eventually (not immediate)
+- Karpenter requests EC2 capacity via Fleet APIs; **kube-scheduler** places pods on provisioned nodes
+- Limits apply **per NodePool** (no global cluster limit exists)
+
+**System boundaries** (which layer is responsible):
+- **Karpenter** → evaluates scheduling requirements, requests EC2 capacity, manages node lifecycle
+- **kube-scheduler** → places pods on available nodes
+- **EC2 Fleet API** → fulfills capacity requests (instance types, AZs, Spot pools)
+
+---
+
+## Decision Entry Points
+
+| Task | Read sections |
+|---|---|
+| Design NodePool strategy | NODEPOOL_DESIGN |
+| Choose instance types | INSTANCE_SELECTION |
+| Configure consolidation | DISRUPTION |
+| Fix scheduling issues | SCHEDULING |
+| Reduce node costs | COST |
+
+---
+
+## Operational Guardrails
+
+- Always define resource requests for all workloads (use LimitRanges for defaults)
+- Always define NodePool cpu/memory limits
+- Always monitor subnet IP capacity and EC2 service quotas
+- Always validate NodePool constraints in non-prod before rollout
+- Set billing alarms for autoscaling clusters (detect unexpected cost spikes)
+- For memory: set requests ≈ limits to avoid OOM during consolidation
+
+---
+
+## Failure Modes (Quick Map)
+
+| Failure | Cause | Fix |
+|---|---|---|
+| UnfulfillableCapacity | Constraints too restrictive | Broaden instance families/generations |
+| Wrong instance size | Pod requests inaccurate | Right-size requests to actual usage |
+| Subnet/IP exhaustion | Scaling beyond VPC capacity | Prefix delegation or secondary CIDRs |
+| Cost runaway | No limits on NodePool | Set cpu/memory caps + billing alarms |
+| Unpredictable placement | Overlapping NodePools | Make NodePools mutually exclusive |
+| Controller unavailable | Running on Karpenter-managed node | Use Fargate or static node group |
+| OOM during consolidation | requests << actual usage | Memory requests ≈ limits |
+
+---
+
+## Cross-Cutting Rules
+
+| Decision | Domains | Rule |
+|---|---|---|
+| Diversify instance types | Instance + Cost | Always allow multiple families — never single type |
+| Resource limits on NodePools | NodePool + Cost | Set CPU/memory caps to prevent runaway |
+| Disruption budgets | Disruption + Availability | Production NodePools need explicit budgets |
+| Accurate pod requests | Scheduling + Cost | Right-sized requests = efficient bin-packing |
+| Encrypted volumes | Instance + Security | Always `encrypted: true` in blockDeviceMappings |
+| LimitRanges | Scheduling + Safety | Enforce default requests for all workloads |
+
+---
+
+## [NODEPOOL_DESIGN]
+
+**Baseline architecture** (Karpenter + managed node groups):
+- **Managed node groups** for: Karpenter controller, system components, predictable baseline
+- **Karpenter** for: dynamic workloads, burst capacity, cost optimization
+- Karpenter is not always cheapest or simplest — baseline stability matters
+
+**When to create separate NodePools**:
+- GPU workloads → dedicated (g5, p4d, inf2)
+- Spot-only batch → separate with `spot` capacity type
+- System/platform → baseline with `on-demand` + taint
+- General workloads → default with mixed spot/on-demand
+
+**Limits** (per NodePool — no global cluster limit):
+- Always set `limits.cpu` and `limits.memory`
+- Size to ~150% of expected peak (burst room without unlimited growth)
+- Total cluster capacity = sum of all NodePool limits + managed node groups
+- Monitor: `karpenter_nodepools_usage` vs `karpenter_nodepools_limit`
+
+**Weight**: Tie-breaker only when multiple NodePools match. Not a cost strategy — use constraints for that.
+
+**Overlap**: If multiple NodePools match same pod → unpredictable. Make mutually exclusive (different taints, selectors, or instance families).
+
+**Example NodePool**:
 ```yaml
 apiVersion: karpenter.sh/v1
 kind: NodePool
@@ -68,40 +156,35 @@ spec:
     consolidateAfter: 1m
 ```
 
-### Requirement Keys
-| Key | Description | Example Values |
-|-----|-------------|----------------|
-| `kubernetes.io/arch` | CPU architecture | amd64, arm64 |
-| `kubernetes.io/os` | Operating system | linux |
-| `karpenter.sh/capacity-type` | On-demand or spot | on-demand, spot |
-| `karpenter.k8s.aws/instance-category` | Instance family category | c, m, r, t, g |
-| `karpenter.k8s.aws/instance-family` | Specific instance family | m7i, c7g, r6i |
-| `karpenter.k8s.aws/instance-generation` | Instance generation | 6, 7 |
-| `karpenter.k8s.aws/instance-size` | Instance size | large, xlarge, 2xlarge |
-| `karpenter.k8s.aws/instance-cpu` | vCPU count | 4, 8, 16 |
-| `karpenter.k8s.aws/instance-memory` | Memory in MiB | 8192, 16384 |
-| `topology.kubernetes.io/zone` | Availability zone | eu-central-1a, eu-central-1b |
-| `node.kubernetes.io/instance-type` | Specific instance type | m7i.xlarge |
+---
 
-### Operators
-- `In` - Value must be in the list
-- `NotIn` - Value must not be in the list
-- `Exists` - Key must exist
-- `DoesNotExist` - Key must not exist
-- `Gt` - Greater than (numeric comparison)
-- `Lt` - Less than (numeric comparison)
+## [INSTANCE_SELECTION]
 
-### Resource Limits
-- Set `limits.cpu` and `limits.memory` to cap total cluster capacity
-- Prevents runaway scaling and cost overruns
-- Monitor actual usage against limits
+**Architecture**:
+- **Default**: Both `amd64` + `arm64` (Graviton 20-40% cheaper)
+- **If app needs x86** → `amd64` only
+- **If cost-optimized + ARM-compatible** → Prefer `arm64`
 
-### Weight
-- NodePools with higher `weight` are preferred when multiple match
-- Use to prefer certain instance types or capacity types
+**Instance families**:
+- General: `m` (balanced), `c` (compute), `r` (memory)
+- GPU: `g5` (A10G), `p4d` (A100), `inf2` (Inferentia)
+- Burstable: `t` — dev/test only, never production
+- Always: Generation ≥6
 
-## EC2NodeClass Configuration
+**Spot vs On-demand**:
+- **Default**: Mixed (both allowed — Karpenter handles fallback)
+- Fault-tolerant → Spot preferred (60-90% savings)
+- Latency-critical / singleton → On-demand only
+- Diversify 10+ instance types across multiple AZs for Spot reliability
+- Over-constraining instance types (especially Spot) → no capacity available → scheduling failure
+- Explicitly exclude bad-fit instances via `NotIn` requirements (e.g., exclude `t` family, small sizes)
 
+**AMI pinning**:
+- Production: Pin version — never `@latest`
+- Non-prod: `@latest` for testing before promotion
+- Use `expireAfter` for periodic rotation within known-good versions
+
+**EC2NodeClass**:
 ```yaml
 apiVersion: karpenter.k8s.aws/v1
 kind: EC2NodeClass
@@ -110,7 +193,7 @@ metadata:
 spec:
   role: KarpenterNodeRole-cluster-name
   amiSelectorTerms:
-    - alias: al2023@latest
+    - alias: al2023@v20260401
   subnetSelectorTerms:
     - tags:
         karpenter.sh/discovery: cluster-name
@@ -123,210 +206,132 @@ spec:
         volumeSize: 100Gi
         volumeType: gp3
         encrypted: true
-        kmsKeyID: "arn:aws:kms:..."
-  tags:
-    Environment: production
   metadataOptions:
-    httpEndpoint: enabled
-    httpProtocolIPv6: disabled
-    httpPutResponseHopLimit: 1
     httpTokens: required
-  userData: |
-    # Custom user data (appended to EKS bootstrap)
 ```
 
-### AMI Selection
-- `alias` - Use well-known AMI aliases: `al2023@latest`, `al2@latest`, `bottlerocket@latest`
-- `id` - Specific AMI ID
-- `tags` - Select by AMI tags
-- `name` - Select by AMI name pattern
-- AMI drift is detected automatically; nodes replaced when new AMIs available
+---
 
-### Subnet and Security Group Selection
-- Use tag-based selectors for automatic discovery
-- Standard tag: `karpenter.sh/discovery: <cluster-name>`
-- Multiple selector terms are OR'd; tags within a term are AND'd
+## [DISRUPTION]
 
-### Block Device Mappings
-- Configure root and additional volumes
-- Use gp3 for best price-performance
-- Enable encryption with KMS
-- Set appropriate volume size for workload needs
+**Consolidation**:
+- **Default**: `WhenEmptyOrUnderutilized` (actively optimizes cost)
+- **Conservative**: `WhenEmpty` (removes only empty nodes)
+- `consolidateAfter`: `1m` aggressive, `30m` conservative
 
-### Instance Profile / Role
-- `role` - IAM role name (Karpenter creates instance profile)
-- `instanceProfile` - Use existing instance profile
-- Role needs permissions: ECR pull, SSM, CloudWatch Logs
-
-## Disruption and Consolidation
-
-### Consolidation Policies
-| Policy | Behavior |
-|--------|----------|
-| `WhenEmpty` | Only remove nodes with no running pods |
-| `WhenEmptyOrUnderutilized` | Remove empty or consolidate underutilized nodes |
-
-### Consolidation Mechanisms
-1. **Node deletion** - Remove empty or underutilized nodes
-2. **Node replacement** - Replace with a smaller/cheaper instance
-3. **Multi-node consolidation** - Consolidate pods from multiple nodes onto fewer
-
-### consolidateAfter
-- Duration to wait before consolidating an empty/underutilized node
-- Set to `0s` for aggressive consolidation
-- Set to `Never` to disable time-based consolidation
-
-### Disruption Budgets
+**Disruption budgets** (production):
 ```yaml
 disruption:
   budgets:
-    - nodes: "10%"           # Max percentage of nodes to disrupt
-    - nodes: "3"             # Or absolute count
-    - nodes: "0"             # Block disruption during schedule
-      schedule: "0 9 * * 1-5"  # Weekdays 9am
-      duration: 8h              # For 8 hours
+    - nodes: "10%"
+    - nodes: "0"
+      schedule: "0 9 * * 1-5"
+      duration: 8h
 ```
+- Limit disruption during business hours
+- Percentage for large clusters, absolute for small
 
-### Disruption Reasons
-- **Consolidation** - Underutilized or empty nodes
-- **Drift** - Node spec doesn't match current NodePool/EC2NodeClass
-- **Expiration** - Node exceeded `expireAfter` TTL
-- **Emptiness** - No schedulable pods running
+**Node expiration**: `expireAfter: 720h` (30 days) — forces AMI rotation, respects budgets/PDBs
 
-### Controlling Disruption
-- `karpenter.sh/do-not-disrupt: "true"` annotation on pods prevents node disruption
-- Pod Disruption Budgets (PDBs) are respected
-- `expireAfter` forces periodic node rotation (patching)
-- `terminationGracePeriod` on NodePool controls drain timeout
+**Spot interruption**: Karpenter handles natively (cordon → drain → terminate). Requires SQS interruption queue for full handling (receives ITN + rebalance signals). Ensure `terminationGracePeriodSeconds` allows clean shutdown. PDBs must allow eviction.
 
-## Scheduling
+**Drift detection**: AMI/NodePool/EC2NodeClass changes → nodes replaced (follows budgets, not instant)
 
-### How Pods Get Scheduled
-- Karpenter respects all standard Kubernetes scheduling constraints:
-  - Resource requests (CPU, memory, GPU, ephemeral storage)
-  - Node selectors
-  - Node affinity/anti-affinity
-  - Pod affinity/anti-affinity
-  - Topology spread constraints
-  - Tolerations
-  - Persistent volume topology
+---
 
-### Pod-Level Controls
-- Use `nodeSelector` to target specific NodePools
-- Use `tolerations` to match NodePool taints
-- Set accurate resource requests for efficient bin-packing
-- Use `topologySpreadConstraints` for zone distribution
+## [SCHEDULING]
 
-### Taints on NodePools
-```yaml
-template:
-  spec:
-    taints:
-      - key: dedicated
-        value: gpu
-        effect: NoSchedule
-```
-- Only pods with matching tolerations will schedule on these nodes
+**Pod → Karpenter interaction**:
+- Watches for Pending pods (reacts to individual unschedulable pods)
+- Evaluates: requests, nodeSelector, affinity, tolerations, topology spread
+- Launches node that satisfies constraints and is cost-efficient
+- Karpenter provisions the node; kube-scheduler then places the pod
 
-## Drift Detection
+**Targeting a NodePool**: Use `nodeSelector` matching NodePool labels, or tolerations matching taints
 
-Karpenter detects drift when:
-- NodePool requirements change
-- EC2NodeClass changes (AMI, subnets, security groups, user data)
-- New AMI available (if using `@latest` alias)
-- Subnet or security group tags change
+**Requests vs limits** (critical):
+- Karpenter sizes nodes on **requests only** — limits ignored for provisioning
+- If limits >> requests → OOM during consolidation (smaller node fits requests but not usage)
+- **Memory**: Set requests ≈ limits (avoids OOM when consolidated to tighter node)
+- **CPU**: Requests can be lower than limits (CPU is compressible)
 
-Drifted nodes are gracefully replaced following disruption budgets.
+**LimitRanges** (prevent mis-sizing):
+- Pods without requests → Karpenter cannot size correctly
+- **Rule**: Use Kubernetes LimitRanges to enforce default requests for all namespaces
 
-## Monitoring
+**Controller placement**:
+- Must NOT run on Karpenter-managed nodes (circular dependency)
+- Run on: Fargate, static managed node group, or EKS Auto Mode system nodes
 
-### Key Metrics
-| Metric | Description |
-|--------|-------------|
-| `karpenter_nodes_total` | Total nodes managed by Karpenter |
-| `karpenter_nodeclaims_created_total` | NodeClaims created |
-| `karpenter_nodeclaims_disrupted_total` | NodeClaims disrupted (by reason) |
-| `karpenter_nodeclaims_terminated_total` | NodeClaims terminated |
-| `karpenter_pods_startup_duration_seconds` | Time from pod creation to running |
-| `karpenter_nodes_allocatable` | Allocatable resources per node |
-| `karpenter_nodepools_usage` | Current resource usage per NodePool |
-| `karpenter_nodepools_limit` | Configured limits per NodePool |
+**Subnet/IP exhaustion**:
+- Nodes scale → VPC IPs consumed → scheduling stalls (even with compute available)
+- **Rule**: Ensure subnet capacity for peak; use prefix delegation or secondary CIDRs
+- Monitor: `aws ec2 describe-subnets` (available IPs)
 
-### Alerts to Configure
-- NodePool approaching resource limits
-- High pod startup latency
-- Frequent disruption/replacement cycles
-- Capacity errors (insufficient capacity in selected instance types)
+---
 
-## Troubleshooting
+## [COST]
 
-### Pods Not Scheduling
-1. Check pod events: `kubectl describe pod <pod>`
-2. Verify NodePool requirements match pod constraints
-3. Check NodePool limits aren't reached
-4. Verify subnets have available IPs
-5. Check EC2 service quotas for instance types
-6. Review Karpenter controller logs
+- **Spot**: 60-90% savings (diversify types for availability)
+- **Graviton**: 20-40% better price-performance
+- **Consolidation**: 30-60% reduction (removes underutilized nodes)
+- **Right-size pods**: Over-requesting wastes capacity, under-requesting causes OOM
+- **Instance selection**: Karpenter selects cost-efficient instance that satisfies constraints — not necessarily absolute cheapest
+- **Billing alarms**: Set anomaly detection for autoscaling clusters
+- **Monitor**: `karpenter_nodepools_usage` / `karpenter_nodepools_limit` ratio
 
-### Nodes Not Consolidating
-1. Verify `consolidationPolicy` is set
-2. Check for `do-not-disrupt` annotations on pods
-3. Check PDBs preventing eviction
-4. Verify `consolidateAfter` duration
-5. Check disruption budgets
+---
 
-### Common Errors
-- **InsufficientInstanceCapacity** - Add more instance types/families to requirements
-- **UnfulfillableCapacity** - Pod constraints too restrictive; relax requirements
-- **NodeClaimNotFound** - EC2 instance terminated externally; Karpenter will retry
+## Anti-Patterns
 
-## Migration
+| Anti-Pattern | Do This Instead |
+|---|---|
+| Single instance type | Allow 10+ types/families |
+| No NodePool limits | Set cpu/memory caps |
+| Over-restrictive requirements | Broaden instance category/generation |
+| No disruption budgets (prod) | Budget with schedule windows |
+| `do-not-disrupt` on everything | Only on truly critical pods |
+| No `expireAfter` | 30d expiration for AMI rotation |
+| Burstable (t-family) for prod | Use c/m/r families |
+| `@latest` AMI in production | Pin version, test in non-prod |
+| Overlapping NodePools | Mutually exclusive or clearly weighted |
+| Controller on Karpenter nodes | Fargate or static node group |
+| Requests << actual usage | Requests ≈ usage (especially memory) |
+| No LimitRanges | Enforce defaults for all namespaces |
+| No billing alarms | Anomaly detection on autoscaling clusters |
 
-### From Cluster Autoscaler
-1. Install Karpenter alongside Cluster Autoscaler
-2. Create NodePools matching existing node group configurations
-3. Cordon managed node groups
-4. Workloads reschedule onto Karpenter-provisioned nodes
-5. Remove managed node groups and Cluster Autoscaler
+---
 
-### From v1beta1 to v1 API
-- `Provisioner` → `NodePool`
-- `AWSNodeTemplate` → `EC2NodeClass`
-- `Machine` → `NodeClaim`
-- Update API versions and field names per migration guide
+## Troubleshooting Decision Trees
 
-## Cost Optimization
+**Pods not scheduling?**
+1. NodePool limits reached? → Increase or add NodePool
+2. Requirements too restrictive? → Broaden families/sizes
+3. Subnet out of IPs? → Check available IPs, prefix delegation
+4. EC2 quota reached? → Request service quota increase
+5. Karpenter controller running? → Check karpenter namespace
 
-- Use Spot instances for fault-tolerant workloads (60-90% savings)
-- Enable consolidation for 30-60% node cost reduction
-- Use Graviton (arm64) instances for 20-40% better price-performance
-- Diversify instance types for better Spot availability
-- Set accurate resource requests (overprovisioning wastes capacity)
-- Monitor `karpenter_nodepools_usage` vs `karpenter_nodepools_limit`
+**Nodes not consolidating?**
+1. `consolidationPolicy` set? → Must be `WhenEmptyOrUnderutilized`
+2. `do-not-disrupt` on pods? → Remove if unnecessary
+3. PDBs blocking? → Check PDB config
+4. `consolidateAfter` too long? → Reduce
+5. Budget at max? → Wait or adjust
+
+**Capacity errors?**
+- `InsufficientInstanceCapacity` → Add more types + AZs
+- `UnfulfillableCapacity` → Relax pod constraints (affinity/selector)
+- `NodeClaimNotFound` → Instance terminated externally, will retry
+
+---
 
 ## Reference Documentation
 
-### Core
 - **Karpenter Docs**: https://karpenter.sh/docs/
-- **Concepts Overview**: https://karpenter.sh/docs/concepts/
-- **Getting Started**: https://karpenter.sh/docs/getting-started/
-
-### API Reference
-- **NodePool**: https://karpenter.sh/docs/concepts/nodepools/
+- **NodePool Concepts**: https://karpenter.sh/docs/concepts/nodepools/
 - **EC2NodeClass**: https://karpenter.sh/docs/concepts/nodeclasses/
-- **NodeClaim**: https://karpenter.sh/docs/concepts/nodeclaims/
 - **Disruption**: https://karpenter.sh/docs/concepts/disruption/
 - **Scheduling**: https://karpenter.sh/docs/concepts/scheduling/
-
-### Operations
 - **Metrics**: https://karpenter.sh/docs/reference/metrics/
-- **Settings**: https://karpenter.sh/docs/reference/settings/
-- **Troubleshooting**: https://karpenter.sh/docs/troubleshooting/
-- **Upgrading**: https://karpenter.sh/docs/upgrading/
-- **Migration from CA**: https://karpenter.sh/docs/getting-started/migrating-from-cas/
-
-### AWS Integration
-- **EKS Karpenter Best Practices**: https://aws.github.io/aws-eks-best-practices/karpenter/
-- **Cluster Autoscaling Best Practices**: https://docs.aws.amazon.com/eks/latest/best-practices/cluster-autoscaling.html
-- **Karpenter AWS Provider GitHub**: https://github.com/aws/karpenter-provider-aws
+- **EKS Best Practices**: https://aws.github.io/aws-eks-best-practices/karpenter/
 - **Karpenter Blueprints**: https://github.com/aws-samples/karpenter-blueprints

@@ -42,6 +42,16 @@
 - **CloudWatch User Guide**: https://docs.aws.amazon.com/cloudwatch/
 - **CloudWatch Logs**: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/
 
+## AI/ML
+- **Amazon Bedrock**: https://docs.aws.amazon.com/bedrock/latest/userguide/
+- **SageMaker Developer Guide**: https://docs.aws.amazon.com/sagemaker/latest/dg/
+- **SageMaker Pipelines**: https://docs.aws.amazon.com/sagemaker/latest/dg/pipelines.html
+- **SageMaker Model Monitor**: https://docs.aws.amazon.com/sagemaker/latest/dg/model-monitor.html
+- **SageMaker Feature Store**: https://docs.aws.amazon.com/sagemaker/latest/dg/feature-store.html
+- **AWS Neuron SDK (Inferentia/Trainium)**: https://awsdocs-neuron.readthedocs-hosted.com/
+- **NVIDIA Device Plugin for K8s**: https://github.com/NVIDIA/k8s-device-plugin
+- **ACK (AWS Controllers for K8s)**: https://aws-controllers-k8s.github.io/community/
+
 ## Cost
 - **AWS Pricing**: https://aws.amazon.com/pricing/
 - **Cost Explorer**: https://docs.aws.amazon.com/cost-management/latest/userguide/ce-what-is.html

@@ -1,103 +1,266 @@
 ---
 name: ask-clarifying-questions
-description: Ensures the agent asks clarifying questions before acting on ambiguous, risky, or under-specified requests. Use on every task involving infrastructure changes, deployments, plan creation, or multi-step operations where assumptions could lead to incorrect outcomes.
+description: >-
+  Execution gate that blocks agents from proceeding on ambiguous, risky, or under-specified
+  requests. Enforces clarification before any infrastructure changes, deployments, plan creation,
+  or multi-step operations. This is a control gate, not guidance.
 metadata:
   author: SHELYOG
-  version: 1.1.0
+  version: 2.1.0
   category: workflow
-  updated: 2026-05-03
+  updated: 2026-05-05
 ---
-# Ask Clarifying Questions
+# Clarification Gate
 
-Before executing any non-trivial task, check for ambiguity. If the request is unclear, under-specified, or carries risk, **stop and ask** before proceeding. Never guess on things that matter.
+This skill is an **execution gate** — it blocks work until ambiguity is resolved.
+
+## Execution Gate (HARD RULE)
+
+If required information is missing:
+- **DO NOT** implement
+- **DO NOT** generate code, infrastructure, or commands
+- **DO NOT** create plans or designs
+- **ONLY** ask clarifying questions
+
+Proceed **only** after:
+- User answers the questions, OR
+- User explicitly approves stated assumptions (e.g., "use defaults", "assume QA")
+
+---
+
+## Minimum Required Context
+
+Do not proceed until **all four** are known:
+
+| Priority | Field | What you need | Example |
+|---|---|---|---|
+| 1 (highest) | **Environment** | Target env name | QA, production, dev, all |
+| 2 | **Intent** | Create / modify / delete | "add new" vs "update existing" vs "remove" |
+| 3 | **Scope** | Resources/services affected | payment-service RDS, all VPCs, single module |
+| 4 | **Constraints** | Requirements or limits | cost ceiling, region, compliance, timeline |
+
+If **any** of these are missing → ask before proceeding.
+
+## Context Priority
+
+When multiple fields are missing, clarify in priority order (1 → 4):
+
+1. **Environment** — highest risk; determines blast radius and safety posture
+2. **Intent** — determines if action is destructive, additive, or modifying
+3. **Scope** — defines impact boundary (one resource vs many)
+4. **Constraints** — optimization limits (cost, region, compliance)
+
+If question limit (5) is reached before all are resolved, ask higher-priority fields first. Lower-priority fields can use safe defaults temporarily.
+
+## Avoid Redundant Questions
+
+- Never re-ask questions already answered (even in different wording)
+- Track which fields are resolved after each user response
+- Only ask for missing or conflicting information
+- If user gives partial answer → acknowledge resolved parts, ask only what remains
+- If context was provided earlier in conversation → treat as answered (unless later contradicted)
+
+## Context Invalidation
+
+- If user provides new information that overrides previous context → update resolved fields immediately
+- If later statement contradicts earlier answer → trigger conflict detection again
+- Never persist stale context — most recent explicit statement wins
+- When override involves escalation (e.g., QA → production), re-apply Override Safety rules
+
+---
+
+## Detect Ambiguity
+
+Treat as ambiguous if:
+- Multiple valid interpretations exist
+- Request uses vague terms ("optimize", "fix", "set up", "improve", "clean up")
+- Critical parameters are missing (see minimum context above)
+- Action could affect shared or production systems
+- Scope could be one resource or many
+
+## Detect Conflicts
+
+Treat as **conflicting** (not just ambiguous) if:
+- Context fields contradict (e.g., "QA production cluster" — which is it?)
+- Instructions are incompatible (e.g., "safe" + "delete everything")
+- Scope boundaries overlap or are unclear (e.g., "this module and related resources")
+- Environment and intent mismatch (e.g., "test this in production")
+
+When conflict detected:
+- Name the specific conflict
+- Ask user to resolve before proceeding
+- Do not pick one interpretation over another
+
+```
+I see a conflict: you said "QA production cluster."
+- Did you mean the QA environment, or Production?
+- These are different targets with different safety requirements.
+```
+
+---
 
 ## When to Ask
 
-### Always ask if any of these are unclear:
-- **Target environment** — Which environment? (dev, staging, production, all)
-- **Scope** — Which resources, services, or repos are affected?
-- **Intent** — Is this additive (create/add), modifying (update/change), or destructive (remove/delete)?
-- **Blast radius** — Could this affect production traffic, data, or other teams?
-- **Credentials/access** — Does this need specific IAM roles, secrets, or permissions?
-- **Existing state** — Is there existing infrastructure that might conflict or need migration?
-
 ### Always ask before:
 - Any destructive operation (delete, deprovision, remove)
-- Changes that span multiple environments or accounts
+- Changes spanning multiple environments or accounts
 - Modifications to shared infrastructure (VPC, DNS, IAM, networking)
-- Creating resources with cost implications (RDS, NAT Gateways, large instance types)
+- Creating resources with cost implications (RDS, NAT Gateways, large instances)
 - Changing CI/CD pipelines or deployment workflows
 - Operations where rollback is difficult or impossible
 
 ### Don't ask when:
-- The request is fully specified with no ambiguity
+- Request is fully specified (all 4 minimum context fields are clear)
 - It's a read-only operation (describe, get, list, plan)
-- You're following an approved plan with clear tasks
-- The answer is obvious from context (e.g., file already open, environment clear from branch name)
+- Following an approved plan with explicit tasks
+- Answer is obvious from context (file open, environment clear from branch)
+
+---
 
 ## How to Ask
 
-### Use structured questions (AskQuestion tool) when possible:
-Prefer multiple-choice over open-ended questions. This is faster for the user and reduces back-and-forth.
+### Question Limits
+- Ask **1–5** high-impact questions in the first pass
+- Prioritize questions that eliminate the largest ambiguity
+- Never ask low-impact or obvious questions
+- If >5 unknowns exist, ask the top 5 and state "I'll ask follow-ups after these"
+
+### Use structured questions (AskQuestion tool preferred):
+Multiple-choice is faster for the user and reduces back-and-forth.
 
 ```
 Example: User says "Set up monitoring for the API"
 
-Good questions:
+Questions:
 - "Which API service?" → [api-gateway, user-service, payment-service, all]
-- "Which monitoring?" → [Datadog APM, Datadog monitors/alerts, Dashboard, SLOs, All]
+- "Which monitoring?" → [Datadog APM, monitors/alerts, Dashboard, SLOs, All]
 - "Which environment?" → [QA only, Production only, Both]
 ```
 
-### Question format guidelines:
-- **Be specific** — Don't ask "Can you clarify?" — ask the exact thing you need to know
-- **Provide options** — Give the most likely choices so the user can pick
-- **Batch questions** — Ask all unclear points at once, not one at a time
-- **State your assumption** — If you have a best guess, say "I'll assume X unless you say otherwise"
-- **Explain why you're asking** — Brief context helps the user give better answers
+### Question format:
+- **Be specific** — Don't ask "Can you clarify?" — ask the exact thing you need
+- **Provide options** — Give the most likely choices
+- **Batch questions** — Ask all unclear points at once
+- **State your assumption** — "I'll assume X unless you say otherwise"
+- **Explain why** — Brief context helps the user give better answers
 
-### Examples
+---
 
-**Ambiguous request**: "Add a database"
+## Fast Path
+
+When appropriate, provide recommended defaults so the user can shortcut:
+
+```
+I need a few details. You can answer individually or say "use defaults":
+
+Defaults I'd recommend:
+- Environment: QA (deploy to prod later)
+- Instance: db.r6g.large (right-size after load test)
+- Multi-AZ: yes (standard for stateful services)
+- Encryption: KMS (mandatory per policy)
+
+Proceed with these defaults? Or specify changes?
+```
+
+Valid fast-path responses from user:
+- "use defaults" → proceed with stated defaults
+- "assume QA" → use QA for environment, ask rest
+- "proceed with safe assumptions" → use least-risk options for all unknowns
+
+---
+
+## Override Safety
+
+If user says "use defaults" or "proceed with assumptions", **still block** if:
+- Production environment is involved
+- Operation is destructive (delete, remove, replace)
+- Scope is unclear and could impact multiple systems
+- Changes are irreversible (data loss, state destruction)
+
+In these cases:
+- Acknowledge the fast-path request
+- Explain why explicit confirmation is needed
+- Ask targeted confirmation (not full re-clarification)
+
+```
+You said "use defaults" — but this involves production.
+I need explicit confirmation: deploy Aurora cluster to PRODUCTION with Multi-AZ? [yes/no]
+```
+
+---
+
+## Assumption Escalation
+
+If you must assume to proceed:
+
+1. **Safe default** — Least destructive, least costly, most reversible option
+2. **State it clearly** — "I'm assuming QA environment since you didn't specify"
+3. **Never assume**: production, destructive intent, broad scope, public access
+4. **Document** — Note assumptions in plan or PR description
+
+---
+
+## System Integration
+
+This skill runs as a **pre-gate** for:
+- `/architect` — before creating a plan
+- `/iac-dev` — before implementing
+- `/devops` — before executing workflows
+- `/reviewer` — before flagging ambiguous security configs
+
+**If triggered → block execution until clarification is complete.**
+
+Agents must not partially implement while waiting for answers.
+
+---
+
+## Clarification Completion
+
+After user responds to questions:
+1. Re-check all 4 required fields (environment, scope, intent, constraints)
+2. If any are **still** unclear or unanswered → ask again (only the missing ones)
+3. Only proceed to execution when **all** are satisfied
+4. If user gives partial answer → acknowledge what's resolved, ask what remains
+
+```
+Thanks — environment (QA) and intent (create new) are clear.
+Still need: which service does this RDS belong to, and any size/cost constraints?
+```
+
+This prevents premature execution on partial answers.
+
+---
+
+## Examples
+
+**Ambiguous**: "Add a database"
 ```
 Before I proceed, I need to clarify:
 - Engine: PostgreSQL (Aurora) or MySQL?
 - Environment: QA, Production, or both?
 - Size: What instance class? (e.g., db.r6g.large)
-- Is this a new cluster or a replica/read-only instance of an existing one?
-- Does it need cross-AZ failover?
+- New cluster or replica of existing?
+- Cross-AZ failover needed?
+
+Or say "use defaults" and I'll go with: Aurora PostgreSQL, QA, db.r6g.large, new cluster, Multi-AZ yes.
 ```
 
-**Risky request**: "Clean up unused resources"
+**Risky**: "Clean up unused resources"
 ```
-This could be destructive, so I want to confirm scope:
+This is potentially destructive — I need to confirm:
 - Which account/environment? [QA, Production, Management]
 - Which resource types? [EC2, EBS, Security Groups, IAM, All]
-- Should I list candidates first for review, or proceed directly?
-- Are there any resources that must NOT be touched?
+- List candidates first for review, or proceed directly?
+- Any resources that must NOT be touched?
 ```
 
-**Under-specified request**: "Deploy the new version"
+**Vague**: "Optimize the cluster"
 ```
-A few things to confirm:
-- Which service? [service-a, service-b, all services]
-- Which version/image tag?
-- Deployment target? [QA first then promote, Production directly]
-- Is there a change ticket or PR linked to this?
+"Optimize" could mean several things:
+- Cost optimization? (smaller instances, spot, consolidation)
+- Performance? (right-sizing, scaling, caching)
+- Security hardening? (network policies, IRSA, encryption)
+- All of the above?
+
+Which is the priority?
 ```
-
-## Assumption Escalation
-
-If you must make an assumption to proceed, follow this priority:
-
-1. **Safe default** — Pick the least destructive, least costly, most reversible option
-2. **State it clearly** — "I'm assuming QA environment since you didn't specify"
-3. **Pause on high-risk** — Never assume production. Never assume destructive intent
-4. **Document it** — Note assumptions in the plan or PR description
-
-## Integration with Other Agents
-
-- **Planner**: Ask clarifying questions during the planning phase, before producing the plan
-- **Orchestrator**: Confirm task dependencies and parallel groups if the user's request is ambiguous
-- **Implementer**: Ask before implementing if the plan leaves room for interpretation
-- **Verifier**: Flag ambiguous security configurations rather than assuming they're acceptable

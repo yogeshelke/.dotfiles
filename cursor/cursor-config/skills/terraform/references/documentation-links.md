@@ -1,6 +1,6 @@
 # Terraform Documentation Links
 
-## Core
+## Core Documentation
 - **Terraform Documentation**: https://developer.hashicorp.com/terraform/docs
 - **Terraform Language**: https://developer.hashicorp.com/terraform/language
 - **Terraform CLI**: https://developer.hashicorp.com/terraform/cli
@@ -17,6 +17,7 @@
 - **console**: https://developer.hashicorp.com/terraform/cli/commands/console
 
 ## Providers and Modules
+- **Providers Overview**: https://developer.hashicorp.com/terraform/language/providers
 - **Terraform Registry**: https://registry.terraform.io/
 - **AWS Provider**: https://registry.terraform.io/providers/hashicorp/aws/latest/docs
 - **AWS Provider Best Practices**: https://docs.aws.amazon.com/prescriptive-guidance/latest/terraform-aws-provider-best-practices/introduction.html
@@ -25,6 +26,7 @@
 
 ## State and Backend
 - **Backend Configuration**: https://developer.hashicorp.com/terraform/language/backend
+- **S3 Backend**: https://developer.hashicorp.com/terraform/language/backend/s3
 - **State Management**: https://developer.hashicorp.com/terraform/language/state
 - **Remote State**: https://developer.hashicorp.com/terraform/language/state/remote
 - **Import**: https://developer.hashicorp.com/terraform/language/import

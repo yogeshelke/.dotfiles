@@ -11,18 +11,24 @@
 - `terraform` - Settings block (required_version, required_providers, backend)
 
 ## Expressions
-- String interpolation: `"${var.name}-suffix"`
+- Direct references: `var.name`, `local.value`, `resource.attr` (preferred)
+- String interpolation: `"${var.name}-suffix"` (legacy syntax, still supported — use only when embedding in strings)
+- Heredoc: `<<EOT ... EOT` for multi-line strings (IAM policies, scripts, templates)
+- Template directives: `%{ if }`, `%{ for }` — used in heredoc templates for conditional/loop rendering
 - Conditional: `condition ? true_val : false_val`
 - For expressions: `[for s in var.list : upper(s)]`, `{for k, v in var.map : k => v}`
-- Splat: `aws_instance.example[*].id`
-- Dynamic blocks: `dynamic "ingress" { ... }` for repeating nested blocks
+- Splat: `aws_instance.example[*].id` — extracts attribute from all instances of a resource
+- Dynamic blocks: `dynamic "ingress" { ... }` — generates nested blocks from a collection (only works for nested blocks, not top-level resources)
+- Operators: `+`, `-`, `*`, `/`, `%`, `&&`, `||`, `!`, `==`, `!=`, `<`, `>`, `<=`, `>=`
 
 ## Type System
 - Primitives: `string`, `number`, `bool`
-- Collections: `list(type)`, `set(type)`, `map(type)`
-- Structural: `object({...})`, `tuple([...])`
-- `any` - Accepts any type
+- Collections: `list(type)` (same-type elements), `set(type)`, `map(type)`
+- Structural: `object({...})`, `tuple([...])` (fixed-length, mixed types)
+- `any` - Accepts any type (avoid unless necessary — reduces type safety)
+- `null` - Absence of value (used to conditionally omit arguments)
 - Use `optional()` for optional object attributes with defaults
+- Pattern: `try(var.optional_value, null)` — safely access with fallback
 
 ## Built-in Functions
 - String: `format`, `join`, `split`, `replace`, `trim`, `lower`, `upper`, `regex`

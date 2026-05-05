@@ -20,6 +20,7 @@ You are the **Security Reviewer**. Security-first mindset for every code change.
 | AWS security | `skills/aws/SKILL.md` |
 | Kubernetes | `skills/kubernetes/SKILL.md` |
 | GitHub Actions | `skills/github/SKILL.md` |
+| Dockerfile, container image | `skills/docker/SKILL.md` |
 
 ## Unified Review Checklist
 

@@ -1,546 +1,280 @@
 ---
 name: github
 description: >-
-  GitHub and GitHub Actions reference for repository management, CI/CD pipelines, and automation. 
-  Use when user mentions "GitHub", "GitHub Actions", "pull request", "PR", "workflow", "CI/CD", 
-  "repository", "branch", "gh CLI", "OIDC", "secrets", "environments", or asks about version control, 
-  automation, continuous integration, or deployment workflows.
+  GitHub and Actions decision system for repository management and CI/CD. Use for branching strategy,
+  workflow design, Actions security, environment configuration, and gh CLI workflows.
+  Do NOT use for general git operations or non-GitHub CI/CD platforms.
 metadata:
   author: SHELYOG
-  version: 2.0.0
+  version: 4.0.0
   category: devops
-  updated: 2026-05-03
+  updated: 2026-05-05
 ---
-# GitHub & GitHub Actions Comprehensive Reference
+# GitHub and Actions Decision Engine
 
-Use this skill when working with GitHub repositories, pull requests, branching, GitHub Actions workflows, CI/CD pipelines, or the gh CLI.
+Decision rules for GitHub repositories and CI/CD pipelines. Not reference material.
 
-## Repository Management
+- Git PR workflow → `skills/git-pr-workflow/`
+- Datadog CI monitoring → `skills/datadog/`
+- This file answers: **how to structure repos, secure Actions, and design CI/CD pipelines**
 
-### Branch Protection Rules
-| Setting | Purpose |
-|---------|---------|
-| Require PR reviews | Enforce code review before merge |
-| Require status checks | CI must pass before merge |
-| Require signed commits | GPG-signed commits only |
-| Restrict push access | Limit who can push to branch |
-| Require linear history | No merge commits (rebase/squash only) |
-| Lock branch | Prevent any changes |
+## Interaction Model
+- This skill defines **repo structure, Actions pipelines, and CI/CD security** only
+- What to deploy (infrastructure) → `aws` skill
+- How to write Terraform in CI → `terraform` skill
+- How to build container images → `docker` skill
+- Monitoring CI/CD health → `datadog` skill
+- Actual PR creation automation → `git-pr-workflow` skill
 
-### Branching Strategies
-| Strategy | Flow | Best For |
-|----------|------|----------|
-| GitHub Flow | `main` + feature branches | Continuous deployment |
-| Git Flow | `main` + `develop` + `release` + `feature` | Versioned releases |
-| Trunk-based | `main` + short-lived branches | High-velocity teams |
+---
 
-### CODEOWNERS
+## Decision Entry Points
+
+| Task | Read sections |
+|---|---|
+| Set up new repository | REPOSITORY + BRANCHING |
+| Create CI/CD workflow | ACTIONS_WORKFLOW |
+| Secure Actions pipeline | ACTIONS_SECURITY |
+| Configure deployment environments | ENVIRONMENTS |
+| PR/release automation | GH_CLI |
+
+---
+
+## Cross-Cutting Rules
+
+| Decision | Domains | Rule |
+|---|---|---|
+| Pin actions to SHA | Security + Workflow | Default: full SHA; first-party may use major tags if org allows |
+| OIDC for AWS | Security + Environments | No stored AWS credentials — OIDC federation only |
+| Explicit permissions | Security + All | Every workflow declares minimum `permissions` block |
+| Branch protection | Repository + Security | main/master always protected — require PR + CI pass |
+| CODEOWNERS | Repository + All | Define ownership for automated review assignment |
+| Pre-merge ≠ deploy | Workflow + Security | Never apply/deploy on `pull_request` — only on push to main |
+
+---
+
+## [REPOSITORY]
+
+**Branch protection** (mandatory on main):
+- Require PR reviews (minimum 1 approval)
+- Require status checks to pass (CI must succeed)
+- Require linear history (squash or rebase)
+- Restrict direct push (only through PRs)
+
+**CODEOWNERS**:
 ```
-# .github/CODEOWNERS
 *                       @org/platform-team
-/terraform/             @org/infra-team
-/src/api/               @org/backend-team
-/.github/workflows/     @org/devops-team
+/provisioning/          @org/devops-platform
+/.github/workflows/     @org/devops-platform
 ```
 
-## Pull Requests
+**Workflow file protection**:
+- Changes to `.github/workflows/` require platform/security team approval (CODEOWNERS)
+- Never auto-merge workflow changes — workflow = execution engine, compromise = full system compromise
+- Review action version changes as security-sensitive (dependency review)
 
-### PR Best Practices
-- Keep PRs small and focused (< 400 lines)
-- Use draft PRs for work-in-progress
-- Write descriptive titles and descriptions
-- Link to issues using `Closes #123` or `Fixes #456`
-- Use PR templates (`.github/pull_request_template.md`)
-- Request specific reviewers via CODEOWNERS or manually
+**Rulesets vs branch protection**:
+- **Default**: Branch protection rules (simpler, well-understood)
+- **If complex conditions** → Rulesets (target patterns, bypass actors)
+- **If org-wide standards** → Org-level rulesets
 
-### PR Template Example
-```markdown
-<!-- .github/pull_request_template.md -->
-## Summary
-<!-- Brief description of changes -->
+---
 
-## Changes
-- 
+## [BRANCHING]
 
-## Test Plan
-- [ ] Unit tests pass
-- [ ] Integration tests pass
-- [ ] Manual testing completed
+**Strategy selection**:
+- **Default**: Trunk-based (main + short-lived feature branches, <3 days)
+- **If versioned releases** → GitHub Flow (main + feature + release tags)
+- **Avoid**: Git Flow for infrastructure (too complex)
 
-## Related Issues
-Closes #
-```
+**Branch naming**: `<type>/<ticket>-<short-description>`
+- Examples: `feat/PLAT-123-add-rds-module`, `fix/PLAT-456-sg-rule`
 
-### Merge Strategies
-| Method | Result | When to use |
-|--------|--------|-------------|
-| Merge commit | Preserves all commits + merge commit | Feature branches with meaningful commits |
-| Squash and merge | Single commit on target branch | Small PRs, noisy commit history |
-| Rebase and merge | Linear history, no merge commit | Clean commit history, each commit is atomic |
+---
 
-## GitHub Actions
+## [ACTIONS_WORKFLOW]
 
-### Workflow Structure
-```yaml
-name: CI Pipeline
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+**Trigger selection**:
+- **pull_request** → Pre-merge CI (lint, validate, terraform plan)
+- **push to main** → Post-merge deploy (apply, release)
+- **workflow_dispatch** → Manual triggers (with inputs)
+- **schedule** → Recurring tasks (cleanup, rotation)
 
-permissions:
-  contents: read
+**Pre-merge vs post-merge** (critical separation):
+- Pre-merge (PR): validate, lint, plan, test — **never apply/deploy**
+- Post-merge (main): apply, deploy, release — **only from protected branch**
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build
-        run: make build
+**Workflow isolation**: Separate CI and CD into different workflow files
+- Reduced blast radius, clearer security boundaries, independent failure domains
 
-  test:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Test
-        run: make test
-```
+**Job structure**:
+- Shared filesystem state → same job
+- Independent + parallelizable → separate jobs
+- Sequential with handoff → `needs:` dependency
 
-### Trigger Events
-| Event | Description |
-|-------|-------------|
-| `push` | Commits pushed to branch |
-| `pull_request` | PR opened, synchronized, reopened |
-| `workflow_dispatch` | Manual trigger with inputs |
-| `schedule` | Cron-based schedule |
-| `release` | Release published, created, etc. |
-| `workflow_call` | Called by another workflow (reusable) |
-| `repository_dispatch` | External webhook trigger |
-| `merge_group` | Merge queue events |
+**Performance**:
+- Cache: `actions/cache` for terraform providers, node_modules, pip
+- Concurrency: `concurrency: { group: ${{ github.workflow }}-${{ github.ref }}, cancel-in-progress: true }`
+- Timeout: Always set `timeout-minutes` (default 6 hours is too long)
+- Matrix: multi-environment plans with `fail-fast: false`
 
-### Event Filters
-```yaml
-on:
-  push:
-    branches: [main, 'release/**']
-    paths: ['src/**', '!src/**/*.md']
-    tags: ['v*']
-  pull_request:
-    types: [opened, synchronize, reopened]
-    branches: [main]
-```
+---
 
-### Runners
-| Runner | Label | Use Case |
-|--------|-------|----------|
-| GitHub-hosted (Linux) | `ubuntu-latest`, `ubuntu-24.04` | Standard CI/CD |
-| GitHub-hosted (macOS) | `macos-latest`, `macos-15` | iOS/macOS builds |
-| GitHub-hosted (Windows) | `windows-latest` | Windows builds |
-| Self-hosted | Custom labels | Private network, GPU, compliance |
-| Larger runners | `ubuntu-latest-xl` etc. | Resource-intensive builds |
+## [ACTIONS_SECURITY]
 
-### Job Configuration
-```yaml
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    concurrency:
-      group: deploy-${{ github.ref }}
-      cancel-in-progress: true
-    environment:
-      name: production
-      url: https://app.example.com
-    if: github.ref == 'refs/heads/main'
-    strategy:
-      matrix:
-        node-version: [18, 20, 22]
-      fail-fast: false
-```
-
-### Common Actions
-| Action | Purpose |
-|--------|---------|
-| `actions/checkout@v4` | Check out repository code |
-| `actions/setup-node@v4` | Set up Node.js |
-| `actions/setup-python@v5` | Set up Python |
-| `actions/setup-go@v5` | Set up Go |
-| `actions/cache@v4` | Cache dependencies |
-| `actions/upload-artifact@v4` | Upload build artifacts |
-| `actions/download-artifact@v4` | Download artifacts from other jobs |
-| `docker/build-push-action@v6` | Build and push Docker images |
-| `docker/login-action@v3` | Login to container registry |
-| `aws-actions/configure-aws-credentials@v4` | Configure AWS credentials (OIDC) |
-| `aws-actions/amazon-ecr-login@v2` | Login to Amazon ECR |
-| `hashicorp/setup-terraform@v3` | Set up Terraform CLI |
-
-## Secrets and Variables
-
-### Secret Types
-| Type | Scope | Access |
-|------|-------|--------|
-| Repository secrets | Single repo | All workflows in repo |
-| Environment secrets | Specific environment | Jobs using that environment |
-| Organization secrets | Org-wide or selected repos | Workflows in permitted repos |
-
-### Using Secrets
-```yaml
-steps:
-  - name: Deploy
-    env:
-      API_KEY: ${{ secrets.API_KEY }}
-    run: ./deploy.sh
-```
-
-### Variables (Non-sensitive)
-```yaml
-steps:
-  - name: Build
-    env:
-      APP_ENV: ${{ vars.APP_ENV }}
-    run: echo "Building for $APP_ENV"
-```
-
-### Secret Best Practices
-- Never echo or log secrets
-- Use environment-scoped secrets for sensitive environments
-- Rotate secrets regularly
-- Use OIDC instead of long-lived credentials where possible
-- Mask secrets in logs with `::add-mask::`
-
-## Environments
-
-### Environment Configuration
-- **Protection rules** - Required reviewers, wait timers, branch restrictions
-- **Environment secrets** - Scoped to jobs targeting the environment
-- **Deployment branches** - Restrict which branches can deploy
-- **Custom rules** - Third-party integrations for approvals
-
-### Environment Usage
-```yaml
-jobs:
-  deploy-staging:
-    environment: staging
-    runs-on: ubuntu-latest
-    steps:
-      - run: ./deploy.sh staging
-
-  deploy-production:
-    needs: deploy-staging
-    environment:
-      name: production
-      url: https://app.example.com
-    runs-on: ubuntu-latest
-    steps:
-      - run: ./deploy.sh production
-```
-
-## OIDC (OpenID Connect)
-
-### AWS OIDC Authentication
+**OIDC authentication to AWS**:
 ```yaml
 permissions:
   id-token: write
   contents: read
 
-steps:
-  - uses: aws-actions/configure-aws-credentials@v4
-    with:
-      role-to-assume: arn:aws:iam::123456789012:role/github-actions-role
-      aws-region: us-east-1
-      role-session-name: github-actions-${{ github.run_id }}
+- uses: aws-actions/configure-aws-credentials@v4
+  with:
+    role-to-assume: arn:aws:iam::123456789:role/github-actions-role
+    aws-region: eu-central-1
 ```
+- Role trust policy restricts to specific repo + branch
 
-### AWS IAM Trust Policy for OIDC
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [{
-    "Effect": "Allow",
-    "Principal": {
-      "Federated": "arn:aws:iam::123456789012:oidc-provider/token.actions.githubusercontent.com"
-    },
-    "Action": "sts:AssumeRoleWithWebIdentity",
-    "Condition": {
-      "StringEquals": {
-        "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
-      },
-      "StringLike": {
-        "token.actions.githubusercontent.com:sub": "repo:org/repo:*"
-      }
-    }
-  }]
-}
-```
+**Action pinning**:
+- **Default**: Pin to full commit SHA
+- **Exception**: Trusted first-party actions may use major tags if org policy permits
+- Requires update strategy: Dependabot or Renovate for SHA bumps
+- **Trust rule**: Verify source (owner, repo, commits) before adopting; prefer verified creators or org-owned forks; pin ≠ trust
 
-## Reusable Workflows
-
-### Defining a Reusable Workflow
+**Checkout hardening**:
 ```yaml
-# .github/workflows/reusable-deploy.yml
-name: Reusable Deploy
-on:
-  workflow_call:
-    inputs:
-      environment:
-        required: true
-        type: string
-      image-tag:
-        required: true
-        type: string
-    secrets:
-      AWS_ROLE_ARN:
-        required: true
+- uses: actions/checkout@<sha>
+  with:
+    persist-credentials: false
+```
+- Prevents token reuse/leakage in subsequent steps
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Deploy
-        run: ./deploy.sh ${{ inputs.environment }} ${{ inputs.image-tag }}
+**`GITHUB_TOKEN` scope**:
+- Default can be broad if not explicitly scoped — always define `permissions:` block
+- Fork PRs → always read-only regardless of workflow config
+- Use minimum scope per job (job-level overrides workflow-level)
+- All steps in a job share the same permissions — split jobs if different permissions needed (avoid over-privileged jobs)
+
+**Secrets**:
+- Environment-scoped (not repo-wide) for sensitive values
+- Never echo/log secrets; never use untrusted input in `run:` blocks (injection risk)
+
+**`pull_request_target` (CRITICAL)**:
+- **Never** use with `actions/checkout` of fork PR code
+- Runs with write permissions + secrets against untrusted code — known exploit vector
+- **Alternative**: `workflow_run` triggered by a separate `pull_request` workflow
+
+**Fork PR behavior**:
+- Fork PRs → read-only token, no secrets access
+- **Default**: No write permissions for fork workflows
+- **Exception**: Only with explicit approval + strict conditions (e.g., labeled by maintainer)
+
+**Self-hosted runners**:
+- Access to internal network, host filesystem, stored credentials — high-risk surface
+- **Never** run fork PRs on self-hosted runners
+- Restrict to: trusted branches, manual approval, or labeled PRs only
+- Prefer GitHub-hosted for public/fork workflows
+
+**Cache and artifact safety**:
+- Do not save cache on untrusted PR workflows (cache poisoning risk)
+- Treat artifacts from other workflows as untrusted input
+- Never execute downloaded artifacts without validation
+- `workflow_run` + artifacts = known attack path
+
+---
+
+## [ENVIRONMENTS]
+
+**When to use**: Production deploys, user-affecting changes, different secrets per environment
+
+**Protection rules**:
+- Required reviewers for production
+- Wait timer (optional — gives time to cancel)
+- Restrict to specific branches (only `main` → prod)
+
+**Environment secrets**: Scoped per environment — prevents accidental prod secret use in dev
+
+---
+
+## [GH_CLI]
+
+```bash
+gh pr create --title "feat: add Aurora module" --body "..." --reviewer team:devops-platform
+gh pr merge --squash --auto
+gh pr checks
+gh release create v1.2.0 --generate-notes
+gh pr list --state open --author @me
 ```
 
-### Calling a Reusable Workflow
-```yaml
-jobs:
-  deploy-staging:
-    uses: ./.github/workflows/reusable-deploy.yml
-    with:
-      environment: staging
-      image-tag: ${{ needs.build.outputs.image-tag }}
-    secrets:
-      AWS_ROLE_ARN: ${{ secrets.STAGING_AWS_ROLE_ARN }}
+---
+
+## Workflow Lifecycle
+
 ```
-
-### Reusable Workflow Limits
-- Max 4 levels of nesting
-- Max 20 reusable workflows per workflow file
-- Secrets must be passed explicitly (or use `secrets: inherit`)
-- `env` context not available in `workflow_call` triggered workflows
-
-## Composite Actions
-
-### Creating a Composite Action
-```yaml
-# .github/actions/setup-app/action.yml
-name: Setup Application
-description: Install dependencies and build
-inputs:
-  node-version:
-    description: Node.js version
-    default: '20'
-runs:
-  using: composite
-  steps:
-    - uses: actions/setup-node@v4
-      with:
-        node-version: ${{ inputs.node-version }}
-        cache: npm
-    - run: npm ci
-      shell: bash
-    - run: npm run build
-      shell: bash
+PR (pre-merge)          Merge (post-merge)       Post-deploy
+─────────────────────   ─────────────────────    ─────────────────
+lint                    apply / deploy           monitor (Datadog)
+validate                release tag              alert on failure
+terraform plan          notify Slack             rollback if needed
+security scan
 ```
+- This skill owns: PR + Merge phases
+- Observability: `skills/datadog/` owns post-deploy
+- Rollback: ArgoCD/Helm for apps, Terraform for infra
 
-### Using a Composite Action
-```yaml
-steps:
-  - uses: actions/checkout@v4
-  - uses: ./.github/actions/setup-app
-    with:
-      node-version: '22'
-```
+---
 
-## Workflow Patterns
+## Execution Guarantees
 
-### CI/CD Pipeline
-```yaml
-name: CI/CD
-on:
-  push:
-    branches: [main]
-  pull_request:
+All workflows must:
+- Fail fast on critical errors (no silent continuation)
+- Never deploy on `pull_request` events
+- Require CI success before merge
+- Deploy only from protected branches
+- Set explicit `timeout-minutes` on every job
 
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: make lint
+---
 
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: make test
+## Anti-Patterns
 
-  build:
-    needs: [lint, test]
-    runs-on: ubuntu-latest
-    outputs:
-      image-tag: ${{ steps.meta.outputs.tags }}
-    steps:
-      - uses: actions/checkout@v4
-      - id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-app
-          tags: type=sha,prefix=
+| Anti-Pattern | Do This Instead |
+|---|---|
+| Actions pinned to tags | Pin to full SHA |
+| No `permissions` block | Explicit minimum permissions |
+| AWS credentials in secrets | OIDC federation |
+| Untrusted input in `run:` | Validate/sanitize inputs |
+| No `timeout-minutes` | Always set explicit timeout |
+| Direct push to main | Branch protection + PR required |
+| No CODEOWNERS | Define per directory/pattern |
+| Manual prod deploys without gate | Environment protection rules |
+| Repo-wide secrets for prod | Environment-scoped secrets |
+| `pull_request_target` + checkout fork | `workflow_run` pattern |
+| Deploy on pull_request | Deploy only on push to main |
+| CI and CD in same workflow | Separate workflow files |
+| Fork PRs on self-hosted runners | GitHub-hosted for untrusted code |
+| `persist-credentials: true` | Always set `false` on checkout |
+| Cache saved on fork PRs | Restrict cache save to trusted events |
 
-  deploy:
-    if: github.ref == 'refs/heads/main'
-    needs: build
-    uses: ./.github/workflows/reusable-deploy.yml
-    with:
-      environment: production
-      image-tag: ${{ needs.build.outputs.image-tag }}
-```
+---
 
-### Matrix Strategy
-```yaml
-jobs:
-  test:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-        python: ['3.11', '3.12', '3.13']
-        exclude:
-          - os: macos-latest
-            python: '3.11'
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python }}
-```
+## Troubleshooting Decision Trees
 
-### Concurrency Control
-```yaml
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-```
+**Workflow not triggering?**
+1. Event type correct? 2. Branch/path filter matches? 3. Workflow file on default branch? 4. Concurrency cancelling?
 
-## Permissions
+**OIDC auth failing?**
+1. Role trust policy allows repo/branch? 2. `id-token: write` set? 3. Correct role ARN? 4. OIDC provider configured in AWS?
 
-### Minimum Permissions
-```yaml
-permissions:
-  contents: read          # Checkout code
-  id-token: write         # OIDC token
-  pull-requests: write    # Comment on PRs
-  packages: write         # Push to GHCR
-  issues: write           # Create/update issues
-  actions: read           # Read workflow runs
-```
+**Permission error?**
+1. `permissions` block too restrictive? 2. Branch protection blocking? 3. Fork PR (read-only token)? 4. Environment approval pending?
 
-### GITHUB_TOKEN Permissions
-- Automatically available in every workflow
-- Scoped to the repository
-- Use `permissions` key to restrict (principle of least privilege)
-- Cannot trigger other workflows (prevents recursive loops)
-
-## gh CLI
-
-### Common Commands
-| Command | Purpose |
-|---------|---------|
-| `gh repo clone org/repo` | Clone repository |
-| `gh pr create --title "..." --body "..."` | Create pull request |
-| `gh pr list` | List open pull requests |
-| `gh pr view 123` | View PR details |
-| `gh pr checks 123` | View CI status |
-| `gh pr merge 123 --squash` | Merge PR |
-| `gh issue create --title "..."` | Create issue |
-| `gh issue list --label bug` | List issues by label |
-| `gh run list` | List workflow runs |
-| `gh run view <id>` | View workflow run |
-| `gh run watch <id>` | Watch a running workflow |
-| `gh release create v1.0.0` | Create a release |
-| `gh api repos/{owner}/{repo}/pulls` | Direct API call |
-
-### gh CLI in Actions
-```yaml
-steps:
-  - uses: actions/checkout@v4
-  - name: Create PR comment
-    env:
-      GH_TOKEN: ${{ github.token }}
-    run: gh pr comment ${{ github.event.pull_request.number }} --body "Deployed to staging"
-```
-
-## Security Best Practices
-
-### Workflow Security
-- Pin actions to full commit SHA (not tags): `actions/checkout@a81bbb...`
-- Use `permissions` to restrict `GITHUB_TOKEN` scope
-- Avoid `pull_request_target` with `actions/checkout` on PR head (code injection risk)
-- Never use `${{ github.event.*.body }}` in `run:` commands (injection risk)
-- Use OIDC for cloud provider authentication instead of stored credentials
-- Audit third-party actions before using
-
-### Dependabot
-```yaml
-# .github/dependabot.yml
-version: 2
-updates:
-  - package-ecosystem: github-actions
-    directory: /
-    schedule:
-      interval: weekly
-    groups:
-      actions:
-        patterns: ["*"]
-  - package-ecosystem: npm
-    directory: /
-    schedule:
-      interval: weekly
-```
-
-## Troubleshooting
-
-### Workflow Issues
-- Workflow not triggering → Check event filters, branch names, path filters
-- Permission denied → Review `permissions` key, check GITHUB_TOKEN scope
-- Action not found → Verify action reference, check marketplace
-- Job timeout → Increase `timeout-minutes`, check for hanging processes
-
-### OIDC Issues
-- AssumeRoleWithWebIdentity failed → Check trust policy conditions, verify `sub` claim format
-- Token audience mismatch → Ensure `aud` is `sts.amazonaws.com`
-- Wrong account → Verify `role-to-assume` ARN
-
-### Runner Issues
-- No matching runner → Check runner labels, verify self-hosted runner is online
-- Disk space → Use `actions/cache` cleanup, minimize artifacts
-- Rate limits → Use `GITHUB_TOKEN` instead of PAT, implement retry logic
+---
 
 ## Reference Documentation
 
-### Core
-- **GitHub Docs**: https://docs.github.com/
-- **GitHub Actions Docs**: https://docs.github.com/en/actions
-- **Actions Marketplace**: https://github.com/marketplace?type=actions
-- **GitHub REST API**: https://docs.github.com/en/rest
-- **GitHub GraphQL API**: https://docs.github.com/en/graphql
-
-### Actions
-- **Workflow Syntax**: https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions
-- **Reusable Workflows**: https://docs.github.com/en/actions/using-workflows/reusing-workflows
-- **Contexts and Expressions**: https://docs.github.com/en/actions/learn-github-actions/contexts
-- **Environment Variables**: https://docs.github.com/en/actions/learn-github-actions/variables
-- **Encrypted Secrets**: https://docs.github.com/en/actions/security-guides/encrypted-secrets
-
-### Security
+- **GitHub Actions**: https://docs.github.com/en/actions
+- **Workflow Syntax**: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions
+- **OIDC for AWS**: https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services
 - **Security Hardening**: https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions
-- **OIDC**: https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect
-- **Permissions**: https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs
-
-### gh CLI
-- **gh CLI Manual**: https://cli.github.com/manual/
-- **gh API**: https://cli.github.com/manual/gh_api
+- **Environments**: https://docs.github.com/en/actions/deployment/targeting-different-environments
+- **gh CLI**: https://cli.github.com/manual/

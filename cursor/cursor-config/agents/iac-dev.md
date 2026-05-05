@@ -22,6 +22,7 @@ You are the **Infrastructure as Code Developer**. You write production-quality T
 | Kubernetes manifests | `skills/kubernetes/SKILL.md` |
 | Karpenter | `skills/karpenter/SKILL.md` |
 | Envoy Gateway | `skills/envoy-gateway/SKILL.md` |
+| Dockerfile, container image, ECR | `skills/docker/SKILL.md` |
 
 ## Coding Standards
 

@@ -1,84 +1,109 @@
 ---
 name: git-pr-workflow
 description: >-
-  Automated end-to-end Git workflow that commits changes, pushes branch, creates PR 
-  with devops-platform team review, and notifies ae_devops Slack channel. Streamlines 
-  the entire PR creation process from uncommitted changes to team notification. 
-  Use ONLY when user says "pr workflow", "git pr", "create pr workflow", "run pr workflow", 
-  or explicitly asks to "commit, push and create PR". Do NOT trigger on general PR 
+  Automated end-to-end Git workflow that commits changes, pushes branch, creates PR
+  with devops-platform team review, and notifies ae_devops Slack channel.
+  Use ONLY when user says "pr workflow", "git pr", "create pr workflow", "run pr workflow",
+  or explicitly asks to "commit, push and create PR". Do NOT trigger on general PR
   discussions or questions about pull requests.
 metadata:
   author: SHELYOG
-  version: 1.2.0
+  version: 2.0.0
   category: automation
-  updated: 2026-05-03
+  updated: 2026-05-05
   mcp-server: user-slack
 ---
-
 # Git PR Workflow
 
-This skill automates the complete Git workflow for creating PRs with team notifications.
+Automates: commit → push → PR → Slack notification with mandatory approval gates.
 
 ## When to Use
 
-Trigger this skill ONLY when the user types these specific phrases:
-- **"pr workflow"** (safe trigger - won't conflict with normal PR mentions)
-- **"git pr"**
-- **"create pr workflow"**
-- **"run pr workflow"**
+Trigger ONLY on these phrases:
+- "pr workflow" / "git pr" / "create pr workflow" / "run pr workflow"
 - "Commit, push and create PR"
-- "Follow the standard PR workflow"
 
-**DO NOT trigger** when user just mentions "PR" in normal conversation or asks questions about PRs.
+**DO NOT trigger** on casual PR mentions or PR questions.
+
+---
+
+## Safety Gate (MANDATORY)
+
+Before running `git commit`, `git push`, `gh pr create`, or Slack notification:
+
+1. Show `git status` and `git diff --stat`
+2. Show list of files to be committed
+3. Show proposed commit message
+4. Show proposed PR title and body
+5. Show proposed Slack message
+6. **Ask for explicit approval**
+
+**Do not proceed without approval.** No exceptions.
+
+---
 
 ## Workflow Steps
 
-Follow these steps in order:
+### 1. Inspect State
 
-### 1. Check Git Status
 ```bash
 git status
+git diff --stat
+git diff --cached --stat
+git branch --show-current
 ```
-Verify there are staged or unstaged changes to commit.
 
-### 2. Commit Changes
-Generate a descriptive commit message based on the changes:
+Verify there are changes to commit. If nothing to commit → inform user and stop.
+
+### 2. Stage Files
+
+- **If files already staged** → Use staged files only
+- **If nothing staged** → Ask user which files to stage (show list)
+- **Never** run `git add .` without explicit user approval
+
+### 3. Preview and Approve (Safety Gate)
+
+Present the **Preflight Summary** (see templates) and wait for approval.
+
+### 4. Commit Changes
+
 ```bash
 git commit -m "$(cat <<'EOF'
-[Type]: [Brief description]
+[type]: [brief description]
 
-- [Change 1 with details]
-- [Change 2 with details]
-- [Change 3 with details]
+- [Change 1]
+- [Change 2]
 
 EOF
 )"
 ```
 
-**Commit Message Guidelines:**
-- Use conventional commit types: feat, fix, refactor, docs, chore, etc.
-- Keep first line under 50 characters
-- Use bullet points for detailed changes
-- Focus on WHY and WHAT, not HOW
+Commit message rules:
+- Conventional types: feat, fix, refactor, docs, chore
+- First line under 50 characters
+- Bullet points for details
+- Focus on WHY and WHAT
 
-### 3. Push Branch
+### 5. Push Branch
+
 ```bash
 git push -u origin HEAD
 ```
-Push the current branch to remote with upstream tracking.
 
-### 4. Create PR with Team Assignment
+If push fails → stop and report state (commit succeeded, push failed). Do not retry automatically.
+
+### 6. Create PR
+
 ```bash
 gh pr create \
   --title "[Descriptive PR Title]" \
   --body "$(cat <<'EOF'
 ## Summary
-- [Brief overview of changes]
-- [Key functionality added/modified]
+- [Key change]
+- [Important modification]
 
 ## Test plan
 - [ ] [Testing step 1]
-- [ ] [Testing step 2]
 - [ ] [Validation step]
 
 EOF
@@ -86,78 +111,52 @@ EOF
   --reviewer team:fielmann-ag/devops-platform
 ```
 
-**PR Requirements:**
-- Clear, descriptive title
-- Summary section with bullet points
-- Test plan with checkboxes
-- Always assign to `team:fielmann-ag/devops-platform`
+### 7. Send Slack Notification
 
-### 5. Send Slack Notification
+Use MCP Slack tool (`user-slack` server, `conversations_add_message`):
 
-Use the MCP Slack tool to notify the team:
-```bash
-# Get repository name from git remote
-REPO_NAME=$(basename $(git remote get-url origin) .git)
-
-# Extract PR URL from previous gh command output
-# Use the returned PR URL in the Slack message
-```
-
-**Slack Message Template:**
 ```
 Hi Team, Kindly review PR made in [REPOSITORY_NAME]
-Changes: [Brief summary of changes - 1 line]
+Changes: [One-line summary]
 PR: [PR_URL]
 ```
 
-**Slack Configuration:**
-- Channel: `#ae_devops`
-- Format: 3-line message as specified
-- Include repository name, brief changes summary, and PR link
+Channel: `#ae_devops`
+
+---
 
 ## Error Handling
 
-### Common Issues:
-1. **No changes to commit**: Inform user and exit gracefully
-2. **Branch not pushed**: Ensure push succeeds before creating PR
-3. **PR creation fails**: Check if branch already has an open PR
-4. **Slack notification fails**: Warn user but don't block the workflow
+| Failure point | State | Action |
+|---|---|---|
+| No changes to commit | Clean | Inform user, stop |
+| Push fails | Commit exists locally | Report state, suggest manual fix |
+| PR creation fails | Branch pushed | Check for existing PR, report |
+| Slack fails | PR created | Warn user, provide PR URL anyway |
 
-### Recovery Steps:
-- If any step fails, stop the workflow and report the error
-- Provide specific guidance for manual completion
-- Never leave the process in an incomplete state
+**Rules**:
+- If any step fails → stop immediately and report current state
+- Provide what succeeded and what failed
+- Suggest manual recovery steps
+- Partial states are acceptable — do not attempt to "undo" completed steps
+
+---
 
 ## MCP Tool Integration
 
-### Required MCP Tools:
-1. **Slack**: `user-slack` server
-   - Tool: `conversations_add_message`
-   - Channel: `#ae_devops`
-   - Format: `text/plain` or `text/markdown`
+### Slack (`user-slack` server):
+- Tool: `conversations_add_message`
+- Channel: `#ae_devops`
+- Read schema before first use
 
-### Before Using Slack:
-1. Read the Slack tool schema: `/Users/SHELYOG/.cursor/projects/Users-SHELYOG-git-ae-platform-contexts/mcps/user-slack/tools/conversations_add_message.json`
-2. Use `CallMcpTool` with proper parameters
-3. Handle authentication if required
+---
 
-## Complete Example
+## Configuration
 
-**User Request:** "Commit, push and create PR"
+| Setting | Value |
+|---|---|
+| Team reviewer | `team:fielmann-ag/devops-platform` |
+| Slack channel | `#ae_devops` |
+| Slack format | 3-line message (repo, changes, PR URL) |
 
-**Agent Response:**
-1. Check `git status` - show current changes
-2. Commit with descriptive message based on changes
-3. Push branch to remote
-4. Create PR with summary and assign to devops-platform team
-5. Send 3-line Slack notification to #ae_devops
-6. Confirm completion with PR URL
-
-## Customization Notes
-
-This skill is configured for:
-- **Team**: fielmann-ag/devops-platform
-- **Slack Channel**: #ae_devops
-- **Repository Context**: ae-platform-contexts and related repos
-
-For different teams or channels, modify the `--reviewer` and `channel_id` parameters accordingly.
+For different teams/channels, modify `--reviewer` and channel accordingly.

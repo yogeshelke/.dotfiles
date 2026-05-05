@@ -110,13 +110,43 @@ When an agent's output is rejected or validation fails, the workflow loops back 
 - Maximum 2 rejection loops on the same issue before escalating to user
 - Never skip the rejection — always loop back, never push forward with known issues
 
+## Conflict Resolution (priority order)
+
+When agents, rules, or skills produce conflicting guidance:
+
+1. **Security wins** — `aws-security.mdc` and `command-restrictions.mdc` override all other decisions
+2. **Architecture wins over implementation** — If `/architect`'s plan says Aurora Serverless v2, `/iac-dev` must not switch to standard Aurora without user approval
+3. **Explicit plan wins over skill defaults** — An approved `.plan.md` overrides generic skill guidance (e.g., plan says "t3.medium" → skill default of "Graviton" doesn't apply to that resource)
+4. **Specific rule wins over general** — `terraform.mdc` on Terraform topics beats `aws-security.mdc` on Terraform coding style (but security constraints still apply)
+5. **If still ambiguous** → Escalate to user with the conflict clearly stated
+
+### Consistency Requirements
+
+- Decisions made in the Plan phase are binding during Build — no silent changes
+- If `/iac-dev` discovers the plan's decision is unimplementable, it must stop and explain why (not substitute)
+- Terminology is consistent: if the plan says "payment-db", every agent uses "payment-db" (not "payments-rds" or "pay-aurora")
+- Resource names, module paths, and variable names from the plan are used verbatim
+
+### Skill Boundaries
+
+| Skill | Decides | Does NOT Decide |
+|-------|---------|-----------------|
+| `aws/` | Which AWS service to use, architecture patterns | How to write the Terraform code |
+| `terraform/` | How to write HCL, module structure, state management | Which AWS service to pick |
+| `eks/` | EKS cluster configuration, add-ons, networking mode | General AWS networking or IAM patterns |
+| `kubernetes/` | Workload specs, scheduling, network policies | EKS-specific infra (node groups, IRSA) |
+| `helm/` | Chart structure, values patterns, templating | Which K8s resources to deploy |
+| `docker/` | Image builds, Dockerfile patterns, ECR workflow | K8s deployment specs or CI/CD pipeline logic |
+
+When two skills overlap (e.g., EKS networking touches both `aws/` and `eks/`), the more specific skill owns the decision.
+
 ## Rules
 
-- Never auto-switch agents -- only suggest and let the user invoke
+- Never auto-switch agents — only suggest and let the user invoke
 - One agent persona active at a time
 - All agents inherit `command-restrictions.mdc`, `interactive-gate.mdc`, and `verification-gate.mdc`
 - All agents follow `context-engineering.mdc` for session management
-- Agent personas are defined in `agents/` -- commands are thin wrappers
+- Agent personas are defined in `agents/` — commands are thin wrappers
 - Reference the active `.plan.md` file when coordinating between phases
 - Agents must show verification evidence before handoff (see `verification-gate.mdc`)
 - On failure, agents follow systematic debugging — one hypothesis at a time, escalate after 3 attempts
