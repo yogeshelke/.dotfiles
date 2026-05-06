@@ -74,7 +74,7 @@ Internet → AWS NLB (L4) → Envoy Gateway → K8s Service → Pods
 | Performance/latency issues | PERFORMANCE |
 | TLS certificate setup | TLS |
 | Gateway placement / multi-team | ROUTING (Gateway design) |
-| Debugging failures | TROUBLESHOOTING |
+| Debugging failures | Troubleshooting Decision Trees |
 
 ---
 

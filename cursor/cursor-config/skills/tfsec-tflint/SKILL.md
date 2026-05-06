@@ -36,7 +36,7 @@ Decision rules for Terraform quality gates: TFLint, tfsec, pre-commit, and terra
 | Configure TFLint rules | TFLINT |
 | Set up tfsec/trivy scanning | TFSEC |
 | Generate module documentation | TERRAFORM_DOCS |
-| Integrate with GitHub security tab | SARIF_INTEGRATION |
+| Integrate with GitHub security tab | TFSEC |
 | Fix pre-commit failures | PRE_COMMIT + TROUBLESHOOTING |
 
 ---

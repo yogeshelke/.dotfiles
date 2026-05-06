@@ -33,12 +33,12 @@ Decision rules for Amazon MSK clusters and Kafka ecosystem management.
 
 | Task | Read sections |
 |---|---|
-| New MSK cluster | CLUSTER_CONFIG + NETWORKING + SECURITY |
-| Kafka ACL management | KAFKA_PROVIDER + ACLS |
+| New MSK cluster | CLUSTER_CONFIG + SECURITY |
+| Kafka ACL management | KAFKA_PROVIDER |
 | Client authentication | SECURITY |
 | Schema Registry setup | SCHEMA_REGISTRY |
 | MSK monitoring | MONITORING |
-| Topic management | KAFKA_PROVIDER + TOPICS |
+| Topic management | KAFKA_PROVIDER |
 | MSK module configuration | TERRAFORM_MODULES |
 
 ---

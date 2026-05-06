@@ -34,7 +34,7 @@ Decision rules for Aurora PostgreSQL cluster management.
 
 | Task | Read sections |
 |---|---|
-| New Aurora cluster | CLUSTER_CONFIG + NETWORKING + ENCRYPTION |
+| New Aurora cluster | CLUSTER_CONFIG + NETWORKING |
 | Manage database users/roles | POSTGRESQL_PROVIDER |
 | Configure credentials | SECRETS_MANAGEMENT |
 | Read replica strategy | REPLICAS |

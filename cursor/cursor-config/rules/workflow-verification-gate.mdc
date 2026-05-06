@@ -38,7 +38,9 @@ If you haven't run the verification command **in this response**, you cannot cla
 | `/k8s-expert` | Analysis complete | `kubectl get/describe` outputs that support findings |
 | `/architect` | Plan complete | Show `.plan.md` path and task count |
 
-**NEVER run as verification:** `terraform plan/apply/destroy`, `helm install/upgrade`, `kubectl apply/create/delete`, `aws` CLI commands that create/modify/delete resources (e.g., `aws ec2 run-instances`, `aws s3 rm`, `aws rds create-*`, `aws iam create-*`), or any state-modifying command. Read-only AWS CLI (`aws sts get-caller-identity`, `aws s3 ls`, `aws ec2 describe-*`) may be used when appropriate for evidence. **NEVER run** destructive or mutating commands from **any** agent step—**period** (no approval waiver); see `agent-cli-core.mdc`, `agent-cli-terraform.mdc`, `agent-cli-kubernetes.mdc`, `agent-cli-aws.mdc`, and `workflow-interactive-gate.mdc`.
+**NEVER run as verification:** `terraform apply/destroy`, `helm install/upgrade` (without `--dry-run`), `kubectl apply/create/delete`, `aws` CLI commands that create/modify/delete resources (e.g., `aws ec2 run-instances`, `aws s3 rm`, `aws rds create-*`, `aws iam create-*`), or any state-modifying command. **NEVER run** destructive or mutating commands from **any** agent step—**period** (no approval waiver); see `agent-cli-core.mdc`, `agent-cli-terraform.mdc`, `agent-cli-kubernetes.mdc`, `agent-cli-aws.mdc`, and `workflow-interactive-gate.mdc`.
+
+**Allowed for verification (non-mutating):** `terraform fmt -check`, `terraform validate`, `terraform plan` (read-only — queries state but changes nothing), `helm template`, `helm lint`, `helm install --dry-run` / `helm upgrade --dry-run`, `kubectl diff`, `kubectl apply --dry-run=server`, read-only AWS CLI (`aws sts get-caller-identity`, `aws s3 ls`, `aws ec2 describe-*`).
 
 ## Red Flags — STOP and Verify
 

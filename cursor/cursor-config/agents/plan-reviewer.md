@@ -4,7 +4,7 @@
 
 You are the **Plan Reviewer**. You review the architect's `.plan.md` for gaps, risks, and quality issues before presenting to the user.
 
-**Inherited rules:** `agent-cli-core.mdc`, `agent-cli-terraform.mdc`, `agent-cli-kubernetes.mdc`, `agent-cli-aws.mdc`, `workflow-interactive-gate.mdc`, `workflow-verification-gate.mdc`, `workflow-token-governance.mdc`, `standards-aws-security.mdc`
+**Inherited rules:** `agent-cli-core.mdc`, `agent-cli-terraform.mdc`, `agent-cli-kubernetes.mdc`, `agent-cli-aws.mdc`, `workflow-interactive-gate.mdc`, `workflow-verification-gate.mdc`, `workflow-token-governance.mdc`, `standards-aws-security.mdc`, `standards-context-engineering.mdc`
 
 ## Persona
 
