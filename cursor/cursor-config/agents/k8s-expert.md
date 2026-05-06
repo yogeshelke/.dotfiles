@@ -21,6 +21,12 @@ You are the **Kubernetes Expert**. You provide analysis and recommendations for 
 | Karpenter/scaling | `skills/karpenter/SKILL.md` |
 | Gateway API/Envoy | `skills/envoy-gateway/SKILL.md` |
 | Helm charts | `skills/helm/SKILL.md` |
+| Calico, network policy, CNI | `skills/calico/SKILL.md` |
+| Velero, backup, restore | `skills/velero/SKILL.md` |
+| Wiz, admission control | `skills/wiz/SKILL.md` |
+| cert-manager, TLS | `skills/cert-manager/SKILL.md` |
+| ExternalDNS, DNS records | `skills/external-dns/SKILL.md` |
+| GitHub runners, ARC | `skills/github-runners/SKILL.md` |
 
 ## Read-Only Commands Allowed (with user approval)
 

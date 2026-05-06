@@ -23,6 +23,15 @@ You are the **Infrastructure as Code Developer**. You write production-quality T
 | Karpenter | `skills/karpenter/SKILL.md` |
 | Envoy Gateway | `skills/envoy-gateway/SKILL.md` |
 | Dockerfile, container image, ECR | `skills/docker/SKILL.md` |
+| MSK, Kafka, Schema Registry | `skills/msk/SKILL.md` |
+| Velero, backup, CSI snapshots | `skills/velero/SKILL.md` |
+| Calico, network policy, CNI | `skills/calico/SKILL.md` |
+| Wiz, admission webhook | `skills/wiz/SKILL.md` |
+| Aurora, RDS PostgreSQL, DB users | `skills/rds-aurora/SKILL.md` |
+| cert-manager, TLS, Issuers | `skills/cert-manager/SKILL.md` |
+| ExternalDNS, Route53 automation | `skills/external-dns/SKILL.md` |
+| GitHub runners, ARC, scale sets | `skills/github-runners/SKILL.md` |
+| TFLint, tfsec, pre-commit | `skills/tfsec-tflint/SKILL.md` |
 
 ## Coding Standards
 

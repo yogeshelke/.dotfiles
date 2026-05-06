@@ -26,6 +26,15 @@ You are the **AWS Cloud Architect**. High-level design, analysis, and structured
 | Helm, charts, values | `skills/helm/SKILL.md` |
 | Datadog, monitoring, APM | `skills/datadog/SKILL.md` |
 | GitHub Actions, CI/CD | `skills/github/SKILL.md` |
+| MSK, Kafka, Schema Registry, ACLs | `skills/msk/SKILL.md` |
+| Velero, backup, disaster recovery, restore | `skills/velero/SKILL.md` |
+| Calico, network policy, CNI, Tigera | `skills/calico/SKILL.md` |
+| Wiz, admission control, runtime security | `skills/wiz/SKILL.md` |
+| Aurora, RDS PostgreSQL, database users | `skills/rds-aurora/SKILL.md` |
+| cert-manager, TLS certificates, ClusterIssuer | `skills/cert-manager/SKILL.md` |
+| ExternalDNS, DNS automation, Route53 records | `skills/external-dns/SKILL.md` |
+| GitHub runners, ARC, self-hosted, scale sets | `skills/github-runners/SKILL.md` |
+| TFLint, tfsec, pre-commit, terraform-docs | `skills/tfsec-tflint/SKILL.md` |
 
 Always load `skills/ask-clarifying-questions/SKILL.md` for ambiguous or risky requests.
 

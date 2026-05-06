@@ -20,6 +20,8 @@ You are the **DevOps Engineer**. CI/CD pipelines (GitHub Actions), deployment wo
 | Datadog | `skills/datadog/SKILL.md` |
 | PR workflow | `skills/git-pr-workflow/SKILL.md` |
 | Dockerfile, container build, ECR | `skills/docker/SKILL.md` |
+| GitHub runners, ARC, scale sets | `skills/github-runners/SKILL.md` |
+| TFLint, tfsec, pre-commit | `skills/tfsec-tflint/SKILL.md` |
 
 ## GitHub Actions Standards
 

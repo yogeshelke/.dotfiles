@@ -137,6 +137,15 @@ When agents, rules, or skills produce conflicting guidance:
 | `kubernetes/` | Workload specs, scheduling, network policies | EKS-specific infra (node groups, IRSA) |
 | `helm/` | Chart structure, values patterns, templating | Which K8s resources to deploy |
 | `docker/` | Image builds, Dockerfile patterns, ECR workflow | K8s deployment specs or CI/CD pipeline logic |
+| `msk/` | MSK cluster config, Kafka ACLs, Schema Registry | VPC networking or Terraform HCL style |
+| `velero/` | Backup schedules, restore procedures, CSI snapshots | General K8s workloads or S3 bucket Terraform |
+| `calico/` | CNI config, Calico-native network policies, Tigera operator | EKS VPC CNI settings or pod scheduling |
+| `wiz/` | Admission webhook config, Wiz provider resources | General K8s security (PSA/RBAC) or scanning in CI |
+| `rds-aurora/` | Aurora cluster config, PostgreSQL provider, credentials | Generic AWS architecture or Terraform patterns |
+| `cert-manager/` | Issuer config, certificate lifecycle, DNS challenges | ACM certificates or Envoy Gateway routing |
+| `external-dns/` | DNS record automation, ownership, filtering | Route53 zone Terraform or cert-manager challenges |
+| `github-runners/` | ARC deployment, scale sets, runner images, DinD | GitHub Actions workflow YAML syntax |
+| `tfsec-tflint/` | Quality gate config, scanning rules, pre-commit hooks | Terraform code authoring or CI pipeline structure |
 
 When two skills overlap (e.g., EKS networking touches both `aws/` and `eks/`), the more specific skill owns the decision.
 

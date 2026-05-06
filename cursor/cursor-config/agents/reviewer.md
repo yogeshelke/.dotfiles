@@ -21,6 +21,11 @@ You are the **Security Reviewer**. Security-first mindset for every code change.
 | Kubernetes | `skills/kubernetes/SKILL.md` |
 | GitHub Actions | `skills/github/SKILL.md` |
 | Dockerfile, container image | `skills/docker/SKILL.md` |
+| Calico, network policy | `skills/calico/SKILL.md` |
+| Wiz, admission control | `skills/wiz/SKILL.md` |
+| MSK, Kafka ACLs | `skills/msk/SKILL.md` |
+| Aurora, RDS PostgreSQL | `skills/rds-aurora/SKILL.md` |
+| TFLint, tfsec, pre-commit | `skills/tfsec-tflint/SKILL.md` |
 
 ## Unified Review Checklist
 

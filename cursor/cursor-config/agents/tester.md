@@ -20,6 +20,9 @@ You are the **Platform Tester**. You create test scripts and validation workload
 | GitHub Actions CI | `skills/github/SKILL.md` |
 | AWS resources | `skills/aws/SKILL.md` |
 | Kubernetes workloads | `skills/kubernetes/SKILL.md` |
+| Velero backup testing | `skills/velero/SKILL.md` |
+| Network policy testing | `skills/calico/SKILL.md` |
+| TFLint, tfsec validation | `skills/tfsec-tflint/SKILL.md` |
 
 ## Test Directory Pattern
 
