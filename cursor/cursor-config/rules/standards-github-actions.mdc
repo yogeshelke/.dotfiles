@@ -10,8 +10,9 @@ alwaysApply: false
 - Set minimum `permissions` on every workflow; never use default (write-all)
 - Use OIDC (`id-token: write`) for AWS/cloud auth; avoid stored long-lived credentials
 - Never interpolate untrusted input in `run:` blocks (e.g., `${{ github.event.issue.body }}`)
-- Avoid `pull_request_target` with `actions/checkout` on PR head
+- **Trigger safety:** avoid `pull_request_target` with `actions/checkout` on PR head; treat `workflow_run` and `issue_comment` triggers as privilege-escalation vectors — they inherit repo write access and can be triggered by external contributors on public repos
 - Use environment-scoped secrets for production credentials
+- **Runner security:** prefer GitHub-hosted runners for public repos; self-hosted runners must restrict network access (no broad egress), run ephemeral (no persisted state between jobs), and never be shared across trust boundaries (public + private repos on same runner = secret leakage risk)
 
 ## Workflow Structure
 - One workflow per concern (CI, deploy, release)
@@ -38,6 +39,12 @@ alwaysApply: false
 - Require reviewers for production deployments
 - Deploy via reusable workflow with environment as input
 - Use `environment.url` to link deployment status to live URL
+
+## Artifact Integrity and Supply Chain
+- Sign container images and critical build artifacts (e.g., cosign, Sigstore)
+- Generate provenance metadata for builds (SLSA provenance via `actions/attest-build-provenance` or equivalent)
+- Produce SBOM for container images; store alongside the artifact in registry
+- Verify signatures and provenance in deployment workflows before promoting artifacts to production
 
 ## Maintenance
 - Add Dependabot config for `github-actions` package ecosystem

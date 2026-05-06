@@ -39,8 +39,21 @@ Every `.plan.md` file must include a **plan log header** immediately after the Y
 | `P3 - Medium` | Planned work, scheduled changes |
 | `P4 - Low` | Nice-to-have, cleanup, optimization |
 
+## Decisions Section
+
+Plans should include a **## Decisions** section to capture key choices and their rationale. This prevents decision loss as plans evolve across sessions:
+
+```markdown
+## Decisions
+| # | Decision | Rationale | Date | Revisable? |
+|---|----------|-----------|------|------------|
+| 1 | Aurora Serverless v2 over provisioned | Cost scales to zero in dev; meets prod burst | 2026-04-15 | Yes |
+| 2 | Single NAT GW in non-prod | Cost saving; acceptable risk for non-prod | 2026-04-15 | No |
+```
+
 ## Rules
 - Always set status when creating or updating a plan
 - Update the `Updated` date on every status change
-- Move status forward: Draft → In Review → Approved → In Progress → Completed
+- **Forward transitions:** Draft → In Review → Approved → In Progress → Completed
+- **Backward transitions (allowed):** In Review → Draft (review feedback requires rework); In Progress → On Hold (blocker discovered)
 - Add PR/Ticket link once available

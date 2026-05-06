@@ -12,7 +12,7 @@ This project uses a layered team of specialist agents for cloud platform enginee
 ```
 Tier 1 - Planning:    /architect → plan-reviewer → USER approval
 Tier 2 - Execution:   /iac-dev | /k8s-expert | /devops
-Tier 3 - Quality:     /reviewer → /tester → /pr-agent
+Tier 3 - Quality:     /reviewer → /platform-tester → /pr-agent
 ```
 
 ## Available Agents
@@ -24,7 +24,7 @@ Tier 3 - Quality:     /reviewer → /tester → /pr-agent
 | `/k8s-expert` | Kubernetes Expert | 2 - Build | Build | Read-only |
 | `/devops` | DevOps Engineer | 2 - Build | Build | Read/Write |
 | `/reviewer` | Security Reviewer | 3 - Quality | Review | Read-only |
-| `/tester` | Platform Tester | 3 - Quality | Test | Read/Write |
+| `/platform-tester` | Platform Tester | 3 - Quality | Test | Read/Write |
 | `/pr-agent` | PR Agent | 3 - Quality | PR | Read/Write |
 | `/check-progress` | Progress Check | Utility | Any | Read-only |
 
@@ -54,7 +54,7 @@ Tier 3 - Quality:     /reviewer → /tester → /pr-agent
 | Kubernetes, EKS, pods, nodes, manifests analysis, troubleshoot | `/k8s-expert` | K8s domain analysis |
 | CI/CD, GitHub Actions, deploy pipelines, Datadog, monitoring | `/devops` | CI/CD + observability |
 | Review, PR review, security audit, check code | `/reviewer` | Security review |
-| Test, validate, coverage, create tests | `/tester` | Test creation |
+| Test, validate, coverage, create tests | `/platform-tester` | Test creation |
 | Commit and PR, "pr workflow", "git pr" | `/pr-agent` | PR workflow |
 | Progress check, status | `/check-progress` | Status utility |
 
@@ -70,7 +70,7 @@ The standard workflow follows these phases:
 1. **Plan**: `/architect` designs → plan-reviewer reviews → user approves
 2. **Build**: `/iac-dev` implements (with `/k8s-expert` or `/devops` as needed)
 3. **Review**: `/reviewer` performs security audit
-4. **Test**: `/tester` creates test scripts (optional, skip for trivial changes)
+4. **Test**: `/platform-tester` creates test scripts (optional, skip for trivial changes)
 5. **PR**: `/pr-agent` commits, pushes, creates PR, notifies Slack
 
 ### Handoff Sequence
@@ -83,8 +83,8 @@ When a task spans multiple agents, suggest the next agent:
 | `/iac-dev` | `/reviewer` | Code written |
 | `/k8s-expert` | `/iac-dev` or `/reviewer` | Analysis complete |
 | `/devops` | `/reviewer` | Workflows written |
-| `/reviewer` | `/tester` or `/pr-agent` | Review complete |
-| `/tester` | `/pr-agent` | Tests created |
+| `/reviewer` | `/platform-tester` or `/pr-agent` | Review complete |
+| `/platform-tester` | `/pr-agent` | Tests created |
 
 ### Common Shortcuts
 - **Quick fix**: `/iac-dev` → `/reviewer` → `/pr-agent` (skip architect for small changes)
@@ -99,8 +99,8 @@ When an agent's output is rejected or validation fails, the workflow loops back 
 |---------|-------------|-----------------|
 | `/iac-dev` validation fails (fmt, validate) | Stay in `/iac-dev` | Systematic debugging → fix → re-validate. Escalate to user after 3 attempts. |
 | `/reviewer` rejects with Critical findings | `/iac-dev` | Reviewer provides exact findings + affected files. `/iac-dev` fixes only the flagged issues, then re-submit to `/reviewer`. |
-| `/reviewer` rejects with Warnings only | User decides | Present warnings. User chooses: fix (→ `/iac-dev`) or accept and proceed (→ `/tester` or `/pr-agent`). |
-| `/tester` finds issues in test creation | `/iac-dev` | Tester explains what can't be tested and why. `/iac-dev` fixes the source issue. |
+| `/reviewer` rejects with Warnings only | User decides | Present warnings. User chooses: fix (→ `/iac-dev`) or accept and proceed (→ `/platform-tester` or `/pr-agent`). |
+| `/platform-tester` finds issues in test creation | `/iac-dev` | Tester explains what can't be tested and why. `/iac-dev` fixes the source issue. |
 | Plan-reviewer rejects plan | `/architect` | Reviewer provides annotated feedback. Architect revises the plan sections that were flagged. |
 | PR creation fails | Stay in `/pr-agent` | Check branch state, resolve conflicts, retry. Escalate to user if blocked. |
 
@@ -114,10 +114,10 @@ When an agent's output is rejected or validation fails, the workflow loops back 
 
 When agents, rules, or skills produce conflicting guidance:
 
-1. **Security wins** — `aws-security.mdc` and `command-restrictions.mdc` override all other decisions
+1. **Security wins** — `standards-aws-security.mdc` and the command restriction suite (`agent-cli-core.mdc`, `agent-cli-terraform.mdc`, `agent-cli-kubernetes.mdc`, `agent-cli-aws.mdc`) override all other decisions
 2. **Architecture wins over implementation** — If `/architect`'s plan says Aurora Serverless v2, `/iac-dev` must not switch to standard Aurora without user approval
 3. **Explicit plan wins over skill defaults** — An approved `.plan.md` overrides generic skill guidance (e.g., plan says "t3.medium" → skill default of "Graviton" doesn't apply to that resource)
-4. **Specific rule wins over general** — `terraform.mdc` on Terraform topics beats `aws-security.mdc` on Terraform coding style (but security constraints still apply)
+4. **Specific rule wins over general** — `standards-terraform.mdc` on Terraform topics beats `standards-aws-security.mdc` on Terraform coding style (but security constraints still apply)
 5. **If still ambiguous** → Escalate to user with the conflict clearly stated
 
 ### Consistency Requirements
@@ -144,9 +144,25 @@ When two skills overlap (e.g., EKS networking touches both `aws/` and `eks/`), t
 
 - Never auto-switch agents — only suggest and let the user invoke
 - One agent persona active at a time
-- All agents inherit `command-restrictions.mdc`, `interactive-gate.mdc`, and `verification-gate.mdc`
-- All agents follow `context-engineering.mdc` for session management
+- All agents inherit `agent-cli-core.mdc`, `agent-cli-terraform.mdc`, `agent-cli-kubernetes.mdc`, `agent-cli-aws.mdc`, `workflow-interactive-gate.mdc`, and `workflow-verification-gate.mdc`
+- All agents follow `standards-context-engineering.mdc` for session management
 - Agent personas are defined in `agents/` — commands are thin wrappers
 - Reference the active `.plan.md` file when coordinating between phases
-- Agents must show verification evidence before handoff (see `verification-gate.mdc`)
+- Agents must show verification evidence before handoff (see `workflow-verification-gate.mdc`)
 - On failure, agents follow systematic debugging — one hypothesis at a time, escalate after 3 attempts
+
+## Structured Artifacts (`.artifacts/`)
+
+Quality agents persist their output as structured files so downstream agents and CI can consume them without relying on chat history.
+
+| File | Written by | Consumed by | Purpose |
+|------|-----------|-------------|---------|
+| `.artifacts/review.md` | `/reviewer` | `/pr-agent`, CI | Security review status, findings, remediation |
+| `.artifacts/test-summary.md` | `/platform-tester` | `/pr-agent`, CI | Test coverage, validation results |
+
+**Rules:**
+- Artifact files use YAML frontmatter (`status`, `date`, `branch`) for machine parsing
+- Writing an artifact requires user approval (per `workflow-interactive-gate.mdc`)
+- On re-review (failure loop), the artifact is **overwritten** with fresh results
+- `/pr-agent` reads artifacts to populate the PR description; missing artifacts are noted as "not performed"
+- CI checks (when configured) can gate merge on artifact `status` field

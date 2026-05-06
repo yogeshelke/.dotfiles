@@ -1,0 +1,43 @@
+---
+description: Terraform CLI safety — agent NEVER runs destructive/state ops; plan hygiene (glob-scoped)
+globs: "**/*.tf,**/*.tfvars,**/*.tftest.hcl"
+alwaysApply: false
+---
+# Terraform Command Safety
+
+Applies when Terraform/OpenTofu configuration is in context (see globs). See `agent-cli-core.mdc` for piping, intent, and autonomy rules.
+
+## Policy wording
+
+- The **agent MUST NOT execute** the commands listed in the **NEVER run** section below—**no exceptions** (including user approval). The **human** runs apply/destroy/state surgery in their own shell or in **CI/CD** after merge.
+- **DO NOT** format them as **runnable steps for the user inside the agent chat** (numbered “run this now”); you **MAY** name them only in **documentation** (runbooks, what CI runs, narrative “then a human/ pipeline runs …”).
+- **Prefer execution via CI/CD pipelines** (plan/apply in automation after merge) rather than the agent simulating apply—aligns with GitOps and PR-driven workflow.
+- **When apply or destroy is required:** agent changes **`.tf` / modules in Git** → show **`terraform plan`** / `-refresh-only` / saved-plan narrative → **PR** → human or pipeline **`apply`**/**`destroy`** outside the agent.
+
+## NEVER run — destructive / state-changing Terraform CLI
+
+**NEVER run** the following from the **agent** terminal. Treat **`terraform state rm`** and **`terraform state mv`** as **especially dangerous**: no plan preview; misuse **silently corrupts state**.
+
+- `terraform apply`, `terraform destroy`
+- `terraform state rm`
+- `terraform state mv`
+- `terraform taint`, `terraform untaint`
+- `terraform force-unlock`
+- `terraform import`
+
+## `terraform init` (non-destructive but sensitive)
+
+- **`terraform init`** is normal setup (providers, modules, backend wiring) and is **not** equivalent to apply/destroy.
+- **Warn** when the user or context implies **`terraform init -upgrade`** (can pull newer provider versions → behavior drift).
+- **Warn** when **backend configuration** changed or is newly introduced (can alter **where state lives**—high blast radius).
+
+## Planning and apply hygiene
+
+- Prefer **`terraform plan -out=<file>`** for a **reproducible** artifact. When explaining apply workflows, prefer **`terraform apply <saved-plan-file>`** (applying a **previously saved** plan) instead of **`terraform apply`** that implicitly **re-plans at apply time**—harder to shortcut and clearer what will run.
+- Use **`terraform plan -refresh-only`** when investigating **drift** **without** proposing normal resource changes (state/refresh lens only; good debugging path).
+- **Re-run `terraform plan`** (or refresh the saved plan) **before any apply** when explaining human-operated flows—detects drift when reality diverges from the last plan.
+- Avoid **manual changes in cloud consoles (“clickops”)**—they are a primary cause of **drift** between **state** and **real infrastructure**.
+
+## Preferred read-only / non-destructive suggestions
+
+`terraform plan`, `terraform plan -refresh-only`, `terraform validate`, `terraform fmt`, `terraform fmt -check`, `terraform show`, `terraform output`, `terraform state list`, `terraform state show`, `terraform providers`, `terraform graph`, and similar **non-mutating** inspection commands.

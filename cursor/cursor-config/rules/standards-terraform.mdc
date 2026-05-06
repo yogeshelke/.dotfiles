@@ -21,12 +21,23 @@ alwaysApply: false
 - Provide `default` values where sensible; require explicit input for environment-specific values
 - Mark secrets with `sensitive = true`
 
+## Modules
+- **Single responsibility:** each module encapsulates one logical concern (e.g., VPC, RDS cluster, IAM role set); avoid "god modules" that create unrelated resources
+- Clear contract: all inputs via `variables.tf` with descriptions; all consumable outputs via `outputs.tf`
+- Pin module versions: `version = "~> 5.0"` or `?ref=v1.0.0`
+- Nest no deeper than 2 levels (root → module → sub-module max)
+
+## Providers and Versioning
+- Define `required_providers` with version constraints in `versions.tf` (e.g., `aws = { source = "hashicorp/aws", version = "~> 5.0" }`)
+- Pin `required_version` for Terraform itself (e.g., `>= 1.5.0, < 2.0.0`)
+- Never use unconstrained provider versions — prevents silent breaking changes and ensures reproducible plans
+
 ## Resources
 - Prefer `for_each` over `count` (stable keys vs fragile indices)
 - Use `moved` blocks for refactoring instead of `terraform state mv`
 - Set `lifecycle.prevent_destroy` on critical resources (databases, S3 buckets)
 - Use `lifecycle.ignore_changes` for externally managed attributes
-- Pin module versions: `version = "~> 5.0"` or `?ref=v1.0.0`
+- **Prefer `data` sources** over hardcoded IDs/ARNs for existing infrastructure (VPCs, subnets, AMIs, KMS keys); data blocks are self-documenting, adapt to environment, and fail loudly if the referenced resource doesn't exist
 
 ## State
 - Remote backend (S3 + DynamoDB) with encryption enabled

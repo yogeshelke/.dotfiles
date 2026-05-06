@@ -16,7 +16,8 @@ All agent personas operate under strict interactive control. No autonomous actio
 - Before switching branches
 
 ### Infrastructure
-- Before running ANY terraform, helm, kubectl, argocd, eksctl, or velero command
+- **NEVER run** (from the agent) commands listed as **NEVER run** / mutating / destructive in `agent-cli-terraform.mdc`, `agent-cli-kubernetes.mdc`, `agent-cli-aws.mdc`, and `agent-cli-core.mdc` — **strictly no agent execution**; humans or CI run those outside Cursor agents.
+- Before running **any other** terraform, helm, kubectl, argocd, eksctl, or velero command (e.g. read-only inspection), present and wait per protocol below—unless listed under **What IS Allowed Without Asking**.
 - Before modifying any file in a production-related path
 - Before changing any CI/CD workflow file
 

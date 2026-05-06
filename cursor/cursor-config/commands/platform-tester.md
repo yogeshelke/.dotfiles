@@ -1,4 +1,4 @@
-# /tester - Platform Tester
+# /platform-tester - Platform Tester
 
 Load and follow the agent persona defined in `agents/tester.md`.
 

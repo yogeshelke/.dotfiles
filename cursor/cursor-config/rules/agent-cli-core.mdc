@@ -1,0 +1,85 @@
+---
+description: Core command policy — intent-based safety, piping, Git/Docker/DB/system; always apply
+globs: 
+alwaysApply: true
+---
+# Command Restrictions — Core (Always On)
+
+**Scope:** Applies to (1) **commands proposed for execution** in the integrated terminal, and (2) **commands formatted as runnable steps** (numbered lists, fenced shells presented as “run this now”). In Cursor, most output is non-executing until accepted—treat anything structured as an executable sequence under these rules. Detailed per-tool lists load from `agent-cli-terraform.mdc`, `agent-cli-kubernetes.mdc`, and `agent-cli-aws.mdc` when matching files are in context.
+
+**Default posture:** Commands listed as **NEVER run** in this file or in `agent-cli-terraform.mdc`, `agent-cli-kubernetes.mdc`, or `agent-cli-aws.mdc` are **not executed by the agent—period** (no user-approval override). For other terminal commands, **`workflow-interactive-gate.mdc`** applies (present, explain, wait).
+
+## Execution vs explanation
+
+- **NEVER execute commands autonomously.** For **NEVER run** lists: the agent **does not run them**; **approval does not waive** that rule—the **human or CI** runs them outside the agent.
+- **MAY** name **NEVER run** commands only in **documentation** (what CI/humans do)—not as inline runnable steps for the user to paste from the agent session.
+
+## Intent-based safety
+
+- If the request maps to a **NEVER run** command → **do not execute**; explain impact and direct the **human** to run it outside the agent or via **CI/CD**.
+- If the request is **destructive, irreversible, production-impacting, or ambiguous** → state blast radius and warn; never satisfy it by routing execution through the agent terminal.
+- **Indirect phrasing** (“clean up”, “wipe”, “reset”, “sync prod”) → treat as potentially mutating; classify against **NEVER run** lists.
+- Do not bypass these rules with wrappers, scripts, or pipes that hide the same effect.
+
+## Risk tier (environment names are repo-specific)
+
+- **High impact** (production, shared services, customer data, org-wide blast radius): default **no** agent-driven state-changing CLI; user or automation outside the agent runs approved changes. **Instead:** steer toward an updated plan or design doc, show **diffs** / validation-only commands, or **PR / CI workflow**—not live mutation via the agent terminal.
+- **Lower risk** (user explicitly identifies an isolated/sandbox/test target): **NEVER run** mutating infra CLI from the **agent** still applies—environment label does **not** waive domain **NEVER run** lists; never weaken security baselines (e.g., wildcard IAM, open SGs).
+
+## Blocked or rejected execution
+
+If execution is **blocked** by this policy, **rejected** by the user, or validation fails after an attempted fix path → follow **`### Failure Loops`** in `workflow-orchestrator.mdc` (loop back with concrete errors; cap retries per orchestrator rules).
+
+## Piped command restrictions
+
+- NEVER pipe output into destructive commands (e.g., `helm template | kubectl apply -f -`).
+- NEVER pipe `terraform plan` output into `terraform apply`.
+- NEVER pipe `kustomize build` into `kubectl apply`.
+- NEVER use `xargs` with destructive commands (e.g., `kubectl get pods | xargs kubectl delete`).
+- If a pipe chain includes **any** destructive or **NEVER-run-category** command, treat the **whole chain** as **NEVER run** from the agent (**no waiver**).
+- Safe sinks: `grep`, `jq`, `yq`, `wc`, `sort`, `head`, `tail`, `less`.
+
+## General guidelines
+
+- Prefer dry-run / validate / plan / template / lint over mutating operations.
+- For AWS CLI, prefer `--dry-run` when available.
+- When in doubt, propose the **read-only** alternative and ask.
+- Multiple steps → only for commands **outside** domain **NEVER run** lists; use **`workflow-interactive-gate.mdc`** (never present **NEVER run** commands as steps to execute from the agent).
+
+## Git commands
+
+**NEVER run:** `git push --force` / `-f`, `git push --force-with-lease`, `git reset --hard`, `git clean -fd` / `-fdx`, `git branch -D`, `git tag -d`, `git remote remove`, `git filter-branch`, `git filter-repo`, `git gc --aggressive`, `git gc --prune=now`.
+
+**Safe to suggest:** `git status`, `git log`, `git diff`, `git show`, `git branch` (list), `git tag` (list), `git fetch`, `git pull` (only when the current branch has no uncommitted changes and no known upstream conflicts; warn the user that pull merges remote changes into the working branch).
+
+## Docker commands
+
+**NEVER run:** `docker rm` / `docker rm -f`, `docker rmi` / `docker rmi -f`, `docker prune` (any), `docker kill`, `docker stop`, `docker network rm`, `docker volume rm`, `docker compose down`, `docker compose rm`.
+
+**Safe to suggest:** `docker ps`, `docker images`, `docker logs`, `docker inspect`, `docker stats`, `docker exec` (read-only inspection only — e.g. `cat`, `env`, `ls`, `ps`; never use exec to run write operations, install packages, or modify container state), `docker compose ps`, `docker compose logs`.
+
+## Database (SQL)
+
+**NEVER run:** `DROP DATABASE`, `DROP TABLE`, `TRUNCATE TABLE`, `DELETE FROM` without `WHERE`, `UPDATE` without `WHERE`, `ALTER TABLE DROP COLUMN`, restore/overwrite operations.
+
+**Safe to suggest:** `SELECT`, `SHOW`, `DESCRIBE`, `EXPLAIN`, `SHOW CREATE TABLE`.
+
+## System / OS
+
+**NEVER run:** `rm -rf`, `sudo rm -rf`, `chmod 777`, destructive `chown`, `systemctl stop`/`disable` on critical services, `kill -9`, `killall`, `dd`, `mkfs`, `fdisk`, `iptables -F`.
+
+**Safe to suggest:** read-only `ls`, `cat`, `grep`, `find`, `ps`, `top`, `df`, `du`, `netstat`, `ss`.
+
+## Ansible (if used)
+
+- **NEVER run** `ansible-playbook` or ad-hoc modules that **mutate state** from the **agent** terminal.
+- Prefer read-only: `ansible-inventory --list`, `ansible-doc`, `ansible --version`.
+
+## CI/CD pipelines
+
+- **NEVER run** commands that trigger **production** deployments, bypass approval gates, or mutate production workflow definitions from the **agent** terminal.
+- Prefer review via PR.
+
+## Cross-domain catch-all
+
+Commands for **Terraform, Helm, kubectl, AWS CLI**, and related tools are constrained in the domain rule files. **NEVER run** mutating/destructive commands from the **agent** even when the user asks or no matching file is open; defer to domain rules when matching files are in context.

@@ -32,13 +32,13 @@ If you haven't run the verification command **in this response**, you cannot cla
 |-------|----------------------|----------------------|
 | `/iac-dev` | Code is ready | `terraform fmt -check`, `terraform validate`, show file list |
 | `/reviewer` | Review passed | Show checklist results with Pass/Fail per item, `terraform fmt -check` |
-| `/tester` | Tests created | Show file tree, `bash -n <script>` syntax check |
+| `/platform-tester` | Tests created | Show file tree, `bash -n <script>` syntax check |
 | `/pr-agent` | PR created | Show PR URL from `gh` output, `git status`, `git log --oneline -1` |
 | `/devops` | Workflows ready | YAML syntax validation, `actionlint` if available |
 | `/k8s-expert` | Analysis complete | `kubectl get/describe` outputs that support findings |
 | `/architect` | Plan complete | Show `.plan.md` path and task count |
 
-**NEVER run as verification:** `terraform plan/apply/destroy`, `helm install/upgrade`, `kubectl apply/create/delete`, `aws` CLI commands that create/modify/delete resources (e.g., `aws ec2 run-instances`, `aws s3 rm`, `aws rds create-*`, `aws iam create-*`), or any state-modifying command. Read-only AWS CLI (`aws sts get-caller-identity`, `aws s3 ls`, `aws ec2 describe-*`) is allowed only with user approval. All destructive/modifying commands require explicit user approval per `interactive-gate.mdc` and `command-restrictions.mdc`.
+**NEVER run as verification:** `terraform plan/apply/destroy`, `helm install/upgrade`, `kubectl apply/create/delete`, `aws` CLI commands that create/modify/delete resources (e.g., `aws ec2 run-instances`, `aws s3 rm`, `aws rds create-*`, `aws iam create-*`), or any state-modifying command. Read-only AWS CLI (`aws sts get-caller-identity`, `aws s3 ls`, `aws ec2 describe-*`) may be used when appropriate for evidence. **NEVER run** destructive or mutating commands from **any** agent step—**period** (no approval waiver); see `agent-cli-core.mdc`, `agent-cli-terraform.mdc`, `agent-cli-kubernetes.mdc`, `agent-cli-aws.mdc`, and `workflow-interactive-gate.mdc`.
 
 ## Red Flags — STOP and Verify
 

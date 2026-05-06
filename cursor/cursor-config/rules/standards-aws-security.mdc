@@ -1,0 +1,95 @@
+---
+description: AWS security guardrails and best practices for infrastructure code
+globs: 
+alwaysApply: true
+---
+# AWS Security Guardrails
+
+## Security Posture
+- Default stance: **deny unless explicitly justified and documented**
+- Follow AWS shared responsibility model: AWS secures infrastructure; we secure configuration, access, and data
+- **Primary risk:** misconfigurations and permission creep cause the majority of AWS incidents — prioritize correct configuration and least privilege over reactive patching
+- Use explicit deny policies to enforce guardrails (e.g., deny public S3, deny unencrypted resources)
+- Continuously audit configurations; security is not a one-time setup — drift causes breaches
+- **Continuous validation:** enable AWS Config rules, Security Hub, and/or CSPM tooling to detect misconfigurations automatically; do not rely solely on periodic manual reviews
+- All exceptions must include justification and be reviewable in PR
+
+## IAM
+- Avoid `*` in IAM actions/resources; if required, must be justified and scoped with conditions
+- Use temporary credentials (STS, IAM roles); avoid long-lived access keys
+- Prefer identity federation (SSO) for human access; avoid IAM users where possible
+- Protect root account: no daily use, enable MFA, no access keys
+- Use IRSA or Pod Identity for EKS workloads; never attach broad roles to nodes
+- Prefer managed policies where available; use inline only for tightly scoped exceptions
+- Enforce MFA for human IAM users; use roles for service access
+- Follow least-privilege: start with zero permissions, add only what's needed
+- Use IAM permission boundaries to prevent privilege escalation
+- Use IAM Access Analyzer to detect overly permissive access
+
+## Secrets
+- Never hardcode credentials, API keys, or tokens in code or config
+- Use AWS Secrets Manager or SSM Parameter Store for secrets
+- Mark all sensitive Terraform variables and outputs with `sensitive = true`
+- Rotate secrets on a defined schedule
+- Restrict secret access via IAM policies (least privilege)
+- Enable audit logging for secret access (CloudTrail)
+- Use resource policies for cross-account secret sharing
+
+## Encryption
+- Enable encryption at rest for all data stores (S3, EBS, RDS, DynamoDB, EFS)
+- Use AWS KMS customer-managed keys for sensitive workloads
+- Enforce TLS/HTTPS for all data in transit
+- Enable Terraform state backend encryption
+- Enforce encryption via policies (e.g., deny unencrypted S3 uploads via bucket policy)
+- Use AWS Config rules to validate encryption compliance
+
+## Networking
+- Default deny: use Security Groups and Network Policies as allowlists
+- No `0.0.0.0/0` ingress rules on production security groups (except public ALBs on 443)
+- Restrict outbound (egress) traffic; avoid open 0.0.0.0/0 egress unless justified
+- Use NAT gateways or proxies for controlled internet access from private subnets
+- Do not assign public IPs to instances/services unless explicitly required
+- Enforce IMDSv2 on all EC2 instances and launch templates (prevents credential theft)
+- Use private subnets for databases, EKS nodes, and internal services
+- Use VPC endpoints for AWS service access from private subnets
+- Enable VPC Flow Logs for audit
+
+## S3
+- Block all public access on buckets (enable `block_public_acls`, `block_public_policy`, etc.)
+- Disable ACLs; use bucket policies and IAM for access control
+- Enable versioning on critical buckets
+- Enable server-side encryption (SSE-S3 or SSE-KMS)
+- Use bucket policies to restrict cross-account access
+
+## Logging and Audit
+- Enable CloudTrail in all regions
+- Enable CloudTrail log file validation (tamper detection)
+- Store audit logs in separate, locked-down account or bucket
+- Enable EKS control plane logging (API server, audit, authenticator)
+- Ship logs to centralized monitoring (Datadog, CloudWatch)
+- Set retention policies on all log groups
+- Enable GuardDuty for threat detection
+- Enable Security Hub for centralized security findings
+
+## Terraform Security
+- Use remote state (S3 + DynamoDB locking)
+- Enable state encryption
+- Do not store secrets in Terraform state; use data sources to fetch from Secrets Manager
+- Run `terraform validate` and `terraform fmt` before PR
+- Never apply Terraform without reviewed plan output
+
+## Backup and Recovery
+- Enable automated backups for stateful services (RDS, EFS, DynamoDB)
+- Enable deletion protection for critical resources
+- Define backup retention policies aligned with RPO/RTO requirements
+
+## Incident Response
+- Define response playbooks for common scenarios (compromised credentials, exposed data, unauthorized access)
+- Security lifecycle: **detect → respond → contain → recover → review**
+- On credential compromise: revoke immediately, audit CloudTrail for blast radius, rotate affected secrets
+- On resource exposure: isolate (SG/NACL deny), assess data impact, remediate via IaC, post-incident review
+
+## Account Strategy
+- Use separate AWS accounts per environment (isolation boundary)
+- Use AWS Organizations SCPs for preventive guardrails
+- Use cross-account roles with external ID for access

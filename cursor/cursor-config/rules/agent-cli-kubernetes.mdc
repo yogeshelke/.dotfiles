@@ -1,0 +1,60 @@
+---
+description: kubectl / Helm / GitOps CLI safety — agent NEVER runs mutating commands; previews (glob-scoped)
+globs: "**/Chart.yaml,**/values.yaml,**/values.*.yaml,**/templates/**/*.yaml,**/templates/**/*.tpl,**/helm/**/*.yaml,**/helm/**/*.yml,**/k8s/**/*.yaml,**/k8s/**/*.yml,**/kubernetes/**/*.yaml,**/kubernetes/**/*.yml,**/manifests/**/*.yaml,**/manifests/**/*.yml"
+alwaysApply: false
+---
+# Kubernetes & Helm Command Safety
+
+Applies when Helm/Kubernetes manifests or charts match globs. Execution gating and autonomy rules: `agent-cli-core.mdc`, `workflow-interactive-gate.mdc`.
+
+## Definitions
+
+**Mutating commands** (this file): any operation that changes **live cluster or release state**—create, update, delete, scale, rollout, sync, Helm install/upgrade (non–`--dry-run`), Velero restore/delete schedule, etc. **Not mutating:** read-only `get`/`describe`/`logs`, **`kubectl diff`**, **`kubectl apply --dry-run=server`**, **`helm install|upgrade --dry-run`**, **`helm diff`**.
+
+## Policy wording
+
+- The **agent MUST NOT execute** the commands listed in the **NEVER run** sections below—**no exceptions** (including user approval). **Humans** or **GitOps/CI** perform mutating work outside the agent.
+- **DO NOT** present those commands as **runnable steps** in chat; only document what pipelines or operators do in prose/runbooks.
+- **Prefer applying changes via GitOps**: manifests/charts → **PR** → **CI/CD** → cluster sync (**e.g. Argo CD**) instead of the agent driving **`kubectl` / `helm`** mutations—aligns with reviewable workflow (and `/pr-agent`).
+- **Drift happens** (manual hotfix, failed sync, partial rollout). Use **`kubectl diff`** and/or **`argocd app diff`** to spot divergence between **desired** and **actual** before changing manifests (in files), not by mutating the cluster from the agent.
+
+## When mutation is required (agent workflow)
+
+The agent does **not** apply mutations via CLI. **Instead:** (1) **change manifests/charts in Git**; (2) explain impact using **`kubectl diff`**, **`helm diff`**, and/or **`--dry-run`** previews; (3) guide the user through **PR → review → merge → CI/CD / controller sync** (e.g. **`/pr-agent`**).
+
+## Helm — NEVER run (mutating releases)
+
+**NEVER run** from the **agent** terminal:
+
+- `helm delete`, `helm uninstall`, `helm rollback`
+- **`helm install`** / **`helm upgrade`** when **not** used as **`--dry-run`** preview-only runs (mutating releases)
+
+**Preferred / preview:** `helm list`, `helm get`, `helm template`, `helm lint`, `helm show`, `helm status`, `helm history`, **`helm install --dry-run`** / **`helm upgrade --dry-run`** (+ **`--debug`** when explaining rendered manifests)—validates/chart render **without applying** (often paired with **`helm diff`**); **`helm diff upgrade` / `helm diff`** when **`helm-diff`** plugin is installed (Terraform-plan-like before mutating releases).
+
+## kubectl — NEVER run (mutating cluster state)
+
+**NEVER run** from the **agent** terminal:
+
+- `kubectl apply`, `kubectl create`, `kubectl delete`, `kubectl edit`, `kubectl set`, `kubectl patch`, `kubectl replace`, `kubectl scale`, `kubectl drain`, `kubectl cordon`, `kubectl uncordon`, `kubectl taint`, `kubectl label` (when mutating nodes/namespaces), `kubectl annotate` (when mutating critical resources)
+- **`kubectl rollout`** workload mutations (`restart`, `undo`, `pause`, `resume` — changes rollout state; **bypasses GitOps** review)
+
+**Preferred / preview:** `kubectl get`, `kubectl describe`, `kubectl logs`, **`kubectl diff -f ...` / `kubectl diff`**, **`kubectl apply --dry-run=server -f ...`** (server-side schema validation—**no mutation**), `kubectl top`, `kubectl api-resources`, `kubectl explain`, `kubectl auth can-i`, `kubectl cluster-info`, `kubectl version`, `kubectl exec` (**debugging / read-only inspection only**—**MUST NOT** use exec to perform **cluster-impacting** or **persistent** changes inside pods; exec can **bypass** declarative controls).
+
+_Note:_ **`kubectl apply --dry-run=server`** is **not** a real apply; a normal **`kubectl apply`** (without `--dry-run=server`) is **NEVER run** from the **agent**.
+
+## Argo CD — NEVER run (mutating)
+
+**NEVER run** from the **agent** terminal:
+
+- **`argocd app sync`** (**mutates cluster state**; **prefer automated sync** via GitOps—**human** may sync from their own environment in an incident; **not** via the agent)
+- `argocd app delete`, `argocd app set` (mutating), `argocd app actions run`, `argocd proj delete`
+
+**Preferred:** `argocd app get`, `argocd app list`, `argocd app diff`, `argocd app history`, `argocd app manifests`, `argocd proj list`.
+
+## Velero — NEVER run (destructive / restore)
+
+**NEVER run** from the **agent** terminal:
+
+- `velero restore create`, `velero backup delete`, `velero schedule delete`
+
+**Preferred:** `velero backup get`, `velero backup describe`, `velero backup logs`, `velero restore get`, `velero schedule get`.

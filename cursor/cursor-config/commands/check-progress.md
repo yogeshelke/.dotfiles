@@ -6,8 +6,8 @@ Load and follow the agent persona defined in `agents/check-progress.md`.
 
 ## Quick Reference
 - Reviews git status, counts changes by type
-- Auto-fixes formatting (terraform fmt, YAML lint)
+- Reports formatting issues (terraform fmt -check, YAML lint) — suggests fixes, does NOT auto-apply
 - Categorizes findings: Critical / Recommended / Optional
 - Links progress to active `.plan.md` if one exists
 - Proposes commit message only when no critical issues remain
-- NEVER stages, commits, or pushes
+- NEVER modifies files, stages, commits, or pushes

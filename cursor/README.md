@@ -75,7 +75,7 @@ All agents must provide **fresh evidence** before claiming completion:
 ### Interactive Safety
 - **No autonomous actions** on production systems
 - All destructive operations require explicit approval
-- Context-aware command restrictions
+- Command policy is split: **always-on core** (`command-restrictions-core.mdc`) plus **glob-scoped** Terraform, Kubernetes, and AWS CLI rules when matching files are in context
 - Environment boundary enforcement
 
 ## 📁 Directory Structure
@@ -100,6 +100,10 @@ cursor/
     │   ├── orchestrator.mdc   # Agent coordination rules
     │   ├── verification-gate.mdc  # Evidence requirements
     │   ├── interactive-gate.mdc   # Safety controls
+    │   ├── command-restrictions-core.mdc  # Core command policy (always on)
+    │   ├── terraform-safety.mdc   # Terraform CLI (glob-scoped)
+    │   ├── kubernetes-safety.mdc  # kubectl/Helm (glob-scoped)
+    │   ├── aws-safety.mdc         # AWS CLI (glob-scoped)
     │   └── aws-security.mdc   # AWS security standards
     └── skills/                # Domain knowledge modules
         ├── aws/              # AWS reference materials

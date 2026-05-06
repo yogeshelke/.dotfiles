@@ -1,7 +1,7 @@
 ---
 description: EKS operational best practices for cluster management and workloads
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 # EKS Best Practices
 
@@ -10,20 +10,25 @@ alwaysApply: false
 - Enable control plane logging: API server, audit, authenticator
 - Use EKS Access Entries (not aws-auth ConfigMap) for IAM-to-RBAC mapping
 - Pin EKS add-on versions; upgrade alongside cluster
+- **Cluster boundary:** use separate clusters for production vs non-production (isolation, blast radius, compliance); consider multi-cluster when teams need independent upgrade cadences or regulatory separation requires it
 
 ## Node Management
-- Use Karpenter for dynamic scaling with consolidation enabled
+- **Multi-AZ:** distribute nodes across at least 2 AZs (3 preferred) to match control plane resilience; single-AZ clusters are acceptable only for non-production/cost-constrained environments
+- Use Karpenter for **node-level** autoscaling with consolidation enabled
 - Prefer Graviton (ARM) instances for cost-performance (20-40% savings)
-- Use Spot instances for fault-tolerant workloads
+- Use Spot instances for fault-tolerant workloads; **mix Spot + On-Demand** to avoid compounded failures (Spot interruption + AZ outage)
+- **Failure domain awareness:** avoid placing all replicas on a single node group or instance type; diversify instance families so that a capacity event in one pool does not take all replicas
 - Set appropriate instance types per workload: compute-optimized, memory-optimized
 - Enable prefix delegation for high pod density
 
 ## Workload Standards
 - Set resource `requests` and `limits` on all containers
-- Use `topologySpreadConstraints` to distribute pods across AZs
+- Use `topologySpreadConstraints` to distribute pods across AZs (workloads must match multi-AZ node topology)
 - Configure PodDisruptionBudgets on all production deployments
+- **Probes and graceful shutdown:** configure `readinessProbe` (traffic gating), `livenessProbe` (restart on hang), and adequate `terminationGracePeriodSeconds` (long enough for in-flight requests to drain); without these, scaling events and rollouts cause cascading failures
 - Run containers as non-root with read-only root filesystem
 - Use dedicated ServiceAccounts with IRSA per workload
+- **Pod-level scaling:** use HPA (Horizontal Pod Autoscaler) for request-driven workloads; consider VPA for right-sizing requests on stable workloads. Scaling is two-dimensional: HPA scales pods, Karpenter scales nodes to fit them
 
 ## Networking
 - Use AWS Load Balancer Controller for ALB/NLB management

@@ -1,10 +1,10 @@
 # Check Progress Agent
 
-**Tier:** Utility | **Mode:** Read-only (auto-fix formatting only) | **Phase:** Any
+**Tier:** Utility | **Mode:** Read-only | **Phase:** Any
 
-Review current work progress, fix formatting, and produce a status summary. Does not stage or commit.
+Review current work progress, report formatting issues, and produce a status summary. Does not modify files, stage, or commit.
 
-**Inherited rules:** `command-restrictions.mdc`, `interactive-gate.mdc`
+**Inherited rules:** `agent-cli-core.mdc`, `agent-cli-terraform.mdc`, `agent-cli-kubernetes.mdc`, `agent-cli-aws.mdc`, `workflow-interactive-gate.mdc`, `workflow-verification-gate.mdc`
 
 ## Workflow
 
@@ -16,12 +16,14 @@ git diff --name-only
 git log --oneline main..HEAD
 ```
 Count files by type (`.tf`, `.yaml`, `.md`, workflows). Link to active plan if one exists.
+- **Plan freshness:** verify the referenced `.plan.md` exists and its branch/environment matches the current branch; flag if plan is missing or stale
+- **Unexpected files:** compare changed file list against the plan's task file paths; flag any files not accounted for in the plan (possible scope creep or accidental changes)
 
-### 2. Auto-Fix Formatting (modified files only)
-- `terraform fmt -recursive` (auto-fix)
-- `terraform validate` (report errors)
-- Validate YAML syntax on changed files
-- Report what was fixed
+### 2. Formatting Check (read-only validation only — no side effects, no file writes)
+- `terraform fmt -check -recursive` (exit code only — reports drift, writes nothing)
+- `terraform validate` (read-only schema check, no state access needed)
+- YAML syntax validation on changed files (parse check, no modification)
+- Report which files need formatting — suggest user runs `terraform fmt` or invokes `/iac-dev` to fix
 
 ### 3. Change Analysis
 Categorize `git diff` findings:
@@ -35,7 +37,7 @@ Categorize `git diff` findings:
 ### Branch — [name], [N] commits ahead of main
 ### Files — [N] Terraform, [N] YAML, [N] Workflow, [N] Other
 ### Changes — [grouped by logical area]
-### Quality — terraform fmt [Pass/Fixed], validate [Pass/Fail], YAML [Pass/Fail], secrets [Clean/Issues]
+### Quality — terraform fmt -check [Pass/Needs fix], validate [Pass/Fail], YAML [Pass/Fail], secrets [Clean/Issues]
 ### Issues — Critical: [N], Recommended: [N], Optional: [N]
 ### Plan Status — [plan file or "none"], [X/Y] tasks complete, next: [description]
 ```
@@ -45,6 +47,7 @@ Only if no Critical issues remain. Conventional commit format.
 If Critical issues found: list them, do NOT propose commit.
 
 ## Constraints
+- Do NOT modify any files (this agent is strictly read-only)
 - Do NOT `git add`, commit, or push
-- Do NOT modify files outside the current diff
-- Auto-fix formatting only (terraform fmt, YAML lint)
+- Use `-check` flags for formatting validation; never apply fixes directly
+- If formatting issues are found, suggest the user runs the fix command or invokes `/iac-dev`

@@ -4,7 +4,7 @@
 
 You are the **PR Agent**. Final workflow phase: commit, push, create PR, notify Slack.
 
-**Inherited rules:** `command-restrictions.mdc`, `interactive-gate.mdc`, `verification-gate.mdc`
+**Inherited rules:** `agent-cli-core.mdc`, `agent-cli-terraform.mdc`, `agent-cli-kubernetes.mdc`, `agent-cli-aws.mdc`, `workflow-interactive-gate.mdc`, `workflow-verification-gate.mdc`
 
 ## Skills to Load
 
@@ -34,7 +34,18 @@ EOF
 **Types:** `feat`, `fix`, `refactor`, `chore`, `docs`, `ci`, `test`
 **Scope:** module or component name
 
-### 3. Push and Create PR
+### 3. Gather Artifacts
+
+Before creating the PR, check for `.artifacts/` files produced by upstream agents:
+
+- `.artifacts/review.md` — security review status and findings (from `/reviewer`)
+- `.artifacts/test-summary.md` — test coverage and validation results (from `/platform-tester`)
+
+Read each file if it exists. Extract `status`, key findings, and coverage summary for the PR body. If an artifact is missing, note "not performed" in the relevant section (it may have been intentionally skipped).
+
+**Gate check:** If `.artifacts/review.md` exists and its frontmatter `status` is `fail`, **stop and refuse to create the PR**. Inform the user: "Review status is `fail` with [N] critical findings. Use `/iac-dev` to remediate, then `/reviewer` for a fresh pass before PR creation." Only proceed if status is `pass` or `warn` (user-accepted).
+
+### 4. Push and Create PR
 ```bash
 git push -u origin HEAD
 gh pr create \
@@ -47,24 +58,30 @@ gh pr create \
 - Plan: `<path>` | Status: [Implemented/Partial]
 
 ## Review Report
-- Security: [Pass / findings] | Static analysis: [Pass / findings]
+<!-- Populated from .artifacts/review.md -->
+- Status: [pass / warn / fail]
+- Critical: [N] | Warnings: [N]
+- Key findings: [1-liner per critical if any]
 
-## Test Plan
-- [ ] terraform validate ✅
-- [ ] terraform plan shows expected changes only
-- [ ] Security scan clean
+## Test Summary
+<!-- Populated from .artifacts/test-summary.md -->
+- Status: [pass / partial / skip]
+- Suites: [N] | Cases: [N]
+- Validation: terraform validate [pass/fail], checkov [pass/N findings]
 
 ## Checklist
 - [ ] Team conventions followed
 - [ ] No hardcoded credentials
 - [ ] Plan file updated
+- [ ] Review artifact present (or "N/A" with reason)
+- [ ] Test summary present (or "N/A" with reason)
 
 EOF
 )" \
   --reviewer team:fielmann-ag/devops-platform
 ```
 
-### 4. Slack Notification
+### 5. Slack Notification
 MCP tool `user-slack` → channel `#ae_devops`:
 ```
 Hi Team, Kindly review PR made in [REPO_NAME]
@@ -72,8 +89,8 @@ Changes: [1-line summary]
 PR: [PR_URL]
 ```
 
-### 5. Verification
-Per `verification-gate.mdc`: show `git status` (clean), commit hash, branch, PR URL from `gh` output, Slack status.
+### 6. Verification
+Per `workflow-verification-gate.mdc`: show `git status` (clean), commit hash, branch, PR URL from `gh` output, Slack status.
 
 ## Error Handling
 - No changes → inform and exit

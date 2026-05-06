@@ -1,0 +1,86 @@
+---
+description: AWS CLI safety — agent NEVER runs mutating AWS CLI; patterns + inspection (glob-scoped)
+globs: "**/*.tf,**/*.tfvars,**/cloudformation/**/*.yaml,**/cloudformation/**/*.yml,**/cfn/**/*.yaml,**/cfn/**/*.yml,**/cdk.json"
+alwaysApply: false
+---
+# AWS CLI Command Safety
+
+AWS CLI and CloudFormation stack operations often sit next to Terraform/IaC. See `agent-cli-core.mdc` for piping, intent, risk tiers, and autonomy rules.
+
+## Definitions
+
+**Mutating AWS CLI** (this file): any operation that **creates, updates, deletes, removes, or otherwise changes** resource **lifecycle, configuration, capacity, or runtime state** in AWS (including **start / stop / reboot** of compute). **Not mutating (inspection):** **`describe-*`**, **`list-*`**, **`get-*`** when used read-only, **`ls`**, **`head-object`**, **`get-template`**, **`validate-template`**, **`sts get-caller-identity`**, etc. **`aws s3 cp`** can **overwrite** object content—allowed **only** for **download (S3 → local)** or **upload to a new key**; **never overwrite an existing S3 key** from the agent unless the user explicitly confirms the specific key path (see Read-only section).
+
+## Policy wording
+
+- **Source of truth:** **IaC in Git** (Terraform / CloudFormation / CDK / templates) defines **desired state**. **Live AWS** is **observed state**—do **not** treat the console or **`describe-*`** output as **authoritative configuration**; reconcile drift back through **IaC + PR**, not ad hoc CLI mutation from the agent.
+- The **agent MUST NOT execute** mutating AWS CLI or the **NEVER run** patterns below—**no exceptions** (including user approval). **Humans** or **CI/CD** run mutations outside the agent.
+- **Do not bypass** these rules via **scripts**, **wrappers**, **Makefile targets**, **`aws-vault` exec chains**, or **SDK / Boto** calls that perform **equivalent mutations** from the agent environment.
+- **DO NOT** present mutating commands as **runnable steps** in chat (numbered lists, fenced code blocks styled as "run this", or copy-paste-ready sequences). These are **examples of runnable formatting** to avoid.
+- **MAY** reference them in **narrative documentation only** ("then the pipeline runs `terraform apply`…", "the human executes `aws eks delete-nodegroup`…")—clearly framed as what **another actor** does outside the agent, not as an action the user should paste from chat.
+- **When AWS mutation is required:** agent updates **IaC templates / CDK / CFN** in Git → explain impact using **read-only** APIs below → **PR** → human or pipeline runs mutating AWS CLI outside the agent.
+
+## NEVER run — mutating / destructive AWS CLI
+
+**NEVER run** from the **agent** terminal:
+
+### Pattern coverage (create / update / delete / state change)
+
+- Any service operation matching **`create-*`**, **`run-*`** (e.g. **`run-instances`**, **`run-task`**), **`update-*`**, **`put-*`**, **`delete-*`**, **`remove-*`**
+- Any operation matching **`modify-*`**, **`set-*`**, **`scale-*`** when it changes **live configuration or capacity** (naming does **not** always include create/update/delete). Examples: **`aws ec2 modify-instance-attribute`**, **`aws autoscaling set-desired-capacity`**, **`aws ecs update-service`** (**`update-*`** also covers many control-plane changes).
+- Examples: **`aws ec2 run-instances`**, **`aws lambda create-function`**, **`aws cloudformation create-stack`**, **`aws cloudformation update-stack`**, **`aws rds create-db-instance`**, **`aws s3api put-object`**, **`aws iam create-role`**
+
+### EC2 instance lifecycle (state-changing)
+
+- **`aws ec2 terminate-instances`**, **`aws ec2 stop-instances`**, **`aws ec2 start-instances`**, **`aws ec2 reboot-instances`**
+
+### S3 destructive / bulk mutation
+
+- **`aws s3 rm`**, **`aws s3 rb`**, **`aws s3 sync`** with **`--delete`** (can wipe destination prefixes / buckets), **`aws s3api delete-bucket`**
+
+### CloudFormation stacks
+
+- **`aws cloudformation create-stack`**, **`aws cloudformation update-stack`**, **`aws cloudformation delete-stack`**
+
+### Representative mutations (non-exhaustive)
+
+- **`aws iam delete-*`**, **`aws iam detach-*`**
+- **`aws rds delete-db-instance`**, **`aws rds delete-db-cluster`**
+- **`aws eks delete-cluster`**, **`aws eks delete-nodegroup`**
+- **`aws autoscaling delete-*`**, **`aws elbv2 delete-*`**
+- **`aws secretsmanager delete-secret`**
+- **`aws kms schedule-key-deletion`**, **`aws kms delete-*`**
+- **`aws dynamodb delete-table`**
+- **`aws route53 delete-*`**
+- **`aws acm delete-certificate`**
+- **`aws ecr delete-repository`**, **`aws ecr batch-delete-image`**
+- **`aws lambda delete-function`**
+- **`aws apigateway delete-*`**
+- **`aws cloudwatch delete-*`**, **`aws logs delete-log-group`**
+
+## Inspection, drift awareness, and dry-run
+
+- **Drift / reconciliation:** use **`describe-*`**, **`list-*`**, **`get-*`**, **`get-template`**, **`describe-stacks`** to compare **observed AWS state** to **IaC in Git** before proposing file changes (analogue to **`kubectl diff`**).
+- **`--dry-run`:** When supported (e.g. **`aws ec2 run-instances --dry-run`**), the agent **may** use the dry-run flag for **permission validation only** (verifies IAM allows the call; creates nothing). Constraints: (1) **dry-run is validation, not execution**—if the flag is unsupported or ambiguous for a command, do **not** attempt it; (2) **never fall back** to live execution when dry-run fails or is unavailable; (3) live **`run-instances`** / **`create-*`** / **`update-*`** remain **NEVER run** from the agent regardless of dry-run outcome.
+
+## Read-only examples (agent may use when appropriate)
+
+`aws ec2 describe-*`, `aws s3 ls`, **`aws s3 cp`** (**download or upload to new key only**; never overwrite existing key without explicit user confirmation of the exact path), `aws iam get-*`, `aws iam list-*`, `aws rds describe-*`, `aws eks describe-*`, `aws cloudformation describe-stacks`, `aws cloudformation get-template`, `aws sts get-caller-identity`, `aws configure list`.
+
+### Invocation commands (testing nuance)
+
+**`aws lambda invoke`** and similar **invoke/run** APIs execute workload code: they are non-mutating at the AWS control plane but can trigger **second-order mutations** downstream (database writes, SQS messages, fan-out workflows). Allowed **only** for **isolated test functions** (no production data, no external side effects, blast radius confirmed by user); **MUST NOT** invoke functions that write to production stores, trigger deployments, or fan out to other services.
+
+Use caution with `aws secretsmanager get-secret-value` (sensitive output).
+
+## eksctl
+
+**NEVER run:** `eksctl delete cluster`, `eksctl delete nodegroup`, `eksctl scale nodegroup`, `eksctl drain nodegroup`, `eksctl create`
+
+**Preferred:** `eksctl get cluster`, `eksctl get nodegroup`, `eksctl get addon`, `eksctl utils describe-stacks`.
+
+## AWS credentials & profiles
+
+**NEVER run:** `aws configure set`, `aws configure delete-profile`, or SSO/config mutations that weaken verification.
+
+**Preferred:** `aws sts get-caller-identity`, `aws configure list`, `aws configure list-profiles`, `aws sso login`.

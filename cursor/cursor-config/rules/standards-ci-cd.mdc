@@ -1,0 +1,92 @@
+---
+description: CI/CD pipeline guidelines for infrastructure and application delivery
+globs: 
+alwaysApply: true
+---
+# CI/CD Guidelines
+
+## Pipeline Principles
+- Every change goes through a pull request; no direct pushes to main
+- CI runs on every PR: lint, validate, test, security scan
+- CD only triggers on merge to main (or release branch)
+- Deployments are automated but gated: require approval for production
+- Pipelines must be reproducible and idempotent
+- Every deployment must map to a commit SHA — log version, environment, and artifact for traceability
+
+## Infrastructure Pipeline (Terraform)
+
+### Validation (PR triggers)
+- `terraform init` with correct backend config (must succeed before any other step)
+- `terraform fmt -check`, `terraform validate`, `terraform plan`
+- Security scan: `checkov` / `tfsec`
+- Policy enforcement: fail pipeline on violations (no public S3, no open SGs, no wildcard IAM)
+- Cost estimation: surface cost diff in PR (Infracost or equivalent)
+- Post plan output as PR comment for reviewer visibility
+
+### Plan Review
+- Reviewer must validate terraform plan output (not just code diff)
+- Explicitly check: resource changes, deletions, replacements
+- Highlight destructive changes (replace, destroy) — require explicit approval
+
+### State & Drift
+- Must use remote backend (S3 + DynamoDB lock)
+- State locking must be enabled — no local state in CI/CD
+- Each environment must have separate state file, backend config, and variables — no shared state between environments
+- Drift detection: plan against remote state before apply; surface drift in PR or pipeline logs
+- Scheduled drift checks (weekly/daily) on production to catch out-of-band changes
+- No manual state manipulation without documented justification
+- Emergency manual changes must be followed by reconciliation via Terraform — drift must be resolved in code, not ignored
+
+### Concurrency
+- Only one apply per environment at a time
+- Use GitHub Actions concurrency groups: `concurrency: { group: terraform-${{ env }}, cancel-in-progress: false }`
+- Queue, don't cancel — infra applies must not be interrupted mid-execution
+
+### Apply
+- Apply only after PR approval and merge
+- Apply must use the same commit SHA as the reviewed plan — no re-plan drift between approval and apply without visibility
+- Use separate pipelines per environment/layer
+- Never auto-apply to production without human approval
+- Avoid destructive changes without explicit reviewer sign-off on plan
+- Set `timeout-minutes` on apply jobs — Terraform can hang on provider/network issues; fail safely
+- Log applied changes and outputs; store apply logs as pipeline artifacts
+- Record: commit SHA, environment, resources changed — for audit and debugging
+
+### Caching
+- Cache Terraform providers and modules (`actions/cache` on `.terraform/`)
+- Reduces init time and provider download flakiness
+
+## Application Pipeline
+- Build → Test → Scan → Push Image → Deploy Staging → Deploy Production
+- Tag images with git SHA (not `latest`)
+- Push images to ECR; use immutable tags
+- Run security scans (Trivy, Snyk) on container images
+- Use rolling deployments with health checks
+- Cache build dependencies (node_modules, pip packages, Go modules)
+
+## Environment Promotion
+- Non-production deploys automatically on merge to main
+- Production deploys require GitHub Environment approval
+- Use the same image/artifact across all environments; only config differs
+- Never rebuild artifacts for production; promote the tested artifact
+
+## Security & Secrets
+- Use OIDC for cloud credentials in CI/CD; no stored access keys
+- Use least-privilege GitHub Actions permissions; restrict default `GITHUB_TOKEN` scopes
+- Declare explicit `permissions:` block in every workflow (never rely on defaults)
+- Store application secrets in AWS Secrets Manager
+- Inject secrets at runtime, never bake into images
+- Rotate CI/CD credentials on a schedule
+
+## Failure Handling
+- Pipeline failure must include: logs, failing step, and error context
+- Infrastructure failures must not auto-retry blindly — require manual review for failed applies
+- Detect stuck pipelines: set `timeout-minutes` on all jobs; kill and alert if exceeded
+- Application deploy failures: auto-rollback if health checks fail within timeout
+- Alert on pipeline failures (Slack/Datadog integration)
+
+## Rollback
+- Application: revert the PR or redeploy previous image tag
+- Infrastructure: revert Terraform code and re-apply (plan + review + apply cycle)
+- Database: use migration rollback scripts; never drop in production
+- Document rollback procedures in runbooks

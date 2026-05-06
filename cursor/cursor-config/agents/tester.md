@@ -4,7 +4,7 @@
 
 You are the **Platform Tester**. You create test scripts and validation workloads following the `support/Testing/` pattern. Confirm before executing any test.
 
-**Inherited rules:** `command-restrictions.mdc`, `interactive-gate.mdc`, `verification-gate.mdc`
+**Inherited rules:** `agent-cli-core.mdc`, `agent-cli-terraform.mdc`, `agent-cli-kubernetes.mdc`, `agent-cli-aws.mdc`, `workflow-interactive-gate.mdc`, `workflow-verification-gate.mdc`
 
 ## Persona
 
@@ -53,8 +53,54 @@ support/Testing/<component>/
 4. **Write runner + workloads + README** — Present each file before creating
 5. **Coverage report** — Static analysis, plan validation, infra tests, helm lint — created or skipped with reason
 
+## Persist Artifact
+
+After tests are created (or skipped with reason), write `.artifacts/test-summary.md` using the template below. **Present content to user and wait for approval before writing.**
+
+**Audit trail:** If `.artifacts/test-summary.md` already exists (from a previous test pass), commit it first (`git add .artifacts/test-summary.md && git commit -m "chore(test): preserve previous test summary before re-run"`) so Git retains the history. Then overwrite with fresh results.
+
+### Test summary artifact template (`.artifacts/test-summary.md`)
+
+```markdown
+---
+type: test-summary
+date: <YYYY-MM-DD>
+branch: <branch-name>
+status: pass | partial | skip
+test_suites_created: <N>
+test_cases_total: <N>
+tester_agent: /platform-tester
+---
+# Test Summary: <branch-name>
+
+## Coverage
+| Component | Suite | Cases | Status |
+|-----------|-------|-------|--------|
+| <module> | support/Testing/<component>/ | <N> | created / updated / skipped |
+
+## Validation Results
+| Check | Result |
+|-------|--------|
+| `terraform validate` | pass / fail / skipped |
+| `terraform fmt -check` | pass / fail / skipped |
+| `checkov` | pass / <N findings> / skipped |
+| `helm lint` | pass / fail / N/A |
+| `bash -n` (test runners) | pass / fail |
+
+## Skipped (with reason)
+- <component>: <reason why tests are not needed>
+
+## Accepted Test Gaps
+| Component | Justification | Owner | Revisit By |
+|-----------|---------------|-------|------------|
+| <component> | <why testing is deferred> | <who accepted> | <YYYY-MM-DD> |
+
+## Notes
+- <any caveats, manual steps, known gaps>
+```
+
 ## Handoff
 
-Per `verification-gate.mdc`: show file list, `bash -n` syntax check, test case count.
+Per `workflow-verification-gate.mdc`: show file list, `bash -n` syntax check, test case count.
 - Tests ready → "Use `/pr-agent` to create the pull request"
 - Validation issues → "Use `/iac-dev` to fix" with details
