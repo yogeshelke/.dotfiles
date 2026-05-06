@@ -1,290 +1,62 @@
 ---
-description: Universal token resource control - hard constraints enforced across all agents
+description: Token governance - hard resource constraints enforced across all agents (v2.2)
 globs: 
 alwaysApply: true
 ---
-
 # Token Governance
 
-**HIERARCHY**: Token governance overrides context expansion decisions
-- **Context-engineering** defines WHAT to include
-- **Token-governance** defines HOW MUCH to include
+Token governance is **resource control** — hard constraints, not suggestions. Overrides context expansion decisions.
 
-Token governance is **resource control** - hard constraints enforced universally.
+- `standards-context-engineering.mdc` defines WHAT to include
+- `workflow-token-governance.mdc` defines HOW MUCH (this rule)
 
-## Core Principles
+## Core Invariants
 
-### Prevention Over Compression
-- Use targeted file reads instead of dumping entire files
-- Request specific sections with line ranges for large files  
-- Prefer diffs over full file echoing for changes
-- Split sessions at logical boundaries before context bloat
+1. **No growth under pressure** — if budget is stressed, context size MUST NOT increase
+2. **Monotonicity** — once threshold exceeded, next step MUST NOT increase token count (formal upper bound)
+3. **Predictive budgeting** — estimate token cost BEFORE execution; pre-trim if estimated > remaining budget
+4. **Shrink before expand** — adding new context requires shrinking existing context first
+5. **Prevention over compression** — targeted reads, line ranges, diffs > bulk loading then compressing
 
-### Context Efficiency (Always Enforced)
-- **200 token rule**: If context exceeds ~200 lines, you're carrying too much
-- **Just-in-time loading**: Fetch information exactly when needed
-- **Verbatim preservation**: Keep technical details (paths, errors) exactly as-is
-- **System instructions**: Use once, not repeated in every message
+## Threshold Enforcement
 
-### Output Control
-- Set appropriate `max_tokens` limits to prevent over-generation
-- Use stop sequences for bounded outputs: `["\n\n", "```", "## Next Step"]`
-- Request YAML over JSON for structured data (50% token reduction)
-- Request diffs instead of full file rewrites
+| Budget Used | Enforcement |
+|-------------|-------------|
+| **< 50%** | Normal operation; follow `standards-context-engineering.mdc` |
+| **50%** | Compress conversation history; single-purpose tool calls only |
+| **70%** | MUST NOT re-read files, quote full content, or increase context size; shrink before any new context |
+| **85%** | MUST NOT read new files, load skills, or expand context; minimal output only |
+| **90%** | MANDATORY session reset with summarized context transfer |
 
-## Context Management Invariants
+## Phase-Aware Budget Allocation
 
-### Always Carry (Essential Context)
-- Current task objective (1 sentence)
-- Critical constraints and boundaries  
-- Active file paths and exact error messages
-- Current step in workflow
+| Phase | Context Budget | Output Budget | Rationale |
+|-------|---------------|---------------|-----------|
+| Plan | 60% | 40% | Architecture needs more exploration |
+| Build | 50% | 50% | Balanced implementation |
+| Review | 30% | 70% | Focused validation, detailed findings |
+| Test/PR | 20% | 80% | Reference-only, results-heavy |
 
-### Never Carry (Fetch When Needed)
-- Entire Terraform files or Helm charts "just in case"
-- Full command output without specific purpose
-- Repeated restatements of requirements
-- Large JSON/YAML blobs that can be re-read
+## Tool Output Discipline
 
-### Session Boundaries (Automatic Reset Triggers)
-- Moving from planning to implementation
-- Switching to different task or repository
-- Context window exceeding 70% capacity
-- Debugging different issue than originally discussed
+- `terraform plan`: carry change summary (adds/changes/destroys + resource names), not full plan
+- `git diff`: carry file names + key changes, not entire diffs
+- `kubectl describe`: carry conditions/events/status, not full spec
+- Error messages: **verbatim** (never summarize)
+- Success confirmations: one line ("terraform validate: Success")
 
-## Cost-Aware Patterns
+## Skill Loading Protocol
 
-### Tool Output Optimization
-```
-❌ Return full file content:
-"Here's the entire auth.ts file (847 lines)..."
+Skills use `<!-- CORE_DECISIONS -->` and `<!-- REFERENCE -->` markers:
 
-✅ Return targeted content:
-"From auth.ts:47-52: TypeError in jwt validation"
-```
+1. **Design decisions** → read header + Decision Entry Points + Cross-Cutting Rules (stop at `<!-- REFERENCE -->`)
+2. **Implementation** → read only the specific `## SECTION` listed in Decision Entry Points table
+3. **Never** read an entire 500+ line skill in one pass
 
-### Context Accumulation Control  
-```
-❌ Echo full files after changes:
-"I've updated the file. Here's the complete file..."
+## Anti-Patterns (NEVER)
 
-✅ Confirm with summary:
-"✅ Updated auth.ts line 47: fixed jwt validation"
-```
-
-### Retrieval Precision
-```
-❌ Dump entire directories:
-"Let me show you all the files in src/..."
-
-✅ Target specific needs:
-"Checking src/middleware/auth.ts for jwt config"
-```
-
-## Implementation Enforcement
-
-### Core Enforcement Rules
-
-**ALWAYS**:
-- Use system instructions (not repeated persona)
-- Request line ranges for files >100 lines  
-- Summarize changes (never echo full content)
-- Check token count before each operation
-
-**NEVER** (at any budget level):
-- Repeat information already in context
-- Load unnecessary skills
-- Re-read unchanged files in same session
-
-**NO GROWTH UNDER PRESSURE**:
-- IF budget_low OR budget_critical: MUST NOT increase context size
-- Prevents accidental context expansion and runaway token growth
-
-**MONOTONICITY RULE** (Mathematical Guarantee):
-- IF session_tokens increasing AND threshold exceeded: next step MUST NOT increase token count
-- Guarantees strict upper bound behavior and formal predictability
-- Prevents edge-case regressions under any conditions
-
-**PREDICTIVE BUDGETING** (Pre-execution):
-- IF estimated_tokens_for_task > remaining_budget: pre-trim context BEFORE execution
-- Estimate token costs before operations to ensure stable scaling
-- Proactive resource management prevents mid-operation budget exhaustion
-
-**CONTEXT SHRINK BEFORE EXPANSION**:
-- IF new context required: shrink existing context FIRST
-- Maintains performance even when context seems relevant
-
-### Automatic Session Management
-
-**Pre-execution**: Estimate task token cost → pre-trim if needed
-**50% threshold**: Compress conversation history
-**70% threshold**: Block file re-reading + context shrink before expansion  
-**85% threshold**: Block new files + minimal output only
-**90% threshold**: MANDATORY session reset with summarized context transfer
-
-**Predictive vs Reactive Control**:
-- **Predictive**: Estimate and pre-trim before task execution
-- **Reactive**: Enforce thresholds during execution
-- Combined approach ensures stable scaling under all conditions
-
-## Direct Enforcement Triggers
-
-### IF session_tokens > 50% of limit:
-**ENFORCE**:
-- Compress conversation history
-- Use line ranges for file reads only
-- Single-purpose tool calls only
-
-### IF session_tokens > 70% of limit:
-**MUST NOT**:
-- Re-read any previously accessed files
-- Quote full content (summarize instead)
-- Use multi-step exploratory operations
-- Increase context size
-
-**BEFORE any new context**:
-- Shrink existing context first
-
-### IF session_tokens > 85% of limit:
-**MUST NOT**:
-- Read any new files
-- Load new skills
-- Expand existing context
-- Generate detailed explanations
-
-**ENFORCE**:
-- Minimal output only
-- Reference existing context only
-
-### IF session_tokens > 90% of limit AND task continues:
-**MANDATORY**:
-- Start new session with summarized context
-- Transfer only essential state
-- Block all context expansion operations
-
-## Phase-Aware Token Allocation
-
-### Plan Phase
-**ALLOW**: More context for architecture decisions
-**BUDGET**: 60% for exploration, 40% for output
-
-### Build Phase  
-**ALLOW**: Moderate context for implementation
-**BUDGET**: 50% for context, 50% for output
-
-### Review Phase
-**ALLOW**: Minimal context - focused validation only
-**BUDGET**: 30% for context, 70% for analysis output
-
-### Test/PR Phase
-**ALLOW**: Reference-only - no new context
-**BUDGET**: 20% for context, 80% for results
-
-### Token Budget Allocation
-- **System/Instructions**: 10-15% of context window
-- **Active task context**: 40-50% of context window  
-- **Tool outputs**: 20-30% of context window
-- **History buffer**: 10-20% of context window
-
-## Cost Monitoring (Built-in)
-
-Track these metrics automatically:
-- Tokens per session turn
-- Context window utilization percentage  
-- Session length before reset needed
-- Cost per completed task
-- **Real-time budget consumption rate**
-- **Projected session completion vs. budget**
-
-Warning signals requiring immediate action:
-- Sessions hitting context limits frequently  
-- Rising token usage without complexity increase
-- Degraded accuracy on technical details
-- Cost escalation beyond budget thresholds
-- **Budget consumption exceeding task complexity**
-
-## Enforcement Examples
-
-### Predictive Budget Control
-```
-Before file read: "Estimated 2.5K tokens needed, 1.8K remaining - pre-trimming context..."
-Before complex task: "Task requires ~15K tokens, current budget 12K - optimizing context first"
-Before analysis: "Multi-file analysis estimated 8K tokens - compressing history preemptively"
-```
-
-### Reactive Threshold Triggers
-```
-50%: History compressed automatically
-70%: "Cannot re-read auth.ts - refer to line 47 context from turn 3"
-85%: "Minimal output only - ✅ JWT config updated" 
-90%: "Session reset required - transferring state to fresh session"
-```
-
-### Context Pressure Response
-```
-New context needed + 70% budget:
-"Shrinking previous file contents before reading new file..."
-
-Context expansion attempted at 85%:
-"BLOCKED: Cannot expand context. Use existing context only."
-```
-
-## Research-Based Optimizations
-
-### Lost-in-the-Middle Mitigation
-- Place critical information at beginning and end of prompts
-- Compress middle sections more aggressively
-- Reorder content by relevance, not chronology
-
-### Perplexity-Aware Preservation
-- Preserve low-perplexity tokens that carry high task value
-- Remove high-perplexity filler while keeping technical specifics
-- Maintain exact syntax for paths, commands, error messages
-
-### Compression Techniques (Applied Automatically)
-- Remove redundant natural language connectors
-- Eliminate repetitive explanations and acknowledgments  
-- Preserve structured content (JSON, YAML, code) verbatim
-- Use hierarchical summarization for large documents
-
-## Integration with Existing Rules
-
-This rule works with existing governance:
-- **standards-context-engineering**: Provides tactical guidance
-- **workflow-verification-gate**: Ensures evidence before claims
-- **workflow-interactive-gate**: Controls autonomous actions
-- **Token governance**: Optimizes cost and performance (this rule)
-
-## Cost Impact (Expected Results)
-
-With proper token governance:
-- **30-50% reduction** in input token usage
-- **2-3x longer** session life before context limits
-- **40-60% cost reduction** for multi-turn workflows  
-- **Improved accuracy** through noise reduction
-
-## Resource Control Enforcement
-
-Token governance operates as **hard resource constraints** - not suggestions or adaptive behavior.
-
-**CONSTRAINTS ARE**:
-- Immediate and automatic
-- Non-negotiable at each budget level  
-- Enforced before operations, not after
-- Phase-aware for workflow efficiency
-
-**CONSTRAINTS ARE NOT**:
-- Suggestions for agents to consider
-- Adaptive behavior requiring reasoning
-- Optional optimizations  
-- Context-dependent decisions
-
-Token governance is **resource control** with automatic enforcement triggers that prevent degraded reasoning and ensure consistent performance across all workflow phases.
-
-**Key Principles**:
-- **Predictive budgeting** - estimate and optimize before execution (v2.2)
-- **No interpretation required** - threshold triggers enforce automatically
-- **No growth under pressure** - prevents runaway token consumption  
-- **Context shrink before expansion** - maintains performance even with relevant content
-- **Mandatory session reset** - prevents degraded reasoning and hallucination
-- **Mathematical monotonicity** - formal guarantees for stable scaling
+- Load multiple full skill files simultaneously
+- Echo back large file contents the user can already see
+- Repeat plan/requirement text already in `.plan.md` on disk — reference by path
+- Carry completed task context forward — summarize to 2-3 lines
+- Compress file paths, error messages, resource names, or command syntax — these stay verbatim
