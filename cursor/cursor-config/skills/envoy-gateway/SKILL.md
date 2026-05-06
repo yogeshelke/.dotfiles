@@ -95,6 +95,8 @@ Internet → AWS NLB (L4) → Envoy Gateway → K8s Service → Pods
 
 ---
 
+<!-- CORE_DECISIONS: Read this section for design choices and constraints -->
+
 ## Cross-Cutting Rules
 
 | Decision | Domains | Rule |
@@ -108,6 +110,8 @@ Internet → AWS NLB (L4) → Envoy Gateway → K8s Service → Pods
 | Circuit breakers always | Traffic | Configure per upstream cluster |
 
 ---
+
+<!-- REFERENCE: Detailed implementation patterns below. Read only when you need specific configs. -->
 
 ## [ROUTING]
 

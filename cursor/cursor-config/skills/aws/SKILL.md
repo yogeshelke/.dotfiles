@@ -46,6 +46,8 @@ Navigate by task type:
 
 ---
 
+<!-- CORE_DECISIONS: Read this section for design choices and constraints -->
+
 ## Cross-Cutting Rules
 
 Decisions that span multiple domains (apply regardless of section):
@@ -61,6 +63,8 @@ Decisions that span multiple domains (apply regardless of section):
 | Tagging | Cost + All | Every resource tagged: env, service, team, managed-by |
 
 ---
+
+<!-- REFERENCE: Detailed implementation patterns below. Read only when you need specific configs. -->
 
 ## [COMPUTE]
 

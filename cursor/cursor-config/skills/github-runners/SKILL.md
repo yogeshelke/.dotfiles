@@ -46,6 +46,8 @@ Decision rules for self-hosted GitHub Actions runners on Kubernetes (ARC).
 
 ---
 
+<!-- CORE_DECISIONS: Read this section for design choices and constraints -->
+
 ## Cross-Cutting Rules
 
 | Decision | Rule |
@@ -58,6 +60,8 @@ Decision rules for self-hosted GitHub Actions runners on Kubernetes (ARC).
 | Privilege | Runners run as non-root by default; DinD is the ONLY exception (isolated) |
 
 ---
+
+<!-- REFERENCE: Detailed implementation patterns below. Read only when you need specific configs. -->
 
 ## SECURITY
 

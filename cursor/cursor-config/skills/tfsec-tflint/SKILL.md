@@ -41,6 +41,8 @@ Decision rules for Terraform quality gates: TFLint, tfsec, pre-commit, and terra
 
 ---
 
+<!-- CORE_DECISIONS: Read this section for design choices and constraints -->
+
 ## Cross-Cutting Rules
 
 | Decision | Rule |
@@ -51,6 +53,8 @@ Decision rules for Terraform quality gates: TFLint, tfsec, pre-commit, and terra
 | Version pinning | Pin pre-commit hook revs and TFLint ruleset versions in config |
 
 ---
+
+<!-- REFERENCE: Detailed implementation patterns below. Read only when you need specific configs. -->
 
 ## PRE_COMMIT
 

@@ -43,6 +43,8 @@ Decision rules for Amazon MSK clusters and Kafka ecosystem management.
 
 ---
 
+<!-- CORE_DECISIONS: Read this section for design choices and constraints -->
+
 ## Cross-Cutting Rules
 
 | Decision | Rule |
@@ -70,6 +72,8 @@ Decision rules for Amazon MSK clusters and Kafka ecosystem management.
 - Never mix: IAM auth + `kafka_acl` resources = silent misconfiguration (ACLs exist but are never evaluated).
 
 ---
+
+<!-- REFERENCE: Detailed implementation patterns below. Read only when you need specific configs. -->
 
 ## CLUSTER_CONFIG
 

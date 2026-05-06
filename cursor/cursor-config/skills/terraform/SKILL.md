@@ -41,6 +41,8 @@ Decision rules for Terraform IaC. Not reference material.
 
 ---
 
+<!-- CORE_DECISIONS: Read this section for design choices and constraints -->
+
 ## Cross-Cutting Rules
 
 | Decision | Domains | Rule |
@@ -52,6 +54,8 @@ Decision rules for Terraform IaC. Not reference material.
 | Pin versions | Dependencies + All | Providers, modules, and Terraform CLI — always pin |
 
 ---
+
+<!-- REFERENCE: Detailed implementation patterns below. Read only when you need specific configs. -->
 
 ## Execution Rules
 

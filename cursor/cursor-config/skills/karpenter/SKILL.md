@@ -86,6 +86,8 @@ Karpenter is **constraint-driven**, not configuration-driven:
 
 ---
 
+<!-- CORE_DECISIONS: Read this section for design choices and constraints -->
+
 ## Cross-Cutting Rules
 
 | Decision | Domains | Rule |
@@ -98,6 +100,8 @@ Karpenter is **constraint-driven**, not configuration-driven:
 | LimitRanges | Scheduling + Safety | Enforce default requests for all workloads |
 
 ---
+
+<!-- REFERENCE: Detailed implementation patterns below. Read only when you need specific configs. -->
 
 ## [NODEPOOL_DESIGN]
 

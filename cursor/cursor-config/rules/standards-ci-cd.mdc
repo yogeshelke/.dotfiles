@@ -1,7 +1,7 @@
 ---
 description: CI/CD pipeline guidelines for infrastructure and application delivery
-globs: 
-alwaysApply: true
+globs: "**/.github/workflows/*.yml,**/.github/workflows/*.yaml,**/.github/actions/**/*.yml,**/Jenkinsfile,**/*pipeline*.yml,**/*pipeline*.yaml,**/*deploy*.yml,**/*deploy*.yaml"
+alwaysApply: false
 ---
 # CI/CD Guidelines
 

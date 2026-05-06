@@ -43,6 +43,8 @@ Decision rules for Aurora PostgreSQL cluster management.
 
 ---
 
+<!-- CORE_DECISIONS: Read this section for design choices and constraints -->
+
 ## Cross-Cutting Rules
 
 | Decision | Rule |
@@ -55,6 +57,8 @@ Decision rules for Aurora PostgreSQL cluster management.
 | Access | Via security group from EKS node/pod SG; no public access |
 
 ---
+
+<!-- REFERENCE: Detailed implementation patterns below. Read only when you need specific configs. -->
 
 ## CLUSTER_CONFIG
 

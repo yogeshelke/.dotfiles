@@ -41,6 +41,8 @@ Decision rules for Kubernetes workloads and operations. Not reference material.
 
 ---
 
+<!-- CORE_DECISIONS: Read this section for design choices and constraints -->
+
 ## Cross-Cutting Rules
 
 | Decision | Domains | Rule |
@@ -53,6 +55,8 @@ Decision rules for Kubernetes workloads and operations. Not reference material.
 | Admission control | Security + All | Enforces invariants at workload creation time (PSA + Kyverno/OPA) |
 
 ---
+
+<!-- REFERENCE: Detailed implementation patterns below. Read only when you need specific configs. -->
 
 ## [WORKLOADS]
 

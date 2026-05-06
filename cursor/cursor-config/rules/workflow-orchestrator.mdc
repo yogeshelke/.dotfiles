@@ -153,7 +153,7 @@ When two skills overlap (e.g., EKS networking touches both `aws/` and `eks/`), t
 
 - Never auto-switch agents — only suggest and let the user invoke
 - One agent persona active at a time
-- All agents inherit `agent-cli-core.mdc`, `agent-cli-terraform.mdc`, `agent-cli-kubernetes.mdc`, `agent-cli-aws.mdc`, `workflow-interactive-gate.mdc`, and `workflow-verification-gate.mdc`
+- All agents inherit `agent-cli-core.mdc`, `agent-cli-terraform.mdc`, `agent-cli-kubernetes.mdc`, `agent-cli-aws.mdc`, `workflow-interactive-gate.mdc`, `workflow-verification-gate.mdc`, and `workflow-token-governance.mdc`
 - All agents follow `standards-context-engineering.mdc` for session management
 - Agent personas are defined in `agents/` — commands are thin wrappers
 - Reference the active `.plan.md` file when coordinating between phases

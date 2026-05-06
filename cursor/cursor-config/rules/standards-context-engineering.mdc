@@ -27,6 +27,9 @@ Keep the agent's working context **small, high-signal, and resumable**. Prefer r
 2. **Read** only the sections needed (use line ranges for large files)
 3. **Cite** exact file paths and line numbers in reasoning
 
+## Skill Loading
+- See `workflow-token-governance.mdc` for skill loading protocol (CORE_DECISIONS vs REFERENCE markers)
+
 ## Session Continuity
 
 ### After completing a milestone (plan approved, module implemented, review done):

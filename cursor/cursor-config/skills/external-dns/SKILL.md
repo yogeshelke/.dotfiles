@@ -42,6 +42,8 @@ Decision rules for automated DNS record management from Kubernetes resources.
 
 ---
 
+<!-- CORE_DECISIONS: Read this section for design choices and constraints -->
+
 ## Cross-Cutting Rules
 
 | Decision | Rule |
@@ -53,6 +55,8 @@ Decision rules for automated DNS record management from Kubernetes resources.
 | Multiple clusters | Each cluster gets unique `txt-owner-id`; shared zones are safe with ownership |
 
 ---
+
+<!-- REFERENCE: Detailed implementation patterns below. Read only when you need specific configs. -->
 
 ## INSTALLATION
 

@@ -44,6 +44,8 @@ Decision rules for automated TLS certificate management in Kubernetes.
 
 ---
 
+<!-- CORE_DECISIONS: Read this section for design choices and constraints -->
+
 ## Cross-Cutting Rules
 
 | Decision | Rule |
@@ -56,6 +58,8 @@ Decision rules for automated TLS certificate management in Kubernetes.
 | Secret ownership | cert-manager owns the TLS secret; NEVER manually edit or recreate it |
 
 ---
+
+<!-- REFERENCE: Detailed implementation patterns below. Read only when you need specific configs. -->
 
 ## TLS_STRATEGY
 

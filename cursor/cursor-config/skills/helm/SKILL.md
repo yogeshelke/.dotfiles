@@ -40,6 +40,8 @@ Decision rules for Helm chart management. Not reference material.
 
 ---
 
+<!-- CORE_DECISIONS: Read this section for design choices and constraints -->
+
 ## Cross-Cutting Rules
 
 | Rule | Domain | Enforcement |
@@ -56,6 +58,8 @@ Decision rules for Helm chart management. Not reference material.
 | Template namespacing | Chart Design | All defines must be `<chart>.<name>` |
 
 ---
+
+<!-- REFERENCE: Detailed implementation patterns below. Read only when you need specific configs. -->
 
 ## Operational Rules
 

@@ -43,6 +43,8 @@ Decision rules for monitoring and observability. Not reference material.
 
 ---
 
+<!-- CORE_DECISIONS: Read this section for design choices and constraints -->
+
 ## Cross-Cutting Rules
 
 | Decision | Domains | Rule |
@@ -54,6 +56,8 @@ Decision rules for monitoring and observability. Not reference material.
 | Namespace metrics | Metrics + All | Prefix custom metrics: `<service>.<metric>` |
 
 ---
+
+<!-- REFERENCE: Detailed implementation patterns below. Read only when you need specific configs. -->
 
 ## [AGENT_DEPLOYMENT]
 

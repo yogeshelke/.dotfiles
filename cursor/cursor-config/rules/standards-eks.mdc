@@ -1,7 +1,7 @@
 ---
 description: EKS operational best practices for cluster management and workloads
-globs: 
-alwaysApply: true
+globs: "**/eks/**/*.tf,**/eks/**/*.yaml,**/eks/**/*.yml,**/karpenter/**/*.tf,**/karpenter/**/*.yaml,**/nodepool*,**/NodePool*,**/Chart.yaml,**/values.yaml,**/values.*.yaml,**/k8s/**/*.yaml,**/kubernetes/**/*.yaml"
+alwaysApply: false
 ---
 # EKS Best Practices
 

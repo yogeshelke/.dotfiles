@@ -67,6 +67,6 @@ All agents follow these (detailed in each agent file):
 
 - Never auto-switch agents — suggest and let the user invoke
 - One agent persona active at a time
-- All agents inherit: `agent-cli-core.mdc`, `agent-cli-terraform.mdc`, `agent-cli-kubernetes.mdc`, `agent-cli-aws.mdc`, `workflow-interactive-gate.mdc`, `workflow-verification-gate.mdc`, `standards-aws-security.mdc`, `standards-context-engineering.mdc`
+- All agents inherit: `agent-cli-core.mdc`, `agent-cli-terraform.mdc`, `agent-cli-kubernetes.mdc`, `agent-cli-aws.mdc`, `workflow-interactive-gate.mdc`, `workflow-verification-gate.mdc`, `workflow-token-governance.mdc`, `standards-aws-security.mdc`, `standards-context-engineering.mdc`
 - Reference the active `.plan.md` when coordinating between phases
 - Build dependency graph before executing; maximize parallelism

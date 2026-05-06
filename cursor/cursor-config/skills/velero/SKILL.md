@@ -43,6 +43,8 @@ Decision rules for Kubernetes backup and disaster recovery with Velero.
 
 ---
 
+<!-- CORE_DECISIONS: Read this section for design choices and constraints -->
+
 ## Cross-Cutting Rules
 
 | Decision | Rule |
@@ -55,6 +57,8 @@ Decision rules for Kubernetes backup and disaster recovery with Velero.
 | Restore safety | NEVER restore into production without dry-run + namespace isolation first |
 
 ---
+
+<!-- REFERENCE: Detailed implementation patterns below. Read only when you need specific configs. -->
 
 ## RPO_RTO
 

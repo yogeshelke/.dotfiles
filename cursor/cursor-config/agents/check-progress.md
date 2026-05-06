@@ -4,7 +4,7 @@
 
 Review current work progress, report formatting issues, and produce a status summary. Does not modify files, stage, or commit.
 
-**Inherited rules:** `agent-cli-core.mdc`, `agent-cli-terraform.mdc`, `agent-cli-kubernetes.mdc`, `agent-cli-aws.mdc`, `workflow-interactive-gate.mdc`, `workflow-verification-gate.mdc`
+**Inherited rules:** `agent-cli-core.mdc`, `agent-cli-terraform.mdc`, `agent-cli-kubernetes.mdc`, `agent-cli-aws.mdc`, `workflow-interactive-gate.mdc`, `workflow-verification-gate.mdc`, `workflow-token-governance.mdc`
 
 ## Workflow
 

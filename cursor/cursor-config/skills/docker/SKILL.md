@@ -45,6 +45,8 @@ Navigate by task type:
 
 ---
 
+<!-- CORE_DECISIONS: Read this section for design choices and constraints -->
+
 ## Cross-Cutting Rules
 
 Decisions that span multiple domains (apply regardless of section):
@@ -60,6 +62,8 @@ Decisions that span multiple domains (apply regardless of section):
 | Image scanning | Security + ECR | Enable on push — block HIGH/CRITICAL in CI |
 
 ---
+
+<!-- REFERENCE: Detailed implementation patterns below. Read only when you need specific configs. -->
 
 ## [BASE_IMAGE]
 

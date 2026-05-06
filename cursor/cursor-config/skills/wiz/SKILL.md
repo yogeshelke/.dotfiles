@@ -41,6 +41,8 @@ Decision rules for Wiz integration in EKS clusters.
 
 ---
 
+<!-- CORE_DECISIONS: Read this section for design choices and constraints -->
+
 ## Cross-Cutting Rules
 
 | Decision | Rule |
@@ -52,6 +54,8 @@ Decision rules for Wiz integration in EKS clusters.
 | Updates | Pin chart version; upgrade in non-prod first; validate admission rules don't break |
 
 ---
+
+<!-- REFERENCE: Detailed implementation patterns below. Read only when you need specific configs. -->
 
 ## PROVIDER
 

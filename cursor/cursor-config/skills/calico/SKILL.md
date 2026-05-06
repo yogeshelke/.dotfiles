@@ -42,6 +42,8 @@ Decision rules for Calico/Tigera network policy management in EKS.
 
 ---
 
+<!-- CORE_DECISIONS: Read this section for design choices and constraints -->
+
 ## Cross-Cutting Rules
 
 | Decision | Rule |
@@ -53,6 +55,8 @@ Decision rules for Calico/Tigera network policy management in EKS.
 | Logging | Enable flow logs for denied traffic in production |
 
 ---
+
+<!-- REFERENCE: Detailed implementation patterns below. Read only when you need specific configs. -->
 
 ## INSTALLATION
 

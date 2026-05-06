@@ -40,6 +40,8 @@ Decision rules for GitHub repositories and CI/CD pipelines. Not reference materi
 
 ---
 
+<!-- CORE_DECISIONS: Read this section for design choices and constraints -->
+
 ## Cross-Cutting Rules
 
 | Decision | Domains | Rule |
@@ -52,6 +54,8 @@ Decision rules for GitHub repositories and CI/CD pipelines. Not reference materi
 | Pre-merge ≠ deploy | Workflow + Security | Never apply/deploy on `pull_request` — only on push to main |
 
 ---
+
+<!-- REFERENCE: Detailed implementation patterns below. Read only when you need specific configs. -->
 
 ## [REPOSITORY]
 

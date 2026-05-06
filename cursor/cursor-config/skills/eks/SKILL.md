@@ -43,6 +43,8 @@ Decision rules for EKS cluster management. Not reference material.
 
 ---
 
+<!-- CORE_DECISIONS: Read this section for design choices and constraints -->
+
 ## Cross-Cutting Rules
 
 | Decision | Domains | Rule |
@@ -54,6 +56,8 @@ Decision rules for EKS cluster management. Not reference material.
 | Prefix delegation | Networking + Scaling | Enable for high pod density (16x more IPs) |
 
 ---
+
+<!-- REFERENCE: Detailed implementation patterns below. Read only when you need specific configs. -->
 
 ## [CLUSTER_CONFIG]
 
