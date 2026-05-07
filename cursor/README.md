@@ -12,41 +12,57 @@ A governed multi-agent platform for infrastructure engineering — distributed s
 - Autonomous code generation systems
 - Non-infrastructure domains
 
-## Why This Architecture Works
+## Architecture
 
-This system separates:
-- **Decision** (skills) — domain knowledge lives in self-contained, composable modules
-- **Execution** (agents) — personas follow plans but cannot act without human routing
-- **Governance** (rules) — safety constraints wrap every agent invocation automatically
+### Role Separation
 
-This prevents:
-- **Agent overreach** — no agent can skip tiers, apply infrastructure, or bypass approval
-- **Unsafe automation** — mutating commands are banned at the CLI policy layer, not just discouraged
-- **Context explosion** — token governance enforces hard budgets with mathematical monotonicity guarantees
+Each phase of the workflow has a dedicated owner. These roles are intentionally separated and must not be merged.
 
-The result is a system that scales in complexity without losing control. This architecture aligns with enterprise multi-agent design principles: specialization, orchestration, governance, and controlled context management.
+```
+/architect       = WHAT to build
+/task-manager    = HOW to break it into executable work
+/orchestrator    = WHEN + WHO executes
+/iac-dev etc.    = DO the work
+/reviewer        = VERIFY the work
+```
 
-## Architecture Overview
+### Workflow
+
+```mermaid
+flowchart TD
+    Architect["/architect\nDefines WHAT"]
+    PlanReviewer["plan-reviewer\nReviews plan"]
+    TaskManager["/task-manager\nDefines HOW"]
+    UserApproval["User Approval"]
+    Orchestrator["/orchestrator\nSchedules WHEN + WHO"]
+
+    subgraph execution [Execution Layer]
+        IacDev["/iac-dev"]
+        DevOps["/devops"]
+        K8sExpert["/k8s-expert"]
+    end
+
+    subgraph quality [Quality Layer]
+        Reviewer["/reviewer"]
+        Tester["/platform-tester"]
+        PRAgent["/pr-agent"]
+    end
+
+    Architect --> PlanReviewer
+    PlanReviewer --> TaskManager
+    TaskManager --> UserApproval
+    UserApproval --> Orchestrator
+    Orchestrator --> execution
+    execution --> quality
+```
+
+### Tiers
 
 ```
 Tier 1   - Planning:       /architect → plan-reviewer
 Tier 1.5 - Task Planning:  /task-manager → USER approval
 Tier 2   - Execution:      /iac-dev | /k8s-expert | /devops
 Tier 3   - Quality:        /reviewer → /platform-tester → /pr-agent
-```
-
-```
-Control flow:
-
-You (human)
-  ↓
-Orchestrator (routing + handoff)
-  ↓
-Agents (execution within persona)
-  ↓
-Rules (constraints applied at every step)
-  ↓
-Skills (domain knowledge, loaded on demand)
 ```
 
 ### Agent Ecosystem
@@ -63,9 +79,57 @@ Skills (domain knowledge, loaded on demand)
 | `/pr-agent` | PR Agent | 3 - Quality | PR | Git workflow, PR creation, Slack notifications |
 | `/check-progress` | Progress Check | Utility | Any | Status and phase check |
 
+**Plan reviewer note:** There is **no** `/plan-reviewer` slash command. After `/architect` drafts a `.plan.md`, ask for a **plan review pass** or `@` `agents/plan-reviewer.md` — then run `/task-manager` to decompose the plan into executable tasks before approving.
+
+## Quick Start
+
+### 1. Setup
+
+The agent system is automatically configured by `bootstrap.sh`:
+
+```bash
+~/.cursor/agents/     → cursor/cursor-config/agents/
+~/.cursor/commands/   → cursor/cursor-config/commands/
+~/.cursor/rules/      → cursor/cursor-config/rules/
+~/.cursor/skills/     → cursor/cursor-config/skills/
+```
+
+MCP integration:
+
+```bash
+cp ~/.dotfiles/cursor/mcp.json.template ~/.cursor/mcp.json
+```
+
+Edit `~/.cursor/mcp.json` with your credentials (Atlassian, Slack, etc.).
+
+### 2. Standard Workflow
+
+```bash
+/architect          # Design architecture, create .plan.md (WHAT)
+# → plan-reviewer reviews
+/task-manager       # Decompose into tasks, execution strategy (HOW)
+# → User approves complete plan + execution strategy
+/iac-dev           # Implement per wave plan (DO)
+/reviewer          # Security and compliance audit (VERIFY)
+/platform-tester   # Tests / validation scripts when warranted
+/pr-agent          # Create PR with devops-platform review
+```
+
+### 3. Shortcuts
+
+| Pattern | Flow |
+|---------|------|
+| **New infrastructure** | `/architect` → plan-reviewer → `/task-manager` → approve → `/iac-dev` → `/reviewer` → `/pr-agent` |
+| **Quick config change** | `/iac-dev` → `/reviewer` → `/pr-agent` |
+| **CI/CD work** | `/architect` → `/task-manager` → `/devops` → `/reviewer` → `/pr-agent` |
+| **Troubleshooting** | `/k8s-expert` or `/devops` (analysis only) |
+| **Simple plan** | `/architect` → `/iac-dev` (skip task-manager when plan has ≤ 3 trivial tasks) |
+
+## How It Works
+
 ### What Happens When You Type a Slash Command
 
-Nothing in this system runs automatically. When you type a slash command (e.g. `/architect`), here is the exact execution path:
+Nothing runs automatically. When you type a slash command (e.g. `/architect`):
 
 1. **Command file** (`commands/architect.md`) tells the model to load the matching agent
 2. **Agent file** (`agents/architect.md`) gives the model a persona, checklist, and skill references
@@ -91,37 +155,35 @@ commands/architect.md  ──→  agents/architect.md  (persona activated)
 | **Rules** (`rules/*.mdc`) | Safety constraints, workflow routing, token governance | **Always active** (Cursor injects them into every chat). |
 | **Skills** (`skills/**/SKILL.md`) | Domain knowledge and procedures (Terraform, AWS, etc.) | **On-demand** — model reads when task matches. |
 
-**Plan reviewer note:** There is **no** `/plan-reviewer` slash command. After `/architect` drafts a `.plan.md`, ask for a **plan review pass** or `@` `agents/plan-reviewer.md` — then run `/task-manager` to decompose the plan into executable tasks before approving.
-
 ### Is the Tier Workflow Automatic?
 
-**No.** The flow **Plan → Build → Review → Test → PR** is a **convention**, not an automated pipeline.
+**No.** The flow **Plan → Task Plan → Build → Review → Test → PR** is a **convention**, not an automated pipeline.
 
 - **Routing:** If you describe work **without** a slash command, the model **suggests** which `/command` fits and **stops** — not silently implement or jump tiers.
 - **Between phases:** Each agent **recommends** the next step. **You** invoke it when ready.
 - Agents are structurally incapable of executing mutating operations; all changes flow through human or CI-controlled pathways. **`workflow-interactive-gate.mdc`** and **`agent-cli-*`** rules reinforce that.
 
+### Failure Handling
+
+Failures are expected and handled explicitly:
+- **Validation failures** loop back to the implementing agent with exact error output
+- **Security failures** loop back with specific findings and remediation steps
+- **Maximum retry count** (2 loops per issue) prevents infinite cycles — escalate to human after that
+
+The system prefers **controlled failure over silent incorrect success**.
+
+### Structured Artifacts (`.artifacts/`)
+
+Quality agents persist results as **structured files** so downstream agents and CI can consume them:
+
+| File | Producer | Consumer | Content |
+|------|----------|----------|---------|
+| `.artifacts/review.md` | `/reviewer` | `/pr-agent`, CI | Security findings, status (`pass`/`warn`/`fail`), remediation |
+| `.artifacts/test-summary.md` | `/platform-tester` | `/pr-agent`, CI | Test coverage, validation results, skipped items |
+
+Each artifact has **YAML frontmatter** (`status`, `date`, `branch`) for machine parsing. `/pr-agent` pulls key fields into the PR body automatically. CI checks can gate merge on `status`.
+
 ## Governance
-
-### Token Governance (v2.2)
-
-Context is treated as the agent's operating system — whoever controls context deterministically controls behavior. Token governance operates as a **3-layer control system**:
-
-| Layer | Mechanism | Guarantee |
-|-------|-----------|-----------|
-| **Predictive** | Estimate token cost → pre-trim before execution | No mid-operation budget exhaustion |
-| **Reactive** | Threshold enforcement (50% → 70% → 85% → 90%) | No runaway context growth |
-| **Mathematical** | Monotonicity — token count cannot increase once threshold exceeded | Formal upper bound on context size |
-
-**Key invariants:**
-- **No growth under pressure** — if budget is stressed, context size MUST NOT increase
-- **Shrink before expand** — adding new context requires shrinking existing context first
-- **Phase-aware allocation** — Plan phase gets 60% context / 40% output; Review gets 30% / 70%
-- **Skill loading protocol** — skills use `<!-- CORE_DECISIONS -->` / `<!-- REFERENCE -->` markers; agents read only what they need
-
-Token governance is enforced automatically across all agents and cannot be bypassed or disabled. It applies to all context sources: chat history, tool output, skills, and rules.
-
-See `workflow-token-governance.mdc` for enforcement rules and `standards-context-engineering.mdc` for content discipline.
 
 ### Safety Controls
 
@@ -154,14 +216,23 @@ All agents must provide **fresh evidence** before claiming completion:
 - Commands like `terraform validate`, `helm lint` must pass
 - Security and compliance checks enforced before handoff
 
-### Failure Philosophy
+### Token Governance (v2.2)
 
-Failures are expected and handled explicitly:
-- **Validation failures** loop back to the implementing agent with exact error output
-- **Security failures** loop back with specific findings and remediation steps
-- **Maximum retry count** (2 loops per issue) prevents infinite cycles — escalate to human after that
+Context is treated as the agent's operating system — whoever controls context deterministically controls behavior. Token governance operates as a **3-layer control system**:
 
-The system prefers **controlled failure over silent incorrect success**. Multi-agent systems must manage interaction failures to remain stable; this architecture treats failure paths as first-class workflow branches, not edge cases.
+| Layer | Mechanism | Guarantee |
+|-------|-----------|-----------|
+| **Predictive** | Estimate token cost → pre-trim before execution | No mid-operation budget exhaustion |
+| **Reactive** | Threshold enforcement (50% → 70% → 85% → 90%) | No runaway context growth |
+| **Mathematical** | Monotonicity — token count cannot increase once threshold exceeded | Formal upper bound on context size |
+
+**Key invariants:**
+- **No growth under pressure** — if budget is stressed, context size MUST NOT increase
+- **Shrink before expand** — adding new context requires shrinking existing context first
+- **Phase-aware allocation** — Plan phase gets 60% context / 40% output; Review gets 30% / 70%
+- **Skill loading protocol** — skills use `<!-- CORE_DECISIONS -->` / `<!-- REFERENCE -->` markers; agents read only what they need
+
+See `workflow-token-governance.mdc` for enforcement rules and `standards-context-engineering.mdc` for content discipline.
 
 ### Rules Naming Convention
 
@@ -171,38 +242,7 @@ The system prefers **controlled failure over silent incorrect success**. Multi-a
 | **`standards-*.mdc`** | **Authoring & platform conventions** — HCL style, security baselines, EKS ops, plans, CI/CD. | `standards-terraform.mdc`, `standards-aws-security.mdc`, `standards-eks.mdc`, `standards-plan.mdc`, `standards-github-actions.mdc`, `standards-ci-cd.mdc`, `standards-context-engineering.mdc` |
 | **`workflow-*.mdc`** | **Multi-agent workflow** — routing, human-in-the-loop, evidence before handoff, token control. | `workflow-orchestrator.mdc`, `workflow-interactive-gate.mdc`, `workflow-verification-gate.mdc`, `workflow-token-governance.mdc` |
 
-**Why two "AWS" rules?** `agent-cli-aws.mdc` = **CLI bans for the agent**. `standards-aws-security.mdc` = **security guardrails** for **design and IaC** (IAM, encryption, networking). Same distinction applies to `standards-terraform.mdc` (HCL conventions) vs `agent-cli-terraform.mdc` (no `terraform apply` from the agent).
-
-## Quick Start
-
-### 1. Automatic Setup
-
-The agent system is automatically configured by `bootstrap.sh`:
-
-```bash
-~/.cursor/agents/     → cursor/cursor-config/agents/
-~/.cursor/commands/   → cursor/cursor-config/commands/
-~/.cursor/rules/      → cursor/cursor-config/rules/
-~/.cursor/skills/     → cursor/cursor-config/skills/
-```
-
-### 2. MCP Integration Setup
-
-```bash
-cp ~/.dotfiles/cursor/mcp.json.template ~/.cursor/mcp.json
-```
-
-Edit `~/.cursor/mcp.json` with your credentials:
-- **Atlassian**: Site name, email, API token
-- **Slack**: xoxc and xoxd tokens
-- **Other integrations**: As needed
-
-### 3. Standard Workflow
-
-1. **Plan Phase**: Run `/architect` for new infrastructure; iterate plan review
-2. **Task Planning**: Run `/task-manager` to decompose plan into executable tasks with execution strategy; approve the complete `.plan.md`
-3. **Build Phase**: Run `/iac-dev` for implementation (following the execution wave plan)
-4. **Quality Phase**: Run `/reviewer` → `/platform-tester` (when tests add value) → `/pr-agent`
+**Why two "AWS" rules?** `agent-cli-aws.mdc` = **CLI bans for the agent**. `standards-aws-security.mdc` = **security guardrails** for **design and IaC** (IAM, encryption, networking).
 
 ## Skills (21 Domain Modules)
 
@@ -217,44 +257,6 @@ Edit `~/.cursor/mcp.json` with your credentials:
 | **Observability** | Datadog |
 | **Operations** | Velero (backup/DR) |
 | **Workflow Control** | Ask Clarifying Questions (execution gate) |
-
-## Structured Artifacts (`.artifacts/`)
-
-Quality agents persist results as **structured files** so downstream agents and CI can consume them without relying on ephemeral chat:
-
-| File | Producer | Consumer | Content |
-|------|----------|----------|---------|
-| `.artifacts/review.md` | `/reviewer` | `/pr-agent`, CI | Security findings, status (`pass`/`warn`/`fail`), remediation |
-| `.artifacts/test-summary.md` | `/platform-tester` | `/pr-agent`, CI | Test coverage, validation results, skipped items |
-
-Each artifact has **YAML frontmatter** (`status`, `date`, `branch`) for machine parsing. `/pr-agent` pulls key fields into the PR body automatically. CI checks can gate merge on `status`.
-
-## Usage Patterns
-
-### New Infrastructure Project
-```bash
-/architect          # Design architecture, create .plan.md (WHAT)
-# → plan-reviewer reviews
-/task-manager       # Decompose into tasks, execution strategy (HOW)
-# → User approves complete plan + execution strategy
-/iac-dev           # Implement Terraform modules per wave plan (DO)
-/reviewer          # Security and compliance audit (VERIFY)
-/platform-tester   # Tests / validation scripts when warranted
-/pr-agent          # Create PR with devops-platform review
-```
-
-### Quick Configuration Change
-```bash
-/iac-dev           # Make the change directly
-/reviewer          # Quick security check
-/pr-agent          # Commit and PR
-```
-
-### Troubleshooting
-```bash
-/k8s-expert        # Analyze cluster problems
-/devops            # Check CI/CD pipeline issues
-```
 
 ## Monitoring and Observability
 
