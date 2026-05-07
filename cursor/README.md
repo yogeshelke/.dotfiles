@@ -1,15 +1,51 @@
 # Cursor IDE Agent Orchestration Ecosystem
 
-A comprehensive cloud platform engineering system powered by specialized AI agents for AWS infrastructure, Kubernetes, and DevOps workflows.
+A governed multi-agent platform for infrastructure engineering — distributed specialized agents, orchestration layer, governance + policy enforcement, and context as a managed system.
+
+## Who This Is For
+
+- Platform engineers managing AWS + EKS infrastructure
+- DevOps teams implementing GitOps workflows
+- Organizations requiring controlled, auditable AI-assisted engineering
+
+**Not designed for:**
+- Autonomous code generation systems
+- Non-infrastructure domains
+
+## Why This Architecture Works
+
+This system separates:
+- **Decision** (skills) — domain knowledge lives in self-contained, composable modules
+- **Execution** (agents) — personas follow plans but cannot act without human routing
+- **Governance** (rules) — safety constraints wrap every agent invocation automatically
+
+This prevents:
+- **Agent overreach** — no agent can skip tiers, apply infrastructure, or bypass approval
+- **Unsafe automation** — mutating commands are banned at the CLI policy layer, not just discouraged
+- **Context explosion** — token governance enforces hard budgets with mathematical monotonicity guarantees
+
+The result is a system that scales in complexity without losing control. This architecture aligns with enterprise multi-agent design principles: specialization, orchestration, governance, and controlled context management.
 
 ## Architecture Overview
-
-This dotfiles configuration provides a **three-tier agent orchestration system** for cloud platform engineering:
 
 ```
 Tier 1 - Planning: /architect → plan-reviewer → USER approval
 Tier 2 - Execution: /iac-dev | /k8s-expert | /devops
 Tier 3 - Quality: /reviewer → /platform-tester → /pr-agent
+```
+
+```
+Control flow:
+
+You (human)
+  ↓
+Orchestrator (routing + handoff)
+  ↓
+Agents (execution within persona)
+  ↓
+Rules (constraints applied at every step)
+  ↓
+Skills (domain knowledge, loaded on demand)
 ```
 
 ### Agent Ecosystem
@@ -25,120 +61,49 @@ Tier 3 - Quality: /reviewer → /platform-tester → /pr-agent
 | `/pr-agent` | PR Agent | 3 - Quality | PR | Git workflow, PR creation, Slack notifications |
 | `/check-progress` | Progress Check | Utility | Any | Status and phase check |
 
-### How commands, agents, rules, and skills connect
+### What Happens When You Type a Slash Command
 
-This repo does **not** run a background scheduler or auto-advance workflow steps. **You** choose when to invoke each slash command. Rules apply whenever Cursor includes them in context; agents describe **how** the model should behave **after** you pick a command.
+Nothing in this system runs automatically. When you type a slash command (e.g. `/architect`), here is the exact execution path:
 
-```mermaid
-flowchart LR
-  subgraph user["You"]
-    SC["Slash command\n/architect, /iac-dev, ..."]
-  end
-  subgraph cursor["Cursor"]
-    CMD["commands/*.md\nthin wrapper"]
-    AG["agents/*.md\npersona + checklist"]
-    RL["rules/*.mdc\nalways-on + globs"]
-    SK["skills/**/SKILL.md\nread when relevant"]
-  end
-  SC --> CMD --> AG
-  RL -.-> AG
-  SK -.-> AG
+1. **Command file** (`commands/architect.md`) tells the model to load the matching agent
+2. **Agent file** (`agents/architect.md`) gives the model a persona, checklist, and skill references
+3. **Rules** are injected by Cursor automatically — they constrain what the agent can do
+4. **Skills** are read on-demand when the task matches a domain keyword
+
+```
+You type /architect
+       │
+       ▼
+commands/architect.md  ──→  agents/architect.md  (persona activated)
+                                    │
+                       ┌────────────┼────────────┐
+                       ▼            ▼            ▼
+                rules/*.mdc    skills/aws/    skills/terraform/
+              (always active)  (read if needed) (read if needed)
 ```
 
-| Piece | What it is | Automatic vs explicit |
-|-------|------------|------------------------|
-| **Slash commands** (`commands/*.md`) | Short prompts that tell the model to load one **`agents/<name>.md`** persona. Filename = command name (e.g. `platform-tester.md` → `/platform-tester`). | **Explicit.** You type `/...` in chat (or pick from the command palette). Nothing runs without that step. |
-| **Agents** (`agents/*.md`) | Markdown **personas**: tier, tools policy, handoff text, which skills to load for which keywords. Not separate processes or daemons. | **Triggered only when** you used a slash command that points at that file, or when you paste/`@` that file and ask the model to follow it. |
-| **Rules** (`rules/*.mdc`) | Cursor **project rules**: YAML frontmatter sets `alwaysApply` and/or **`globs`**. They constrain style, CLI safety, workflow routing, verification, etc. | **Automatic (Cursor injects them).** You do not "invoke" a rule. Always-on rules affect essentially every chat in this workspace; glob rules attach when matching files are in context. |
-| **Skills** (`skills/**/SKILL.md`) | Packaged procedures and domain decisions (Terraform, AWS, Git PR workflow, etc.). Listed in agent files ("when task mentions X, load skill Y"). | **On-demand.** The model is instructed to **read** the skill file when the task matches (and may use tools to open it). Skills are **not** executed like scripts unless the skill text tells the agent to run specific commands—with your approval per **`workflow-interactive-gate.mdc`**. `/pr-agent` loads `skills/git-pr-workflow/SKILL.md` as part of its persona. |
+| Component | Role | When it activates |
+|-----------|------|-------------------|
+| **Slash commands** (`commands/*.md`) | Thin wrapper that loads one agent persona | **You type it.** Nothing runs otherwise. |
+| **Agents** (`agents/*.md`) | Persona definition: tier, tools policy, handoff rules, skill references | **On command invocation** or when you `@` the file directly. |
+| **Rules** (`rules/*.mdc`) | Safety constraints, workflow routing, token governance | **Always active** (Cursor injects them into every chat). |
+| **Skills** (`skills/**/SKILL.md`) | Domain knowledge and procedures (Terraform, AWS, etc.) | **On-demand** — model reads when task matches. |
 
-**Plan reviewer (`agents/plan-reviewer.md`):** There is **no** `/plan-reviewer` slash command. After `/architect` drafts a `.plan.md`, continue in the same thread and ask for a **plan review pass**, or `@` `agents/plan-reviewer.md` so the model follows that persona—then you approve the plan before `/iac-dev`.
+**Plan reviewer note:** There is **no** `/plan-reviewer` slash command. After `/architect` drafts a `.plan.md`, ask for a **plan review pass** or `@` `agents/plan-reviewer.md` — then approve the plan before `/iac-dev`.
 
-### Is the tier workflow automatic?
+### Is the Tier Workflow Automatic?
 
-**No.** The diagram **Plan → Build → Review → Test → PR** is a **convention** and ordering hint, not an automated pipeline.
+**No.** The flow **Plan → Build → Review → Test → PR** is a **convention**, not an automated pipeline.
 
-- **Routing (`workflow-orchestrator.mdc`):** If you describe work **without** typing a slash command, the model should **suggest** which `/command` fits and **stop**—not silently implement or jump tiers (unless you opt out with something like "just do it" or it is a trivial factual question).
-- **Between phases:** After each agent finishes, it **recommends** the next step ("Use `/iac-dev`..."). **You** run the next slash command when you are ready. Tests (`/platform-tester`) are optional for small changes, as agent text describes.
-- **Nothing** auto-runs Terraform apply, kubectl apply, Helm upgrade, or git push; **`workflow-interactive-gate.mdc`** and **`agent-cli-*`** rules reinforce that.
+- **Routing:** If you describe work **without** a slash command, the model **suggests** which `/command` fits and **stops** — not silently implement or jump tiers.
+- **Between phases:** Each agent **recommends** the next step. **You** invoke it when ready.
+- Agents are structurally incapable of executing mutating operations; all changes flow through human or CI-controlled pathways. **`workflow-interactive-gate.mdc`** and **`agent-cli-*`** rules reinforce that.
 
-## Quick Start
-
-### 1. Automatic Setup
-The agent system is automatically configured by `bootstrap.sh`:
-
-```bash
-# All agent configurations are symlinked:
-~/.cursor/agents/     → cursor/cursor-config/agents/
-~/.cursor/commands/   → cursor/cursor-config/commands/
-~/.cursor/rules/      → cursor/cursor-config/rules/
-~/.cursor/skills/     → cursor/cursor-config/skills/
-```
-
-### 2. MCP Integration Setup
-Configure MCP servers for enhanced capabilities:
-
-```bash
-# Copy template and add your API tokens
-cp ~/.dotfiles/cursor/mcp.json.template ~/.cursor/mcp.json
-```
-
-Edit `~/.cursor/mcp.json` with your credentials:
-- **Atlassian**: Site name, email, API token
-- **Slack**: xoxc and xoxd tokens
-- **Other integrations**: As needed
-
-### 3. Standard Workflow
-
-1. **Plan Phase**: Run `/architect` for new infrastructure; iterate plan review if needed, then approve the `.plan.md`
-2. **Build Phase**: Run `/iac-dev` for implementation
-3. **Quality Phase**: Run `/reviewer` → `/platform-tester` (when tests add value) → `/pr-agent`
-
-## Core Features
-
-### Skills-Based Knowledge System (21 domain skills)
-- **AWS**: Service patterns, architecture decisions, DR, cost
-- **Terraform**: HCL syntax, modules, state management, refactoring
-- **Kubernetes**: Workloads, networking, security, scheduling
-- **EKS**: Cluster config, add-ons, upgrades, networking modes
-- **Helm**: Chart design, values patterns, deployment strategy
-- **Docker**: Base images, multi-stage builds, ECR, security hardening
-- **Karpenter**: NodePool design, instance selection, disruption, cost
-- **Envoy Gateway**: Gateway API routing, TLS, traffic/security policies
-- **GitHub Actions**: CI/CD workflows, security, environments
-- **GitHub Runners**: ARC, self-hosted runners, scale sets, DinD
-- **Datadog**: Monitoring, APM, log management, K8s integration
-- **MSK/Kafka**: Cluster config, ACLs, Schema Registry, auth
-- **Velero**: Backup, disaster recovery, CSI snapshots, restore
-- **Calico**: CNI, network policies, Tigera operator
-- **Wiz**: Admission control, runtime security, Terraform provider
-- **RDS Aurora**: PostgreSQL clusters, credential management, replicas
-- **cert-manager**: TLS automation, Issuers, DNS challenges
-- **ExternalDNS**: Automated DNS record management, Gateway API
-- **tfsec/TFLint**: Static analysis, pre-commit, quality gates
-- **Ask Clarifying Questions**: Execution gate for ambiguous/risky requests
-- **Git PR Workflow**: End-to-end commit → PR → Slack notification
-
-### Verification Gates
-All agents must provide **fresh evidence** before claiming completion:
-- No "should work" or "looks correct" - only verified output
-- Commands like `terraform validate`, `helm lint` must pass
-- Security and compliance checks enforced
-
-### Structured Artifacts (`.artifacts/`)
-
-Quality agents persist their results as **structured files** so downstream agents, CI, and future sessions can consume them without relying on ephemeral chat:
-
-| File | Producer | Consumer | Content |
-|------|----------|----------|---------|
-| `.artifacts/review.md` | `/reviewer` | `/pr-agent`, CI | Security findings, status (`pass`/`warn`/`fail`), remediation |
-| `.artifacts/test-summary.md` | `/platform-tester` | `/pr-agent`, CI | Test coverage, validation results, skipped items |
-
-Each artifact has **YAML frontmatter** (`status`, `date`, `branch`) for machine parsing. `/pr-agent` pulls key fields into the PR body automatically. CI checks can gate merge on `status`.
+## Governance
 
 ### Token Governance (v2.2)
 
-Context is a managed resource — not passive input. Token governance operates as a **3-layer control system** enforced across all agents:
+Context is treated as the agent's operating system — whoever controls context deterministically controls behavior. Token governance operates as a **3-layer control system**:
 
 | Layer | Mechanism | Guarantee |
 |-------|-----------|-----------|
@@ -150,25 +115,148 @@ Context is a managed resource — not passive input. Token governance operates a
 - **No growth under pressure** — if budget is stressed, context size MUST NOT increase
 - **Shrink before expand** — adding new context requires shrinking existing context first
 - **Phase-aware allocation** — Plan phase gets 60% context / 40% output; Review gets 30% / 70%
-- **Skill loading protocol** — skills annotated with `<!-- CORE_DECISIONS -->` / `<!-- REFERENCE -->` markers; agents read only what they need
+- **Skill loading protocol** — skills use `<!-- CORE_DECISIONS -->` / `<!-- REFERENCE -->` markers; agents read only what they need
+
+Token governance is enforced automatically across all agents and cannot be bypassed or disabled. It applies to all context sources: chat history, tool output, skills, and rules.
 
 See `workflow-token-governance.mdc` for enforcement rules and `standards-context-engineering.mdc` for content discipline.
 
-### Interactive Safety
+### Safety Controls
+
+```
+User → Agent → Rules → Skills → Output
+              ▲
+              │
+    Rules always wrap the agent:
+    • workflow-interactive-gate.mdc (safety)
+    • workflow-verification-gate.mdc (evidence)
+    • workflow-token-governance.mdc (budget)
+```
+
 - **No autonomous actions** on production systems
 - All destructive operations require explicit approval
-- Command policy is split: **always-on core** (`agent-cli-core.mdc`) plus **glob-scoped** `agent-cli-*.mdc` (Terraform, Kubernetes, AWS) when matching files are in context
-- Environment boundary enforcement
+- Command policy: **always-on core** (`agent-cli-core.mdc`) plus **glob-scoped** domain rules (Terraform, Kubernetes, AWS)
+- Environment boundary enforcement (production requires written confirmation)
 
-### Rules naming (purpose, not duplicates)
+### Command Restrictions
+
+- **Terraform**: Only `validate`, `fmt`, `plan` — never `apply`
+- **Kubernetes**: Only read operations — no `apply`, `delete`
+- **AWS CLI**: Only describe/get operations — no create/delete
+- **Git**: Safe operations only — no force push
+
+### Verification Gates
+
+All agents must provide **fresh evidence** before claiming completion:
+- No "should work" or "looks correct" — only verified output
+- Commands like `terraform validate`, `helm lint` must pass
+- Security and compliance checks enforced before handoff
+
+### Failure Philosophy
+
+Failures are expected and handled explicitly:
+- **Validation failures** loop back to the implementing agent with exact error output
+- **Security failures** loop back with specific findings and remediation steps
+- **Maximum retry count** (2 loops per issue) prevents infinite cycles — escalate to human after that
+
+The system prefers **controlled failure over silent incorrect success**. Multi-agent systems must manage interaction failures to remain stable; this architecture treats failure paths as first-class workflow branches, not edge cases.
+
+### Rules Naming Convention
 
 | Prefix / pattern | Purpose | Examples |
 |------------------|---------|----------|
-| **`agent-cli-*.mdc`** | **Agent execution policy** — which **CLI** invocations the agent must **not** run (mutating / destructive); glob-scoped where noted. | `agent-cli-core.mdc` (always on), `agent-cli-terraform.mdc`, `agent-cli-kubernetes.mdc`, `agent-cli-aws.mdc` |
-| **`standards-*.mdc`** | **Authoring & platform conventions** — HCL style, security baselines, EKS ops, plans, CI/CD, context discipline. | `standards-terraform.mdc`, `standards-aws-security.mdc`, `standards-eks.mdc`, `standards-plan.mdc`, `standards-github-actions.mdc`, `standards-ci-cd.mdc`, `standards-context-engineering.mdc` |
-| **`workflow-*.mdc`** | **Multi-agent workflow** — routing, human-in-the-loop, evidence before handoff, token resource control. | `workflow-orchestrator.mdc`, `workflow-interactive-gate.mdc`, `workflow-verification-gate.mdc`, `workflow-token-governance.mdc` |
+| **`agent-cli-*.mdc`** | **Agent execution policy** — CLI invocations the agent must **not** run (mutating / destructive). | `agent-cli-core.mdc` (always on), `agent-cli-terraform.mdc`, `agent-cli-kubernetes.mdc`, `agent-cli-aws.mdc` |
+| **`standards-*.mdc`** | **Authoring & platform conventions** — HCL style, security baselines, EKS ops, plans, CI/CD. | `standards-terraform.mdc`, `standards-aws-security.mdc`, `standards-eks.mdc`, `standards-plan.mdc`, `standards-github-actions.mdc`, `standards-ci-cd.mdc`, `standards-context-engineering.mdc` |
+| **`workflow-*.mdc`** | **Multi-agent workflow** — routing, human-in-the-loop, evidence before handoff, token control. | `workflow-orchestrator.mdc`, `workflow-interactive-gate.mdc`, `workflow-verification-gate.mdc`, `workflow-token-governance.mdc` |
 
-**Why two "AWS" rules?** `agent-cli-aws.mdc` = **CLI bans for the agent**. `standards-aws-security.mdc` = **security guardrails** for **design and IaC** (IAM, encryption, networking). Same distinction applies to **`standards-terraform.mdc`** (HCL conventions) vs **`agent-cli-terraform.mdc`** (no `terraform apply` from the agent).
+**Why two "AWS" rules?** `agent-cli-aws.mdc` = **CLI bans for the agent**. `standards-aws-security.mdc` = **security guardrails** for **design and IaC** (IAM, encryption, networking). Same distinction applies to `standards-terraform.mdc` (HCL conventions) vs `agent-cli-terraform.mdc` (no `terraform apply` from the agent).
+
+## Quick Start
+
+### 1. Automatic Setup
+
+The agent system is automatically configured by `bootstrap.sh`:
+
+```bash
+~/.cursor/agents/     → cursor/cursor-config/agents/
+~/.cursor/commands/   → cursor/cursor-config/commands/
+~/.cursor/rules/      → cursor/cursor-config/rules/
+~/.cursor/skills/     → cursor/cursor-config/skills/
+```
+
+### 2. MCP Integration Setup
+
+```bash
+cp ~/.dotfiles/cursor/mcp.json.template ~/.cursor/mcp.json
+```
+
+Edit `~/.cursor/mcp.json` with your credentials:
+- **Atlassian**: Site name, email, API token
+- **Slack**: xoxc and xoxd tokens
+- **Other integrations**: As needed
+
+### 3. Standard Workflow
+
+1. **Plan Phase**: Run `/architect` for new infrastructure; iterate plan review, then approve the `.plan.md`
+2. **Build Phase**: Run `/iac-dev` for implementation
+3. **Quality Phase**: Run `/reviewer` → `/platform-tester` (when tests add value) → `/pr-agent`
+
+## Skills (21 Domain Modules)
+
+| Category | Skills |
+|----------|--------|
+| **Cloud & Infra** | AWS, Terraform, EKS, Karpenter, RDS Aurora |
+| **Containers & Orchestration** | Docker, Kubernetes, Helm |
+| **Networking & Traffic** | Envoy Gateway, Calico, ExternalDNS, cert-manager |
+| **CI/CD & Git** | GitHub Actions, GitHub Runners, Git PR Workflow |
+| **Data & Messaging** | MSK/Kafka |
+| **Security** | Wiz, tfsec/TFLint |
+| **Observability** | Datadog |
+| **Operations** | Velero (backup/DR) |
+| **Workflow Control** | Ask Clarifying Questions (execution gate) |
+
+## Structured Artifacts (`.artifacts/`)
+
+Quality agents persist results as **structured files** so downstream agents and CI can consume them without relying on ephemeral chat:
+
+| File | Producer | Consumer | Content |
+|------|----------|----------|---------|
+| `.artifacts/review.md` | `/reviewer` | `/pr-agent`, CI | Security findings, status (`pass`/`warn`/`fail`), remediation |
+| `.artifacts/test-summary.md` | `/platform-tester` | `/pr-agent`, CI | Test coverage, validation results, skipped items |
+
+Each artifact has **YAML frontmatter** (`status`, `date`, `branch`) for machine parsing. `/pr-agent` pulls key fields into the PR body automatically. CI checks can gate merge on `status`.
+
+## Usage Patterns
+
+### New Infrastructure Project
+```bash
+/architect          # Design architecture, create .plan.md
+# → User reviews and approves plan
+/iac-dev           # Implement Terraform modules
+/reviewer          # Security and compliance audit
+/platform-tester   # Tests / validation scripts when warranted
+/pr-agent          # Create PR with devops-platform review
+```
+
+### Quick Configuration Change
+```bash
+/iac-dev           # Make the change directly
+/reviewer          # Quick security check
+/pr-agent          # Commit and PR
+```
+
+### Troubleshooting
+```bash
+/k8s-expert        # Analyze cluster problems
+/devops            # Check CI/CD pipeline issues
+```
+
+## Monitoring and Observability
+
+- **Datadog integration** for infrastructure monitoring
+- **GitHub Actions** for workflow visibility
+- **Slack notifications** for team coordination
+- **Progress tracking** via `/check-progress`
 
 ## Directory Structure
 
@@ -240,59 +328,6 @@ See `workflow-token-governance.mdc` for enforcement rules and `standards-context
     └── test-summary.md                 # From /platform-tester
 ```
 
-## Usage Patterns
-
-### New Infrastructure Project
-```bash
-/architect          # Design architecture, create .plan.md
-# → User reviews and approves plan
-/iac-dev           # Implement Terraform modules
-/reviewer          # Security and compliance audit
-/platform-tester   # Tests / validation scripts when warranted
-/pr-agent          # Create PR with devops-platform review
-```
-
-### Quick Configuration Change
-```bash
-/iac-dev           # Make the change directly
-/reviewer          # Quick security check
-/pr-agent          # Commit and PR
-```
-
-### Troubleshooting Issues
-```bash
-/k8s-expert        # Analyze cluster problems
-/devops            # Check CI/CD pipeline issues
-```
-
-## Safety and Compliance
-
-### Command Restrictions
-- **Terraform**: Only `validate`, `fmt`, `plan` - never `apply`
-- **Kubernetes**: Only read operations - no `apply`, `delete`
-- **AWS CLI**: Only describe/get operations - no create/delete
-- **Git**: Safe operations only - no force push
-
-### Environment Protection
-- Production changes require explicit approval
-- No direct cluster modifications
-- All changes go through PR workflow
-- Verification evidence required
-
-### Security Standards
-- IAM least privilege enforcement
-- Encryption at rest and in transit
-- VPC security group validation
-- Secret management compliance
-
-## Monitoring and Observability
-
-The ecosystem includes built-in observability through:
-- **Datadog integration** for infrastructure monitoring
-- **GitHub Actions** for workflow visibility
-- **Slack notifications** for team coordination
-- **Progress tracking** via `/check-progress`
-
 ## Contributing
 
 ### Adding New Agents
@@ -309,7 +344,7 @@ The ecosystem includes built-in observability through:
 
 ## Design Boundaries
 
-This system is a **governance-first orchestration framework** — not a runtime engine or autonomous scheduler. Understanding what it is and isn't prevents misaligned expectations.
+This system is a **governance-first orchestration framework** — not a runtime engine or autonomous scheduler.
 
 ### What this system IS
 
@@ -323,12 +358,12 @@ This system is a **governance-first orchestration framework** — not a runtime 
 
 | Expectation | Reality |
 |-------------|---------|
-| **Enforced transitions** | Agent rules instruct the model to refuse invalid flows (e.g., `/pr-agent` refuses if review `status: fail`), but there is no hard runtime lock. CI merge gates are the enforcement layer for what matters most (merge). |
-| **Runtime orchestrator** | No background scheduler evaluates state and dispatches agents. The human is the router. This is intentional for regulated infrastructure work where **control > automation speed**. |
-| **Event-driven reactivity** | Artifacts are passive files. No event bus triggers the next agent on write. Agents read artifacts at invocation time and adapt behavior—read-time reactivity, not pub/sub. |
-| **Full audit without Git** | Artifacts are overwritten on re-review; the audit trail lives in **Git commit history** (agents commit before overwriting). There is no append-only log file or database. |
+| **Enforced transitions** | Agent rules instruct the model to refuse invalid flows, but there is no hard runtime lock. CI merge gates are the enforcement layer. |
+| **Runtime orchestrator** | No background scheduler dispatches agents. The human is the router — intentional for regulated infrastructure where **control > automation speed**. |
+| **Event-driven reactivity** | Artifacts are passive files. Agents read them at invocation time — read-time reactivity, not pub/sub. |
+| **Full audit without Git** | Artifacts are overwritten on re-review; the audit trail lives in **Git commit history**. |
 
-### Where enforcement actually lives
+### Where Enforcement Lives
 
 ```
 In-IDE (soft)          CI / merge (hard)
@@ -343,7 +378,7 @@ Interactive gate       Branch protection rules
 asks before acting     prevent direct push to main
 ```
 
-### When to consider evolving beyond this model
+### When to Evolve Beyond This Model
 
 - Multiple engineers need to hand off work across sessions without shared chat context
 - Compliance requires machine-verifiable audit logs (not Git history)
@@ -354,4 +389,4 @@ At that point, the right move is an **external orchestration layer** (CI-driven 
 
 ---
 
-**Note**: This system is designed for cloud platform engineering teams managing AWS infrastructure, EKS clusters, and DevOps workflows. All configurations are version-controlled and team-shareable through dotfiles.
+**Note**: This is a governed multi-agent platform for infrastructure engineering — not just Cursor configuration. It implements distributed specialized agents, an orchestration layer, governance + policy enforcement, and context as a managed system. All configurations are version-controlled and team-shareable through dotfiles.
