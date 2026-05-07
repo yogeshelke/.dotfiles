@@ -29,9 +29,10 @@ The result is a system that scales in complexity without losing control. This ar
 ## Architecture Overview
 
 ```
-Tier 1 - Planning: /architect → plan-reviewer → USER approval
-Tier 2 - Execution: /iac-dev | /k8s-expert | /devops
-Tier 3 - Quality: /reviewer → /platform-tester → /pr-agent
+Tier 1   - Planning:       /architect → plan-reviewer
+Tier 1.5 - Task Planning:  /task-manager → USER approval
+Tier 2   - Execution:      /iac-dev | /k8s-expert | /devops
+Tier 3   - Quality:        /reviewer → /platform-tester → /pr-agent
 ```
 
 ```
@@ -53,6 +54,7 @@ Skills (domain knowledge, loaded on demand)
 | Command | Agent | Tier | Phase | Specialization |
 |---------|-------|------|-------|----------------|
 | `/architect` | AWS Cloud Architect | 1 - Plan | Plan | Architecture design, infrastructure planning |
+| `/task-manager` | Task Manager | 1.5 - Plan Refinement | Task Planning | Task decomposition, execution strategy, parallel safety |
 | `/iac-dev` | IaC Developer | 2 - Build | Build | Terraform, Helm, YAML implementation |
 | `/k8s-expert` | Kubernetes Expert | 2 - Build | Build | EKS, pods, networking analysis |
 | `/devops` | DevOps Engineer | 2 - Build | Build | CI/CD, GitHub Actions, monitoring |
@@ -89,7 +91,7 @@ commands/architect.md  ──→  agents/architect.md  (persona activated)
 | **Rules** (`rules/*.mdc`) | Safety constraints, workflow routing, token governance | **Always active** (Cursor injects them into every chat). |
 | **Skills** (`skills/**/SKILL.md`) | Domain knowledge and procedures (Terraform, AWS, etc.) | **On-demand** — model reads when task matches. |
 
-**Plan reviewer note:** There is **no** `/plan-reviewer` slash command. After `/architect` drafts a `.plan.md`, ask for a **plan review pass** or `@` `agents/plan-reviewer.md` — then approve the plan before `/iac-dev`.
+**Plan reviewer note:** There is **no** `/plan-reviewer` slash command. After `/architect` drafts a `.plan.md`, ask for a **plan review pass** or `@` `agents/plan-reviewer.md` — then run `/task-manager` to decompose the plan into executable tasks before approving.
 
 ### Is the Tier Workflow Automatic?
 
@@ -197,9 +199,10 @@ Edit `~/.cursor/mcp.json` with your credentials:
 
 ### 3. Standard Workflow
 
-1. **Plan Phase**: Run `/architect` for new infrastructure; iterate plan review, then approve the `.plan.md`
-2. **Build Phase**: Run `/iac-dev` for implementation
-3. **Quality Phase**: Run `/reviewer` → `/platform-tester` (when tests add value) → `/pr-agent`
+1. **Plan Phase**: Run `/architect` for new infrastructure; iterate plan review
+2. **Task Planning**: Run `/task-manager` to decompose plan into executable tasks with execution strategy; approve the complete `.plan.md`
+3. **Build Phase**: Run `/iac-dev` for implementation (following the execution wave plan)
+4. **Quality Phase**: Run `/reviewer` → `/platform-tester` (when tests add value) → `/pr-agent`
 
 ## Skills (21 Domain Modules)
 
@@ -230,10 +233,12 @@ Each artifact has **YAML frontmatter** (`status`, `date`, `branch`) for machine 
 
 ### New Infrastructure Project
 ```bash
-/architect          # Design architecture, create .plan.md
-# → User reviews and approves plan
-/iac-dev           # Implement Terraform modules
-/reviewer          # Security and compliance audit
+/architect          # Design architecture, create .plan.md (WHAT)
+# → plan-reviewer reviews
+/task-manager       # Decompose into tasks, execution strategy (HOW)
+# → User approves complete plan + execution strategy
+/iac-dev           # Implement Terraform modules per wave plan (DO)
+/reviewer          # Security and compliance audit (VERIFY)
 /platform-tester   # Tests / validation scripts when warranted
 /pr-agent          # Create PR with devops-platform review
 ```
@@ -263,10 +268,11 @@ Each artifact has **YAML frontmatter** (`status`, `date`, `branch`) for machine 
 ```
 .cursor/
 ├── README.md                        # This file
-├── agents/                          # Agent persona definitions (10)
+├── agents/                          # Agent persona definitions (11)
 │   ├── architect.md                 # Tier 1: architecture planning
 │   ├── plan-reviewer.md            # Tier 1: plan review (no slash command)
-│   ├── orchestrator.md             # Routing + dependency waves (no slash command)
+│   ├── task-manager.md             # Tier 1.5: task decomposition + execution strategy
+│   ├── orchestrator.md             # Routing + scheduling (no slash command)
 │   ├── iac-dev.md                  # Tier 2: Terraform/Helm implementation
 │   ├── k8s-expert.md              # Tier 2: Kubernetes analysis
 │   ├── devops.md                   # Tier 2: CI/CD + observability
@@ -274,8 +280,9 @@ Each artifact has **YAML frontmatter** (`status`, `date`, `branch`) for machine 
 │   ├── tester.md                   # Tier 3: test creation
 │   ├── pr-agent.md                 # Tier 3: PR workflow
 │   └── check-progress.md          # Utility: progress check
-├── commands/                        # Slash command wrappers (8)
+├── commands/                        # Slash command wrappers (9)
 │   ├── architect.md                # /architect
+│   ├── task-manager.md             # /task-manager
 │   ├── iac-dev.md                  # /iac-dev
 │   ├── k8s-expert.md              # /k8s-expert
 │   ├── devops.md                   # /devops

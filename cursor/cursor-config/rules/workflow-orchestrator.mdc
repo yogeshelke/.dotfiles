@@ -7,12 +7,13 @@ alwaysApply: true
 
 This project uses a layered team of specialist agents for cloud platform engineering. Each agent has a specific role, tier, and phase in the workflow. Agents are defined in `agents/` and invoked via slash commands in `commands/`.
 
-## Three-Tier Architecture
+## Tiered Architecture
 
 ```
-Tier 1 - Planning:    /architect → plan-reviewer → USER approval
-Tier 2 - Execution:   /iac-dev | /k8s-expert | /devops
-Tier 3 - Quality:     /reviewer → /platform-tester → /pr-agent
+Tier 1   - Planning:           /architect → plan-reviewer
+Tier 1.5 - Task Planning:      /task-manager → USER approval
+Tier 2   - Execution:          /iac-dev | /k8s-expert | /devops
+Tier 3   - Quality:            /reviewer → /platform-tester → /pr-agent
 ```
 
 ## Available Agents
@@ -20,6 +21,7 @@ Tier 3 - Quality:     /reviewer → /platform-tester → /pr-agent
 | Command | Agent | Tier | Phase | Mode |
 |---------|-------|------|-------|------|
 | `/architect` | AWS Cloud Architect | 1 - Plan | Plan | Read-only |
+| `/task-manager` | Task Manager | 1.5 - Plan Refinement | Task Planning | Read/Write (`.plan.md` only) |
 | `/iac-dev` | IaC Developer | 2 - Build | Build | Read/Write |
 | `/k8s-expert` | Kubernetes Expert | 2 - Build | Build | Read-only |
 | `/devops` | DevOps Engineer | 2 - Build | Build | Read/Write |
@@ -50,6 +52,7 @@ Tier 3 - Quality:     /reviewer → /platform-tester → /pr-agent
 | Task Pattern | Route To | Rationale |
 |-------------|----------|-----------|
 | Architecture, design, "how should we...", new infrastructure, add/create resource | `/architect` | Needs plan before code |
+| Break down plan, task decomposition, execution strategy, "plan the tasks" | `/task-manager` | Decomposes plan into executable tasks |
 | Write Terraform, Helm, YAML, implement, code, modify existing | `/iac-dev` | Implementation work |
 | Kubernetes, EKS, pods, nodes, manifests analysis, troubleshoot | `/k8s-expert` | K8s domain analysis |
 | CI/CD, GitHub Actions, deploy pipelines, Datadog, monitoring | `/devops` | CI/CD + observability |
@@ -67,19 +70,22 @@ You may skip routing and act directly ONLY when:
 
 The standard workflow follows these phases:
 
-1. **Plan**: `/architect` designs → plan-reviewer reviews → user approves
-2. **Build**: `/iac-dev` implements (with `/k8s-expert` or `/devops` as needed)
-3. **Review**: `/reviewer` performs security audit
-4. **Test**: `/platform-tester` creates test scripts (optional, skip for trivial changes)
-5. **PR**: `/pr-agent` commits, pushes, creates PR, notifies Slack
+1. **Plan**: `/architect` designs → plan-reviewer reviews
+2. **Task Planning**: `/task-manager` decomposes into executable tasks → user approves complete plan + execution strategy
+3. **Build**: `/iac-dev` implements per wave plan (with `/k8s-expert` or `/devops` as needed)
+4. **Review**: `/reviewer` performs security audit
+5. **Test**: `/platform-tester` creates test scripts (optional, skip for trivial changes)
+6. **PR**: `/pr-agent` commits, pushes, creates PR, notifies Slack
 
 ### Handoff Sequence
 When a task spans multiple agents, suggest the next agent:
 
 | Completing Agent | Suggest Next | When |
 |-----------------|-------------|------|
-| `/architect` | plan-reviewer → user | Plan created |
-| User approves | `/iac-dev` | Plan approved |
+| `/architect` | plan-reviewer | Plan created |
+| plan-reviewer | `/task-manager` | Plan reviewed |
+| `/task-manager` | user approval | Execution strategy added to `.plan.md` |
+| User approves | `/iac-dev` (or parallel agents per wave plan) | Plan + execution strategy approved |
 | `/iac-dev` | `/reviewer` | Code written |
 | `/k8s-expert` | `/iac-dev` or `/reviewer` | Analysis complete |
 | `/devops` | `/reviewer` | Workflows written |
@@ -87,9 +93,10 @@ When a task spans multiple agents, suggest the next agent:
 | `/platform-tester` | `/pr-agent` | Tests created |
 
 ### Common Shortcuts
-- **Quick fix**: `/iac-dev` → `/reviewer` → `/pr-agent` (skip architect for small changes)
+- **Quick fix**: `/iac-dev` → `/reviewer` → `/pr-agent` (skip architect + task-manager for small changes)
 - **Analysis only**: `/k8s-expert` or `/reviewer` alone (no code changes)
-- **CI/CD work**: `/architect` → `/devops` → `/reviewer` → `/pr-agent`
+- **CI/CD work**: `/architect` → `/task-manager` → `/devops` → `/reviewer` → `/pr-agent`
+- **Simple plan**: `/architect` → `/iac-dev` (skip task-manager when plan has ≤ 3 trivial tasks)
 
 ### Failure Loops
 
@@ -148,6 +155,32 @@ When agents, rules, or skills produce conflicting guidance:
 | `tfsec-tflint/` | Quality gate config, scanning rules, pre-commit hooks | Terraform code authoring or CI pipeline structure |
 
 When two skills overlap (e.g., EKS networking touches both `aws/` and `eks/`), the more specific skill owns the decision.
+
+## Model Assignment Strategy
+
+The `/task-manager` assigns a recommended AI model per task in the `## Execution Strategy` section. The orchestrator communicates these recommendations when suggesting agent invocations.
+
+| Complexity | Model | When |
+|------------|-------|------|
+| `heavy` | `opus` | Architecture decisions, complex modules, cross-cutting concerns, security |
+| `medium` | `sonnet` | Standard implementation, moderate logic |
+| `light` | `sonnet` | Boilerplate, fmt/validate, simple config |
+
+**Escalation rule:** If a task fails twice during execution → recommend upgrading from `sonnet` to `opus` on retry. Model assignment is advisory — the user selects the model when invoking each agent.
+
+## Critical Question Protocol
+
+Execution agents (`/iac-dev`, `/devops`, `/k8s-expert`) must stop and ask the user when encountering any of these proactive triggers during implementation:
+
+1. **Ambiguity** — the plan can be interpreted two ways for the current task
+2. **Plan-reality conflict** — the codebase contradicts the plan
+3. **Unaddressed design decision** — a choice is needed that the plan does not cover
+4. **Security implication discovered** — a risk not in the plan's Security Considerations
+5. **Cross-task impact** — the current task would affect another task's Reads/Writes or break a Task Contract
+
+**Protocol:** Stop → State question with context → Present options → Wait for user input → Resume after answer.
+
+**Rule:** Never guess, infer, or substitute silently. A paused task is always better than a wrong implementation. This extends the existing reactive stops (file scope, missing dependency, 3 failures) into proactive territory.
 
 ## Rules
 

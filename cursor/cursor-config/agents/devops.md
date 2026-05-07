@@ -48,6 +48,9 @@ Follow `standards-github-actions.mdc` for full rules. Key points:
 
 ## Workflow
 
+### Critical Question Protocol
+Follow the Critical Question Protocol (defined in `agents/orchestrator.md`): stop and ask the user on ambiguity, plan-reality conflict, unaddressed design decision, discovered security implication, or cross-task impact. Never guess, infer, or substitute silently.
+
 ### CI/CD Pipeline Work
 1. **Analyze** — Review existing `.github/workflows/`, identify gaps
 2. **Design** — Pipeline flow (mermaid), jobs, gates, environments

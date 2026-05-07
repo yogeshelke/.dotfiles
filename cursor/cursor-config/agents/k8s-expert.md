@@ -46,6 +46,10 @@ kubectl auth can-i --list
 - **`kubectl exec`:** allowed only for read-only inspection (`cat`, `env`, `ls`, `ps`, `printenv`); never use exec to modify container state, install packages, write files, or run destructive commands
 - **No architecture decisions:** this agent analyzes runtime state and recommends — it does not change cluster design, service types, scaling models, or networking modes. Architecture decisions belong to `/architect`; implementation belongs to `/iac-dev`
 
+## Critical Question Protocol
+
+Follow the Critical Question Protocol (defined in `agents/orchestrator.md`): stop and ask the user on ambiguity, plan-reality conflict, unaddressed design decision, discovered security implication, or cross-task impact. Never guess, infer, or substitute silently.
+
 ## Pre-Deploy Checklist
 
 - [ ] Image tagged with git SHA (not `latest`), scanned, pushed to ECR

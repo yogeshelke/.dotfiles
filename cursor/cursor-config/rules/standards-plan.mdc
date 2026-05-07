@@ -51,6 +51,52 @@ Plans should include a **## Decisions** section to capture key choices and their
 | 2 | Single NAT GW in non-prod | Cost saving; acceptable risk for non-prod | 2026-04-15 | No |
 ```
 
+## Execution Strategy Section
+
+After plan-reviewer review, `/task-manager` appends a `## Execution Strategy` section to the `.plan.md`. This section is structured and machine-readable. The template:
+
+```markdown
+## Execution Strategy
+<!-- Added by /task-manager -->
+
+### Task Breakdown
+| ID | Name | Type | Agent | Model | Skills | Reads | Writes | Code Depends On | Execution Depends On | Complexity | Output | Validation |
+|----|------|------|-------|-------|--------|-------|--------|-----------------|----------------------|------------|--------|------------|
+
+### Dependency Graph
+<!-- mermaid diagram showing task relationships -->
+
+### Execution Waves
+#### Wave 1 (Parallel Safe)
+T1, T3
+
+#### Wave 2 (Blocked by T1)
+T2
+
+### Critical Path
+T1 → T2 → [final task]
+
+### File Ownership
+| Path | Owner | Access |
+|------|-------|--------|
+
+### Parallel Execution Safety
+- Write-Write conflicts: [none | details]
+- Read-Write conflicts: [none | details]
+- Shared state: [none | details]
+
+**Parallel Execution Safety: XX%**
+
+### Model Assignment Summary
+| Model | Task Count | Task IDs |
+|-------|------------|----------|
+```
+
+**Rules for the Execution Strategy section:**
+- Only `/task-manager` writes this section — no other agent modifies it
+- The section is appended after the architect's content — `/task-manager` never modifies content above it
+- The user approves the complete plan (architecture + execution strategy) before execution begins
+
 ## Rules
 - Always set status when creating or updating a plan
 - Update the `Updated` date on every status change
