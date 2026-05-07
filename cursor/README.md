@@ -29,37 +29,44 @@ Each phase of the workflow has a dedicated owner. These roles are intentionally 
 ### Workflow
 
 ```mermaid
-flowchart TD
-    Architect["/architect\nDefines WHAT"]
-    PlanReviewer["plan-reviewer\nReviews plan"]
-    TaskManager["/task-manager\nDefines HOW"]
+flowchart LR
+    subgraph planning [Planning Phase - Auto-chained]
+        Architect["/architect<br/>Defines WHAT"]
+        PlanReviewer["plan-reviewer (internal)<br/>Reviews plan"]
+        TaskManager["/task-manager<br/>Defines HOW"]
+    end
+    
     UserApproval["User Approval"]
-    Orchestrator["/orchestrator\nSchedules WHEN + WHO"]
-
+    Orchestrator["/orchestrator<br/>Schedules WHEN + WHO"]
+    
     subgraph execution [Execution Layer]
         IacDev["/iac-dev"]
-        DevOps["/devops"]
         K8sExpert["/k8s-expert"]
+        DevOps["/devops"]
     end
-
+    
     subgraph quality [Quality Layer]
         Reviewer["/reviewer"]
         Tester["/platform-tester"]
         PRAgent["/pr-agent"]
     end
 
-    Architect --> PlanReviewer
-    PlanReviewer --> TaskManager
-    TaskManager --> UserApproval
+    Architect --> PlanReviewer --> TaskManager
+    planning --> UserApproval
     UserApproval --> Orchestrator
-    Orchestrator --> execution
-    execution --> quality
+    Orchestrator -.-> IacDev
+    Orchestrator -.-> K8sExpert
+    Orchestrator -.-> DevOps
+    IacDev --> Reviewer
+    K8sExpert --> Reviewer
+    DevOps --> Reviewer
+    Reviewer --> Tester --> PRAgent
 ```
 
 ### Tiers
 
 ```
-Tier 1   - Planning:       /architect → plan-reviewer
+Tier 1   - Planning:       /architect → plan-reviewer (internal)
 Tier 1.5 - Task Planning:  /task-manager → USER approval
 Tier 2   - Execution:      /iac-dev | /k8s-expert | /devops
 Tier 3   - Quality:        /reviewer → /platform-tester → /pr-agent
@@ -79,7 +86,9 @@ Tier 3   - Quality:        /reviewer → /platform-tester → /pr-agent
 | `/pr-agent` | PR Agent | 3 - Quality | PR | Git workflow, PR creation, Slack notifications |
 | `/check-progress` | Progress Check | Utility | Any | Status and phase check |
 
-**Plan reviewer note:** There is **no** `/plan-reviewer` slash command. After `/architect` drafts a `.plan.md`, ask for a **plan review pass** or `@` `agents/plan-reviewer.md` — then run `/task-manager` to decompose the plan into executable tasks before approving.
+**Planning auto-chain:** `/architect` may invoke the planning sequence in one user session: `/architect` → plan-reviewer (internal) → `/task-manager`. This does not merge responsibilities — each agent still owns a separate phase; the command only streamlines the user workflow before approval. Plan-reviewer and task-manager remain available as standalone agents via `@` for re-runs on existing plans.
+
+**Orchestrator note:** `/orchestrator` is a coordination persona used by the workflow rules. It is not usually invoked directly as a slash command.
 
 ## Quick Start
 
@@ -105,9 +114,7 @@ Edit `~/.cursor/mcp.json` with your credentials (Atlassian, Slack, etc.).
 ### 2. Standard Workflow
 
 ```bash
-/architect          # Design architecture, create .plan.md (WHAT)
-# → plan-reviewer reviews
-/task-manager       # Decompose into tasks, execution strategy (HOW)
+/architect          # Design + review + task decomposition (auto-chained)
 # → User approves complete plan + execution strategy
 /iac-dev           # Implement per wave plan (DO)
 /reviewer          # Security and compliance audit (VERIFY)
@@ -119,11 +126,11 @@ Edit `~/.cursor/mcp.json` with your credentials (Atlassian, Slack, etc.).
 
 | Pattern | Flow |
 |---------|------|
-| **New infrastructure** | `/architect` → plan-reviewer → `/task-manager` → approve → `/iac-dev` → `/reviewer` → `/pr-agent` |
+| **New infrastructure** | `/architect` (auto-chains review + task decomposition) → approve → `/iac-dev` → `/reviewer` → `/pr-agent` |
 | **Quick config change** | `/iac-dev` → `/reviewer` → `/pr-agent` |
-| **CI/CD work** | `/architect` → `/task-manager` → `/devops` → `/reviewer` → `/pr-agent` |
+| **CI/CD work** | `/architect` → `/devops` → `/reviewer` → `/pr-agent` |
 | **Troubleshooting** | `/k8s-expert` or `/devops` (analysis only) |
-| **Simple plan** | `/architect` → `/iac-dev` (skip task-manager when plan has ≤ 3 trivial tasks) |
+| **Simple plan** | `/architect` → approve → `/iac-dev`; task-manager phase may be skipped only when no parallelism, no shared files, and no infra/state risk exists |
 
 ## How It Works
 
@@ -279,7 +286,7 @@ See `workflow-token-governance.mdc` for enforcement rules and `standards-context
 │   ├── k8s-expert.md              # Tier 2: Kubernetes analysis
 │   ├── devops.md                   # Tier 2: CI/CD + observability
 │   ├── reviewer.md                 # Tier 3: security review
-│   ├── tester.md                   # Tier 3: test creation
+│   ├── platform-tester.md           # Tier 3: test creation
 │   ├── pr-agent.md                 # Tier 3: PR workflow
 │   └── check-progress.md          # Utility: progress check
 ├── commands/                        # Slash command wrappers (9)

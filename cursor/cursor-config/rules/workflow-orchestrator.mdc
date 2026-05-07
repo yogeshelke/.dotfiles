@@ -70,21 +70,20 @@ You may skip routing and act directly ONLY when:
 
 The standard workflow follows these phases:
 
-1. **Plan**: `/architect` designs → plan-reviewer reviews
-2. **Task Planning**: `/task-manager` decomposes into executable tasks → user approves complete plan + execution strategy
-3. **Build**: `/iac-dev` implements per wave plan (with `/k8s-expert` or `/devops` as needed)
-4. **Review**: `/reviewer` performs security audit
-5. **Test**: `/platform-tester` creates test scripts (optional, skip for trivial changes)
-6. **PR**: `/pr-agent` commits, pushes, creates PR, notifies Slack
+1. **Plan**: `/architect` designs, auto-runs plan review, auto-runs task decomposition → user approves complete plan + execution strategy
+2. **Build**: `/iac-dev` implements per wave plan (with `/k8s-expert` or `/devops` as needed)
+3. **Review**: `/reviewer` performs security audit
+4. **Test**: `/platform-tester` creates test scripts (optional, skip for trivial changes)
+5. **PR**: `/pr-agent` commits, pushes, creates PR, notifies Slack
+
+**Planning auto-chain:** `/architect` runs three phases in a single session (design → plan review → task decomposition) before presenting to the user. This does not violate the "never auto-switch agents" rule — the auto-chain applies only to Tier 1/1.5 planning phases where all work is read-only/plan-only with no decision point requiring user input. Plan-reviewer and task-manager remain available as standalone agents via `@` for re-runs.
 
 ### Handoff Sequence
 When a task spans multiple agents, suggest the next agent:
 
 | Completing Agent | Suggest Next | When |
 |-----------------|-------------|------|
-| `/architect` | plan-reviewer | Plan created |
-| plan-reviewer | `/task-manager` | Plan reviewed |
-| `/task-manager` | user approval | Execution strategy added to `.plan.md` |
+| `/architect` | user approval | Plan + review + execution strategy complete (auto-chained) |
 | User approves | `/iac-dev` (or parallel agents per wave plan) | Plan + execution strategy approved |
 | `/iac-dev` | `/reviewer` | Code written |
 | `/k8s-expert` | `/iac-dev` or `/reviewer` | Analysis complete |
@@ -95,8 +94,8 @@ When a task spans multiple agents, suggest the next agent:
 ### Common Shortcuts
 - **Quick fix**: `/iac-dev` → `/reviewer` → `/pr-agent` (skip architect + task-manager for small changes)
 - **Analysis only**: `/k8s-expert` or `/reviewer` alone (no code changes)
-- **CI/CD work**: `/architect` → `/task-manager` → `/devops` → `/reviewer` → `/pr-agent`
-- **Simple plan**: `/architect` → `/iac-dev` (skip task-manager when plan has ≤ 3 trivial tasks)
+- **CI/CD work**: `/architect` → `/devops` → `/reviewer` → `/pr-agent`
+- **Simple plan**: `/architect` → approve → `/iac-dev`; task-manager phase may be skipped only when no parallelism, no shared files, and no infra/state risk exists
 
 ### Failure Loops
 

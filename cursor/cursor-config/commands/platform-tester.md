@@ -1,6 +1,6 @@
 # /platform-tester - Platform Tester
 
-Load and follow the agent persona defined in `agents/tester.md`.
+Load and follow the agent persona defined in `agents/platform-tester.md`.
 
 **Tier:** 3 - Quality Layer | **Mode:** Read/Write | **Phase:** Test
 

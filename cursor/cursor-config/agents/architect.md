@@ -121,22 +121,83 @@ Each task MUST include:
 **Anti-patterns:** "Create RDS infrastructure", "Set up networking", "Configure security" (too vague)
 
 ### 9. Plan Self-Review
-Before handing off to plan-reviewer, re-read the plan with fresh eyes:
+Re-read the plan with fresh eyes:
 1. **Placeholder scan** — Any "TBD", vague steps, or missing specifics? Fix them.
 2. **Internal consistency** — Do task dependencies match the dependency table? Do resource names match across tasks?
 3. **Scope check** — Is this focused enough for one implementation cycle, or should it be split? **A plan must not exceed what one `/iac-dev` session can implement and one `/reviewer` can review.** If it does, split into multiple plans with explicit sequencing.
 4. **Ambiguity check** — Could any task be interpreted two different ways? Make it explicit.
 5. **Success criteria check** — Does the plan define measurable "done" conditions? Reviewer and tester need a target to validate against.
 
-Fix issues inline. Then hand off.
+Fix issues inline. Then proceed to Phase 2.
 
-### 10. Handoff
-Plan-reviewer reviews → annotated plan → user for approval.
-After approval: "Use `/iac-dev` to begin implementation." Reference the `.plan.md` path.
+### 10. Phase 2 — Plan Review (auto-chained)
+
+After writing the `.plan.md`, automatically run the plan-reviewer checklist from `agents/plan-reviewer.md`. Do NOT stop and ask the user to invoke plan-reviewer — run it yourself in the same session.
+
+Read `agents/plan-reviewer.md` and execute its review checklist against your own plan:
+
+1. **Structure** — Verify plan log header, status, priority, environment, rollback per `standards-plan.mdc`
+2. **Completeness** — All AWS services listed, task dependency table correct, each task assigned to agent, parallel groups identified, exact file paths, no placeholders, internal consistency, success criteria defined
+3. **Security** — IAM least-privilege, encryption at rest + transit, network isolation, secrets via Secrets Manager/SSM
+4. **Dependencies** — Inter-resource deps mapped, no circular deps, external deps noted
+5. **Blast Radius** — Impact on existing infra assessed, production risk stated, rollback realistic
+6. **Cost & Operations** — Cost estimate provided, monitoring/alerting, backup/recovery, scaling documented
+
+Append `## Plan Review Notes` to the `.plan.md`:
+
+```markdown
+## Plan Review Notes
+**Reviewed by:** Plan Reviewer (auto) | **Date:** <YYYY-MM-DD>
+### Critical — [findings + recommendations]
+### Warning — [findings + suggestions]
+### Info — [observations]
+### Summary — Structure/Security/Dependencies/Blast Radius/Cost/Ops: [Pass/Issues]
+```
+
+If Critical items are found, fix them inline before proceeding. Then proceed to Phase 3.
+
+### 11. Phase 3 — Task Decomposition (auto-chained)
+
+After the plan review, automatically run the task-manager decomposition from `agents/task-manager.md`. Do NOT stop and ask the user to invoke task-manager — run it yourself in the same session.
+
+Read `agents/task-manager.md` and execute its workflow against your plan:
+
+1. **Task Decomposition** — Break implementation tasks into atomic, machine-readable tasks using the schema:
+
+```markdown
+| ID | Name | Type | Agent | Model | Skills | Reads | Writes | Code Depends On | Execution Depends On | Complexity | Output | Validation |
+```
+
+2. **Dependency Graph** — Identify Code Dependencies (file/module) and Execution Dependencies (runtime ordering). Render as mermaid diagram. Detect circular dependencies.
+
+3. **Execution Waves** — Group tasks into parallel-safe waves. Identify the Critical Path.
+
+4. **File Ownership Map** — Assign exclusive write ownership per file. Rule: only one task owns a file for writing.
+
+5. **Parallel Execution Safety** — Check Write-Write conflicts (critical), Read-Write conflicts (warning), Shared external state (warning). Calculate safety score. Resolve all Write-Write conflicts before presenting.
+
+6. **Model Assignment** — Assign `opus` or `sonnet` per task based on complexity rules.
+
+Append `## Execution Strategy` to the `.plan.md` per the template in `standards-plan.mdc`.
+
+### 12. Present to User
+
+Present the complete package to the user for approval:
+- Architecture + design (Phase 1)
+- Plan review notes (Phase 2)
+- Execution strategy with task breakdown, waves, safety score, model assignments (Phase 3)
+
+The user approves or rejects the entire package. If rejected, revise and re-run the relevant phase.
+
+After approval: "Use `/iac-dev` to begin implementation, following the Execution Strategy wave plan." Reference the `.plan.md` path.
 If the plan includes a Testing section, mention: "After review, use `/platform-tester` to create infrastructure tests."
+
+**Standalone re-runs:** If the user needs to re-run just the plan review or just the task decomposition on an existing plan, they can `@` `agents/plan-reviewer.md` or `@` `agents/task-manager.md` directly.
 
 ## Guidelines
 
 - Prefer modular, layered infrastructure (base → platform → application)
 - Multi-AZ for production; always estimate cost impact
 - Produce dependency table so orchestrator can parallelize waves
+- The auto-chain (Phase 1 → 2 → 3) runs in a single session — no user invocation required between phases
+- The "never auto-switch agents" rule applies to execution agents (Tier 2+), not to the planning auto-chain
