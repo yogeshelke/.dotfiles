@@ -294,13 +294,44 @@ topologySpreadConstraints:
 
 ## Reference Documentation
 
-- **EKS User Guide**: https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html
-- **EKS Best Practices**: https://docs.aws.amazon.com/eks/latest/best-practices/introduction.html
-- **EKS Best Practices (GitHub)**: https://github.com/aws/aws-eks-best-practices
-- **VPC CNI Plugin**: https://github.com/aws/amazon-vpc-cni-k8s
-- **AWS Load Balancer Controller**: https://kubernetes-sigs.github.io/aws-load-balancer-controller/
-- **IRSA**: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html
-- **Pod Identity**: https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html
-- **Access Entries**: https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html
-- **EKS Blueprints (Terraform)**: https://github.com/aws-ia/terraform-aws-eks-blueprints
-- **Karpenter**: https://karpenter.sh/docs/
+## References
+
+### EKS
+- [EKS User Guide](https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html)
+- [EKS Best Practices Guide](https://docs.aws.amazon.com/eks/latest/best-practices/introduction.html)
+- [EKS Best Practices (GitHub)](https://github.com/aws/aws-eks-best-practices)
+- [EKS Blueprints (Terraform)](https://github.com/aws-ia/terraform-aws-eks-blueprints)
+- [EKS Add-ons Overview](https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html)
+- [EKS Upgrade Guide](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)
+
+### EKS Add-ons
+- [CoreDNS](https://docs.aws.amazon.com/eks/latest/userguide/managing-coredns.html)
+- [kube-proxy](https://docs.aws.amazon.com/eks/latest/userguide/managing-kube-proxy.html)
+- [VPC CNI (amazon-vpc-cni-k8s)](https://docs.aws.amazon.com/eks/latest/userguide/managing-vpc-cni.html)
+- [EBS CSI Driver](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html)
+- [EFS CSI Driver](https://docs.aws.amazon.com/eks/latest/userguide/efs-csi.html)
+- [AWS Load Balancer Controller](https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html)
+- [CloudWatch Observability Agent](https://docs.aws.amazon.com/eks/latest/userguide/cloudwatch-agent.html)
+- [ADOT (AWS Distro for OpenTelemetry)](https://docs.aws.amazon.com/eks/latest/userguide/opentelemetry.html)
+- [Mountpoint for S3 CSI Driver](https://docs.aws.amazon.com/eks/latest/userguide/s3-csi.html)
+- [Pod Identity Agent](https://docs.aws.amazon.com/eks/latest/userguide/pod-id-agent-setup.html)
+- [GuardDuty Agent](https://docs.aws.amazon.com/guardduty/latest/ug/guardduty-eks-runtime-monitoring.html)
+- [Available EKS Add-ons (full list)](https://docs.aws.amazon.com/eks/latest/userguide/workloads-add-ons-available-eks.html)
+
+### Networking & Auth
+- [VPC CNI Plugin](https://github.com/aws/amazon-vpc-cni-k8s)
+- [AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/)
+- [IRSA (IAM Roles for Service Accounts)](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
+- [Pod Identity](https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html)
+- [Access Entries](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)
+
+### Scaling & Compute
+- [Karpenter Documentation](https://karpenter.sh/docs/)
+- [Cluster Autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler)
+
+### Kubernetes (upstream)
+- [Kubernetes Documentation](https://kubernetes.io/docs/home/)
+- [Kubernetes API Reference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.35/)
+- [kubectl Cheat Sheet](https://kubernetes.io/docs/reference/kubectl/cheatsheet/)
+- [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
+- [Kubernetes Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)

@@ -307,9 +307,36 @@ These must hold for every workload — no exceptions without explicit justificat
 
 ## Reference Documentation
 
-- **Kubernetes Docs**: https://kubernetes.io/docs/home/
-- **API Reference**: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.35/
-- **Pod Security Standards**: https://kubernetes.io/docs/concepts/security/pod-security-standards/
-- **Network Policies**: https://kubernetes.io/docs/concepts/services-networking/network-policies/
-- **Gateway API**: https://gateway-api.sigs.k8s.io/
-- **kubectl Cheat Sheet**: https://kubernetes.io/docs/reference/kubectl/cheatsheet/
+## References
+
+### Core Kubernetes
+- [Kubernetes Documentation](https://kubernetes.io/docs/home/)
+- [Kubernetes API Reference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.35/)
+- [kubectl Cheat Sheet](https://kubernetes.io/docs/reference/kubectl/cheatsheet/)
+- [kubectl Reference](https://kubernetes.io/docs/reference/kubectl/)
+
+### Workloads & Scheduling
+- [Deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)
+- [StatefulSets](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/)
+- [Jobs & CronJobs](https://kubernetes.io/docs/concepts/workloads/controllers/job/)
+- [Topology Spread Constraints](https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/)
+- [Pod Disruption Budgets](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/)
+- [Resource Management](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
+
+### Security
+- [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
+- [Pod Security Admission](https://kubernetes.io/docs/concepts/security/pod-security-admission/)
+- [RBAC Authorization](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
+- [Security Best Practices](https://kubernetes.io/docs/concepts/security/overview/)
+
+### Networking
+- [Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [Services](https://kubernetes.io/docs/concepts/services-networking/service/)
+- [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/)
+- [Gateway API](https://gateway-api.sigs.k8s.io/)
+- [DNS for Services and Pods](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)
+
+### Observability & Debugging
+- [Logging Architecture](https://kubernetes.io/docs/concepts/cluster-administration/logging/)
+- [Debug Running Pods](https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/)
+- [Resource Metrics Pipeline](https://kubernetes.io/docs/tasks/debug/debug-cluster/resource-metrics-pipeline/)
