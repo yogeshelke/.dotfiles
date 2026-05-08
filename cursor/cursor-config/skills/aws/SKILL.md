@@ -3,7 +3,8 @@ name: aws
 description: >-
   AWS architecture decision system. Use for AWS service selection, infrastructure design,
   and platform engineering decisions. Covers compute, networking, database, IAM, cost,
-  scalability, DR, and AI/ML tradeoffs. Security constraints enforced via aws-security.mdc.
+  scalability, DR, and Gen AI/ML (3-layer: infrastructure, platform/Bedrock, integrated services).
+  Security constraints enforced via aws-security.mdc.
   Do NOT use for non-AWS cloud providers or general cloud concepts without AWS context.
 metadata:
   author: SHELYOG
@@ -42,7 +43,9 @@ Navigate by task type:
 | Cost optimization | COST |
 | Performance fix | SCALABILITY + DATABASE |
 | Disaster recovery | DR |
-| ML/AI workload | AI/ML + COMPUTE + COST |
+| Gen AI application (agents, RAG, chat) | AI/ML Layer 2 + IAM |
+| Gen AI infrastructure (training, fine-tune) | AI/ML Layer 1 + COMPUTE + COST |
+| AI-integrated AWS service | AI/ML Layer 3 |
 
 ---
 
@@ -185,12 +188,75 @@ Avoid Lambda for: long-running, stateful, high-throughput, latency-critical work
 
 ## [AI/ML]
 
-- **API-based LLM access** → Bedrock (no infra, pay per token)
-- **Custom model training** → SageMaker with spot training (90% savings)
-- **Model inference on EKS** → Karpenter GPU pool (g5 general, inf2 cost-optimized)
-- **Supported model architecture** → Inferentia/Trainium (40-70% cheaper than NVIDIA)
+AWS Gen AI operates in three layers. Most platform teams need Layer 2 (build) and Layer 3 (consume). Layer 1 is high-cost infrastructure — avoid unless training custom models.
 
-See `references/detailed-service-guides.md` for full MLOps pipeline patterns.
+### Layer 1 — Infrastructure (Train / Fine-tune / Inference Infra)
+
+High-cost compute for custom model training, RAG pipelines, and self-hosted inference. **Only needed when Bedrock or managed services don't meet requirements.**
+
+| Use Case | Service | Instance Type | Notes |
+|----------|---------|--------------|-------|
+| Custom model training | SageMaker Training | `ml.p4d.24xlarge` (GPU), `ml.trn1.32xlarge` (Trainium) | Use spot training for 90% savings |
+| Fine-tuning LLMs | SageMaker + Bedrock Custom Model | GPU/Trainium | Bedrock fine-tune if model supports it; SageMaker for full control |
+| RAG infrastructure | OpenSearch Serverless (vector) + S3 + Bedrock KB | N/A | Managed knowledge bases preferred over self-hosted vector DBs |
+| Self-hosted inference | EKS + Karpenter GPU pool | `g5` (NVIDIA), `inf2` (Inferentia) | Prefer `inf2` if architecture supported (40-70% cheaper) |
+| Inference serving | SageMaker Endpoints, Triton on EKS, KServe on EKS | Varies | SageMaker for managed; Triton/KServe for K8s-native |
+| High-memory workloads | SageMaker / EKS | `ml.r5`, `r6i`, `x2idn` | For large embedding models or in-memory vector stores |
+
+**Cost warning:** GPU/Trainium instances are expensive. Always use spot for training, auto-scaling for inference endpoints, and scale-to-zero for non-prod.
+
+### Layer 2 — Platform (Build Agents & Applications)
+
+Core services for building Gen AI applications without managing infrastructure.
+
+| Use Case | Service | Notes |
+|----------|---------|-------|
+| FM/LLM access (API) | **Amazon Bedrock** | Pay per token; supports Claude, Llama, Titan, Cohere, Mistral |
+| Build AI agents | **Bedrock Agents** | Orchestrates FM + tools + knowledge bases; action groups for API calls |
+| Knowledge bases (RAG) | **Bedrock Knowledge Bases** | Managed RAG: S3 → chunking → vector store → retrieval |
+| Fine-tune models | **Bedrock Custom Models** | Fine-tune supported FMs on your data without managing infra |
+| Guardrails | **Bedrock Guardrails** | Content filtering, PII detection, topic denial, word filters |
+| Prompt management | **Bedrock Prompt Management** | Version, test, and manage prompts across models |
+| Model evaluation | **Bedrock Model Evaluation** | Compare models on your data before deploying |
+| Orchestration frameworks | LangChain, LangGraph, CrewAI | Run on EKS/Lambda; use Bedrock as the LLM backend |
+| Inference optimization | Triton Inference Server, KServe | For self-hosted models on EKS with GPU/Inferentia |
+
+**Default path:** Bedrock Agents + Knowledge Bases + Guardrails covers most Gen AI use cases without infrastructure management.
+
+### Layer 3 — Integrated Services & Agent Applications
+
+AWS services with Gen AI built in — ready to use, minimal configuration.
+
+| Service | What It Does | Version/Notes |
+|---------|-------------|---------------|
+| **Amazon Q Developer** | AI coding assistant (IDE, CLI, code review, transformation) | Developer-focused; integrates with IDEs |
+| **Amazon Q Business** | AI assistant for enterprise data (search, summarize, chat) | Connects to enterprise data sources (S3, SharePoint, Confluence, etc.) |
+| **Amazon QuickSight Q** | Natural language BI queries | Ask questions about dashboards in plain English |
+| **Amazon Connect** | AI-powered contact center | Agent assist, call summarization, sentiment analysis |
+| **AWS Supply Chain** | AI-driven supply chain insights | Demand forecasting, inventory optimization |
+| **Amazon CodeWhisperer** | (Now Amazon Q Developer) | Code generation, security scanning |
+| **Amazon Transcribe** | Speech-to-text | Real-time and batch transcription |
+| **Amazon Comprehend** | NLP — sentiment, entities, PII detection | Pre-trained models, no ML expertise needed |
+| **Amazon Rekognition** | Image/video analysis | Object detection, face analysis, content moderation |
+| **Amazon Textract** | Document extraction (OCR + structure) | Tables, forms, handwriting from scanned docs |
+
+**Quick wins:** Amazon Q Developer for productivity; QuickSight Q for BI; Bedrock Agents for custom AI workflows.
+
+### AI/ML Decision Tree
+
+```
+Need AI capability?
+├── Using existing AWS service (QuickSight, Connect, etc.)? → Layer 3 (built-in)
+├── Building custom AI application?
+│   ├── Standard FM access (chat, summarize, generate)? → Bedrock API (Layer 2)
+│   ├── Need RAG over your data? → Bedrock Knowledge Bases (Layer 2)
+│   ├── Need AI agent with tools? → Bedrock Agents (Layer 2)
+│   ├── Need guardrails (safety, PII)? → Bedrock Guardrails (Layer 2)
+│   └── Need complex orchestration? → LangChain/LangGraph + Bedrock (Layer 2)
+└── Training/fine-tuning custom model?
+    ├── Bedrock supports the base model? → Bedrock Custom Models (Layer 2)
+    └── Full control needed? → SageMaker Training (Layer 1, high cost)
+```
 
 ---
 
@@ -260,3 +326,12 @@ See `references/detailed-service-guides.md` for full MLOps pipeline patterns.
 - [AWS Security Best Practices](https://docs.aws.amazon.com/security/)
 - [AWS CLI Command Reference](https://docs.aws.amazon.com/cli/latest/reference/)
 - [Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
+- [Amazon Bedrock Documentation](https://docs.aws.amazon.com/bedrock/latest/userguide/what-is-bedrock.html)
+- [Bedrock Agents](https://docs.aws.amazon.com/bedrock/latest/userguide/agents.html)
+- [Bedrock Knowledge Bases](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html)
+- [Bedrock Guardrails](https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html)
+- [Amazon Q Developer](https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/what-is.html)
+- [Amazon Q Business](https://docs.aws.amazon.com/amazonq/latest/qbusiness-ug/what-is.html)
+- [SageMaker Documentation](https://docs.aws.amazon.com/sagemaker/latest/dg/whatis.html)
+- [AWS Inferentia / Trainium](https://aws.amazon.com/machine-learning/inferentia/)
+- [LangChain on AWS](https://python.langchain.com/docs/integrations/providers/aws/)
