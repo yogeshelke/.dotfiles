@@ -49,9 +49,41 @@ This is enforced by agent instructions (`/task-manager` and `/iac-dev` both refu
 | `P3 - Medium` | Planned work, scheduled changes |
 | `P4 - Low` | Nice-to-have, cleanup, optimization |
 
-## Decisions Section
+## Plan Section Order
 
-Plans should include a **## Decisions** section to capture key choices and their rationale. This prevents decision loss as plans evolve across sessions:
+Every `.plan.md` must follow this section sequence. The order is intentional — reviewers and users read top-down: why, what, how, risk, then execution.
+
+```markdown
+> **Plan** | `<plan-name>`
+> **Status** | `<status>` | **Priority** | `<priority>`
+> **Created** | `<YYYY-MM-DD>` | **Updated** | `<YYYY-MM-DD>`
+> **Author** | `<author>` | **Environment** | `<environments>`
+> **PR/Ticket** | `<link or —>` | **Rollback** | `<Yes/No/N/A>`
+> **Phase** | `<current-phase>` | **Wave** | `<current-wave or —>`
+
+# <Plan Title>
+
+## Context                  — Why this change is needed
+## Architecture             — Design, diagrams, service interactions
+## Decisions                — Key choices with rationale (see table below)
+## Task Dependency Table    — Task graph with agent assignments
+## Implementation Tasks     — Granular, bite-sized steps with exact file paths
+## Security Considerations  — IAM, encryption, networking, secrets
+## Cost Impact              — Instance types, monthly delta, savings
+## Resilience               — RPO/RTO, DR strategy (or "N/A" for non-critical)
+## Testing                  — New/updated tests in support/Testing/? Recommend or skip with reason
+## Success Criteria         — Measurable acceptance criteria
+## Non-Goals                — What is explicitly out of scope
+## Risks & Rollback         — Failure scenarios, rollback procedures
+## Open Questions           — Unresolved items requiring user input
+
+## Plan Review Notes        — Appended by plan-reviewer (auto-chained)
+## Execution Strategy       — Appended by /task-manager (auto-chained)
+```
+
+### Decisions Table
+
+Capture key choices and their rationale. Prevents decision loss as plans evolve across sessions:
 
 ```markdown
 ## Decisions

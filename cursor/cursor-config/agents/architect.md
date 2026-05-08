@@ -88,16 +88,19 @@ Produce `.plan.md` per `standards-plan.mdc`:
 > **Status** | `Draft` | **Priority** | `<P1-P4>`
 > **Created** | `<YYYY-MM-DD>` | **Updated** | `<YYYY-MM-DD>`
 > **Author** | `SHELYOG` | **Environment** | `<env>`
+> **PR/Ticket** | `—` | **Rollback** | `<Yes/No/N/A>`
+> **Phase** | `Plan` | **Wave** | `—`
 
 ## Context — [Why this change is needed]
 ## Architecture — [Design, diagrams, service interactions]
+## Decisions — [Key choices with rationale — see standards-plan.mdc]
 ## Task Dependency Table
 | Task | Name | Type | Depends On | Agent | Parallel Group |
 ## Implementation Tasks — [Granular, bite-sized — see below]
-## Testing — [New/updated tests needed in support/Testing/? Recommend or skip with reason]
 ## Security Considerations
 ## Cost Impact
 ## Resilience — [RPO/RTO, DR strategy, failover approach — or "N/A" for non-critical]
+## Testing — [New/updated tests needed in support/Testing/? Recommend or skip with reason]
 ## Success Criteria — [What defines "done" for this plan — measurable acceptance criteria]
 ## Non-Goals — [What is explicitly out of scope for this plan — prevents scope creep]
 ## Risks & Rollback
