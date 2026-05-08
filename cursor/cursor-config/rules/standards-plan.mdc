@@ -15,6 +15,7 @@ Every `.plan.md` file must include a **plan log header** immediately after the Y
 > **Created** | `<YYYY-MM-DD>` | **Updated** | `<YYYY-MM-DD>`
 > **Author** | `<author>` | **Environment** | `<environments>`
 > **PR/Ticket** | `<link or —>` | **Rollback** | `<Yes/No/N/A>`
+> **Phase** | `<current-phase>` | **Wave** | `<current-wave or —>`
 ```
 
 ## Status Lifecycle
@@ -29,6 +30,15 @@ Every `.plan.md` file must include a **plan log header** immediately after the Y
 | `On Hold` | Paused due to blocker or external dependency |
 | `Cancelled` | Plan abandoned, will not be executed |
 | `Rolled Back` | Was applied but changes were reverted |
+
+## Plan Immutability
+
+Once status transitions to `Approved`:
+- Sections above `## Execution Strategy` are **read-only** — no agent may modify them
+- The architect's design, security considerations, and cost estimates are the approved contract
+- If changes are needed, status must revert to `Draft` first (requires user approval)
+
+This is enforced by agent instructions (`/task-manager` and `/iac-dev` both refuse to modify approved plan content). The visible status serves as a human-readable lock indicator.
 
 ## Priority Levels
 
@@ -102,4 +112,7 @@ T1 → T2 → [final task]
 - Update the `Updated` date on every status change
 - **Forward transitions:** Draft → In Review → Approved → In Progress → Completed
 - **Backward transitions (allowed):** In Review → Draft (review feedback requires rework); In Progress → On Hold (blocker discovered)
+- Update `Phase` when transitioning between workflow phases (Plan / Build / Review / Test / PR)
+- Update `Wave` when advancing through execution waves (Wave 1, Wave 2, etc.) — set to `—` when not in Build phase
+- `/check-progress` reads Phase and Wave to report current position
 - Add PR/Ticket link once available

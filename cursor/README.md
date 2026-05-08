@@ -77,7 +77,7 @@ Tier 3   - Quality:        /reviewer → /platform-tester → /pr-agent
 | Command | Agent | Tier | Phase | Specialization |
 |---------|-------|------|-------|----------------|
 | `/architect` | AWS Cloud Architect | 1 - Plan | Plan | Architecture design, infrastructure planning |
-| `/task-manager` | Task Manager | 1.5 - Plan Refinement | Task Planning | Task decomposition, execution strategy, parallel safety |
+| `/task-manager` | Task Manager | 1.5 - Plan Refinement | Task Planning | Decomposition + simulation: task graph, conflict detection, execution waves |
 | `/iac-dev` | IaC Developer | 2 - Build | Build | Terraform, Helm, YAML implementation |
 | `/k8s-expert` | Kubernetes Expert | 2 - Build | Build | EKS, pods, networking analysis |
 | `/devops` | DevOps Engineer | 2 - Build | Build | CI/CD, GitHub Actions, monitoring |
@@ -172,10 +172,18 @@ commands/architect.md  ──→  agents/architect.md  (persona activated)
 
 ### Failure Handling
 
-Failures are expected and handled explicitly:
+Failures are expected, classified, and handled explicitly:
 - **Validation failures** loop back to the implementing agent with exact error output
 - **Security failures** loop back with specific findings and remediation steps
 - **Maximum retry count** (2 loops per issue) prevents infinite cycles — escalate to human after that
+- **Failure classification** — on escalation, agents categorize the failure so the user knows their response path:
+
+| Type | User action |
+|------|-------------|
+| **TRANSIENT** | Retry (same task, same approach) |
+| **LOGIC** | Fix code, re-validate |
+| **DEPENDENCY** | Reorder tasks or fix upstream |
+| **ENVIRONMENT** | Human intervention outside agent |
 
 The system prefers **controlled failure over silent incorrect success**.
 
@@ -215,6 +223,13 @@ User → Agent → Rules → Skills → Output
 - **Kubernetes**: Only read operations — no `apply`, `delete`
 - **AWS CLI**: Only describe/get operations — no create/delete
 - **Git**: Safe operations only — no force push
+
+### Plan Governance
+
+Plans (`.plan.md`) are treated as execution contracts:
+- **Immutability** — once `Status` is `Approved`, sections above `## Execution Strategy` are read-only; changes require reverting to `Draft` first
+- **Phase tracking** — plan header includes `Phase` (Plan / Build / Review / Test / PR) and `Wave` (current execution wave) for cross-session continuity
+- **Parallel safety** — parallelism is allowed only when no shared writes, no unsafe shared state, and no execution dependency violation
 
 ### Verification Gates
 

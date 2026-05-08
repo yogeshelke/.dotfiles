@@ -18,6 +18,7 @@ git log --oneline main..HEAD
 Count files by type (`.tf`, `.yaml`, `.md`, workflows). Link to active plan if one exists.
 - **Plan freshness:** verify the referenced `.plan.md` exists and its branch/environment matches the current branch; flag if plan is missing or stale
 - **Unexpected files:** compare changed file list against the plan's task file paths; flag any files not accounted for in the plan (possible scope creep or accidental changes)
+- **Phase tracking:** read the plan header's `Phase` and `Wave` fields; report current position in the workflow and which tasks are next per the Execution Strategy
 
 ### 2. Formatting Check (read-only validation only — no side effects, no file writes)
 - `terraform fmt -check -recursive` (exit code only — reports drift, writes nothing)

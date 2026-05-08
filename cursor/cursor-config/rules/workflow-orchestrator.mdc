@@ -110,6 +110,20 @@ When an agent's output is rejected or validation fails, the workflow loops back 
 | Plan-reviewer rejects plan | `/architect` | Reviewer provides annotated feedback. Architect revises the plan sections that were flagged. |
 | PR creation fails | Stay in `/pr-agent` | Check branch state, resolve conflicts, retry. Escalate to user if blocked. |
 
+### Failure Classification
+
+When escalating a failure to the user, classify it:
+
+| Type | Signal | User action |
+|------|--------|-------------|
+| **TRANSIENT** | Timeout, rate limit, intermittent API error | Retry (same task, same approach) |
+| **LOGIC** | Wrong output, validation failure, incorrect resource config | Fix code, re-validate |
+| **DEPENDENCY** | Missing input, unresolved module, task ordering issue | Reorder tasks or fix upstream |
+| **ENVIRONMENT** | AWS permission denied, backend unreachable, cluster state | Human intervention outside agent |
+
+Agents must include the classification when escalating:
+"Escalating after 3 attempts. **Failure type: LOGIC** — terraform validate fails on cyclic reference in `modules/rds/main.tf`."
+
 **Failure loop rules:**
 - The rejecting agent must include: what failed, which files, and what needs to change
 - The fixing agent must reference the rejection feedback explicitly
@@ -132,6 +146,10 @@ When agents, rules, or skills produce conflicting guidance:
 - If `/iac-dev` discovers the plan's decision is unimplementable, it must stop and explain why (not substitute)
 - Terminology is consistent: if the plan says "payment-db", every agent uses "payment-db" (not "payments-rds" or "pay-aurora")
 - Resource names, module paths, and variable names from the plan are used verbatim
+
+### Parallel Execution Principle
+
+Parallelism is allowed only when: (1) no shared writes, (2) no unsafe shared state, and (3) no execution dependency violation. If any condition fails, tasks must be sequentialized. The Task Manager enforces this via the Parallel Execution Safety analysis; the orchestrator respects wave ordering.
 
 ### Skill Boundaries
 
