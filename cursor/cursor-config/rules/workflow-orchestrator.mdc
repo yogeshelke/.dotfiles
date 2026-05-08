@@ -1,64 +1,83 @@
 ---
-description: Agent orchestrator - routes tasks to specialist agents based on task type, tracks workflow phases
+description: Agent orchestrator - dual-role (router + executor) that routes tasks to specialist agents and automates execution of approved plans through a 5-phase hybrid workflow
 globs: 
 alwaysApply: true
 ---
 # Agent Orchestrator
 
-This project uses a layered team of specialist agents for cloud platform engineering. Each agent has a specific role, tier, and phase in the workflow. Agents are defined in `agents/` and invoked via slash commands in `commands/`.
+This project uses a hybrid automated workflow for cloud platform engineering. The orchestrator operates in two modes: **Routing Mode** (directing user intent to the right phase/agent) and **Execution Mode** (automating approved plans through build, review, and test cycles). Agents are defined in `agents/` and invoked via slash commands in `commands/`.
 
-## Tiered Architecture
+## 5-Phase Workflow
 
 ```
-Tier 1   - Planning:           /architect → plan-reviewer
-Tier 1.5 - Task Planning:      /task-manager → USER approval
-Tier 2   - Execution:          /iac-dev | /k8s-expert | /devops
-Tier 3   - Quality:            /reviewer → /platform-tester → /pr-agent
+Phase 1 — Automated Planning:     Architect ↔ Plan-Reviewer → Task Manager → STOP
+Phase 2 — Manual User Approval:   User reviews plan + execution strategy → approve or reject
+Phase 3 — Automated Execution:    Orchestrator spawns tasks → auto-review → test creation → STOP
+Phase 4 — Manual Final Review:    User reviews all output → approve or request fixes
+Phase 5 — Automated PR Creation:  User triggers → PR Agent runs autonomously
 ```
+
+Automated phases (1, 3, 5): orchestrator controls agent switching, model selection, and context scoping.
+Manual phases (2, 4): user has full control; no automated execution.
 
 ## Available Agents
 
 | Command | Agent | Tier | Phase | Mode |
 |---------|-------|------|-------|------|
-| `/architect` | AWS Cloud Architect | 1 - Plan | Plan | Read-only |
-| `/task-manager` | Task Manager | 1.5 - Plan Refinement | Task Planning | Read/Write (`.plan.md` only) |
-| `/iac-dev` | IaC Developer | 2 - Build | Build | Read/Write |
-| `/k8s-expert` | Kubernetes Expert | 2 - Build | Build | Read-only |
-| `/devops` | DevOps Engineer | 2 - Build | Build | Read/Write |
-| `/reviewer` | Security Reviewer | 3 - Quality | Review | Read-only |
-| `/platform-tester` | Platform Tester | 3 - Quality | Test | Read/Write |
-| `/pr-agent` | PR Agent | 3 - Quality | PR | Read/Write |
+| `/architect` | AWS Cloud Architect | T1 | Phase 1 | Read-only |
+| `/task-manager` | Task Manager | T2 | Phase 1b | Read/Write (`.plan.md` only) |
+| `/iac-dev` | IaC Developer | T1/T2 | Phase 3 | Read/Write |
+| `/k8s-expert` | Kubernetes Expert | T1/T2 | Phase 3 | Read-only |
+| `/devops` | DevOps Engineer | T1/T2 | Phase 3 | Read/Write |
+| `/reviewer` | Security Reviewer | T1 | Phase 3b | Read-only |
+| `/platform-tester` | Platform Tester | T2 | Phase 3c | Read/Write |
+| `/pr-agent` | PR Agent | T3 | Phase 5 | Read/Write |
 | `/check-progress` | Progress Check | Utility | Any | Read-only |
 
-## Mandatory Routing Gate
+## Orchestrator Modes
 
-**CRITICAL: When the user describes a task without invoking a specific slash command, you MUST NOT start working on it directly.** Instead:
+### Routing Mode (default)
 
-1. Identify which agent should handle the task using the routing table below
-2. Present the routing suggestion to the user with a brief rationale
-3. **STOP and WAIT** for the user to invoke the suggested slash command
-4. Do NOT read skills, explore the codebase, or begin any work until the user invokes an agent
+Active when the user describes work without invoking a specific slash command. The orchestrator identifies the correct phase and routes accordingly.
+
+**CRITICAL: When the user describes a task without invoking a slash command, route — do not execute.**
+
+1. Identify which phase/agent should handle the task using the routing table
+2. Present the routing suggestion with a brief rationale
+3. **STOP and WAIT** for user confirmation or slash command invocation
+4. Do NOT read skills, explore the codebase, or begin work until the user confirms
 
 **Example of CORRECT behavior:**
 > User: "I need to add a new RDS Aurora cluster"
 > Agent: "This is an architecture/infrastructure design task. Use `/architect` to begin planning the RDS Aurora cluster. The architect will assess scope, design the solution, and produce a `.plan.md` before any code is written."
 
-**Example of WRONG behavior:**
-> User: "I need to add a new RDS Aurora cluster"
-> Agent: [starts reading skills and exploring the codebase directly]
+### Execution Mode (Phase 3)
 
-### Routing Table
+Active after the user approves a plan in Phase 2. The orchestrator reads the Execution Strategy from the approved `.plan.md` and drives task execution automatically.
+
+In Execution Mode, the orchestrator:
+- Reads the Execution Strategy (task table, dependency graph, execution waves)
+- Spawns agents per task with assigned model, skills, and context scope
+- Enforces task order, dependencies, and file ownership
+- Enforces parallel execution safety
+- Routes completed tasks to the Reviewer automatically
+- Handles review fix loops (max 3 per task)
+- Pauses on critical blockers and escalates to user
+- Ensures platform tests run only after all dev tasks complete
+
+## Routing Table
 
 | Task Pattern | Route To | Rationale |
 |-------------|----------|-----------|
-| Architecture, design, "how should we...", new infrastructure, add/create resource | `/architect` | Needs plan before code |
-| Break down plan, task decomposition, execution strategy, "plan the tasks" | `/task-manager` | Decomposes plan into executable tasks |
-| Write Terraform, Helm, YAML, implement, code, modify existing | `/iac-dev` | Implementation work |
-| Kubernetes, EKS, pods, nodes, manifests analysis, troubleshoot | `/k8s-expert` | K8s domain analysis |
-| CI/CD, GitHub Actions, deploy pipelines, Datadog, monitoring | `/devops` | CI/CD + observability |
-| Review, PR review, security audit, check code | `/reviewer` | Security review |
-| Test, validate, coverage, create tests | `/platform-tester` | Test creation |
-| Commit and PR, "pr workflow", "git pr" | `/pr-agent` | PR workflow |
+| Architecture, design, "how should we...", new infrastructure, add/create resource | `/architect` (Phase 1) | Needs plan before code |
+| Break down plan, task decomposition, execution strategy, "plan the tasks" | `/task-manager` (Phase 1b) | Decomposes plan into executable tasks |
+| Approved plan, "build", "execute", "start implementation" | Phase 3 (Execution Mode) | Plan approved, orchestrator drives execution |
+| Write Terraform, Helm, YAML, implement, code, modify existing | `/iac-dev` (Phase 3) | Implementation work |
+| Kubernetes, EKS, pods, nodes, manifests analysis, troubleshoot | `/k8s-expert` (Phase 3) | K8s domain analysis |
+| CI/CD, GitHub Actions, deploy pipelines, Datadog, monitoring | `/devops` (Phase 3) | CI/CD + observability |
+| Review, security audit, check code | `/reviewer` (Phase 3b) | Security review |
+| Test, validate, coverage, create tests | `/platform-tester` (Phase 3c) | Test creation |
+| Commit and PR, "pr workflow", "git pr" | `/pr-agent` (Phase 5) | PR workflow |
 | Progress check, status | `/check-progress` | Status utility |
 
 ### Exception: Direct Action Allowed
@@ -66,51 +85,143 @@ You may skip routing and act directly ONLY when:
 - The user explicitly says "just do it" or "skip the workflow"
 - The task is a simple question that needs no agent (e.g., "what region is this cluster in?")
 
-## Workflow Phase Tracking
+## Phase 1: Automated Planning
 
-The standard workflow follows these phases:
+Planning runs as an automated chain. The orchestrator controls agent switching and model selection throughout.
 
-1. **Plan**: `/architect` designs, auto-runs plan review, auto-runs task decomposition → user approves complete plan + execution strategy
-2. **Build**: `/iac-dev` implements per wave plan (with `/k8s-expert` or `/devops` as needed)
-3. **Review**: `/reviewer` performs security audit
-4. **Test**: `/platform-tester` creates test scripts (optional, skip for trivial changes)
-5. **PR**: `/pr-agent` commits, pushes, creates PR, notifies Slack
+### 1a. Architect
 
-**Planning auto-chain:** `/architect` runs three phases in a single session (design → plan review → task decomposition) before presenting to the user. This does not violate the "never auto-switch agents" rule — the auto-chain applies only to Tier 1/1.5 planning phases where all work is read-only/plan-only with no decision point requiring user input. Plan-reviewer and task-manager remain available as standalone agents via `@` for re-runs.
+- Orchestrator routes new work to `/architect` with T1 model (Claude Opus 4.6 high)
+- Architect creates the plan including a mandatory **Platform Tests** section
+- If platform tests are not required, architect must explicitly state why
 
-### Handoff Sequence
-When a task spans multiple agents, suggest the next agent:
+### 1b. Architect ↔ Plan-Reviewer Loop
 
-| Completing Agent | Suggest Next | When |
-|-----------------|-------------|------|
-| `/architect` | user approval | Plan + review + execution strategy complete (auto-chained) |
-| User approves | `/iac-dev` (or parallel agents per wave plan) | Plan + execution strategy approved |
-| `/iac-dev` | `/reviewer` | Code written |
-| `/k8s-expert` | `/iac-dev` or `/reviewer` | Analysis complete |
-| `/devops` | `/reviewer` | Workflows written |
-| `/reviewer` | `/platform-tester` or `/pr-agent` | Review complete |
-| `/platform-tester` | `/pr-agent` | Tests created |
+```
+Architect → Plan-Reviewer → Architect (max 3 iterations)
+```
 
-### Common Shortcuts
-- **Quick fix**: `/iac-dev` → `/reviewer` → `/pr-agent` (skip architect + task-manager for small changes)
-- **Analysis only**: `/k8s-expert` or `/reviewer` alone (no code changes)
-- **CI/CD work**: `/architect` → `/devops` → `/reviewer` → `/pr-agent`
-- **Simple plan**: `/architect` → approve → `/iac-dev`; task-manager phase may be skipped only when no parallelism, no shared files, and no infra/state risk exists
+- Plan-Reviewer evaluates the plan and returns: pass, warn, or critical
+- On pass or warn-only: plan proceeds to Task Manager
+- On critical findings: architect revises the flagged sections and resubmits
+- After 3 iterations with unresolved critical blockers → escalate to user
+- The orchestrator tracks iteration count and enforces the cap
 
-### Failure Loops
+### 1c. Task Manager
+
+- Orchestrator auto-switches to Task Manager with T2 model (Claude Sonnet 4.5)
+- Context reset: Task Manager receives only the finalized `.plan.md`
+- Task Manager produces the `## Execution Strategy` section containing:
+  - Task breakdown table (ID, Name, Type, Agent, Model, Skills, Reads, Writes, Code Depends On, Execution Depends On, Complexity, Output, Validation)
+  - Dependency graph (mermaid)
+  - Execution waves
+  - File ownership map
+  - Parallel execution safety score
+  - Model and skill assignment per task
+  - Read/write file scope per task
+  - Test sequencing plan (test tasks always in final wave)
+- Task Manager completes → **STOP for Phase 2**
+
+## Phase 3: Automated Execution & Review
+
+After user approval in Phase 2, the orchestrator enters Execution Mode.
+
+### 3a. Task Execution
+
+The orchestrator reads the approved `.plan.md` Execution Strategy and spawns agents per task:
+- Assigned model from the Model column (auto-selected, not advisory)
+- Assigned skills from the Skills column
+- Fresh context per task: task-scoped files only, no cross-task context bleed
+- Tasks run parallel or sequential per execution wave ordering
+- File ownership map is binding — agents may only write to assigned files
+
+### 3b. Automated Review
+
+After each task completes, the orchestrator auto-routes to `/reviewer` (T1: Claude Opus 4.6 high).
+
+Reviewer returns a structured verdict:
+- **pass** → task complete, proceed to next task
+- **warn** → task complete with warnings, present warnings to user at Phase 4
+- **fail** → task sent back to executing agent for fixes
+
+Fix-review loop:
+```
+Executing Agent → Reviewer → fix → Reviewer (max 3 iterations per task)
+```
+
+- Failed task returns to the same executing agent with: findings, affected files, relevant task context
+- No full conversation history in the loop — only findings and files
+- After 3 failed iterations → pause execution of this task AND all dependent tasks → escalate to user
+- Independent tasks on other execution paths continue
+
+### 3c. Platform Test Creation
+
+Platform tests run only after ALL development tasks are completed and reviewed.
+
+- Test tasks always execute in the final wave
+- Test tasks never run in parallel with development tasks
+- Platform Tester uses T2 model (Claude Sonnet 4.5)
+- Platform Tester follows the plan's Platform Tests section
+- Generated tests are auto-routed to `/reviewer` for review
+- Test review follows the same max 3-loop rule as 3b
+
+### 3d. Execution Complete
+
+After all tasks and tests pass review, the orchestrator presents the user with:
+- Changed files (full list)
+- Created artifacts (`.artifacts/review.md`, `.artifacts/test-summary.md`)
+- Task status (per task: pass/warn/fail)
+- Review status (per task: reviewer verdict)
+- Test summary
+
+→ **STOP for Phase 4**
+
+## Model Assignment Strategy
+
+AI model selection is **automatic** in orchestrator-driven phases (1, 3, 5) and **advisory** when the user invokes agents manually via slash commands.
+
+| Tier | Complexity | Model | Version | Auto-Selected In | Typical Agents |
+|------|------------|-------|---------|------------------|----------------|
+| **T1** | `heavy` | Claude Opus (high) | **4.6** | Phase 1 (architect, plan-reviewer), Phase 3b (reviewer) | `/architect`, `/reviewer`, complex `/iac-dev` |
+| **T2** | `medium` | Claude Sonnet | **4.5** | Phase 1c (task-manager), Phase 3a (execution), Phase 3c (tester) | `/iac-dev`, `/devops`, `/k8s-expert`, `/platform-tester`, `/task-manager` |
+| **T2-alt** | `medium` | GPT Codex | **5.3** | Phase 3a (user preference) | `/iac-dev`, `/devops` |
+| **T3** | `light` | Claude Sonnet | **4** | Phase 5 (PR) | `/pr-agent`, `/check-progress` |
+
+**Model fixity:** Model assignment is fixed per task instance. Retries within a review loop use the **same model** as the original attempt — this ensures reproducibility and debuggability. Model changes only on **explicit escalation**: if the same task fails twice at its assigned tier, auto-upgrade one tier on retry (T3 → T2 → T1). The escalation is logged in task status.
+
+**Automated phases (1, 3, 5):** model selection is automatic — the orchestrator applies the model from the Execution Strategy or the tier defaults above. No user prompt for model choice.
+
+**Manual invocation:** model assignment is advisory — the user selects the model when invoking each agent via slash command.
+
+## Context Optimization
+
+Context resets at every phase boundary and at every task boundary within Phase 3.
+
+| Transition | Context Passed |
+|-----------|---------------|
+| Architect → Task Manager | `.plan.md` only |
+| User approval → Execution Mode | Approved `.plan.md` only |
+| Per task execution (Phase 3a) | Fresh session: task-scoped files, assigned skills, task description |
+| Task → Reviewer (Phase 3b) | Changed files, relevant plan section, task description |
+| Review fix loop | Findings, affected files, relevant task context (no conversation history) |
+| All tasks → Platform Tester (Phase 3c) | Platform Tests section, created files |
+| PR creation (Phase 5) | `.artifacts/review.md`, `.artifacts/test-summary.md`, git diff |
+
+## Failure Loops
 
 When an agent's output is rejected or validation fails, the workflow loops back — not forward.
 
-| Failure | Loop Back To | What Must Happen |
-|---------|-------------|-----------------|
-| `/iac-dev` validation fails (fmt, validate) | Stay in `/iac-dev` | Systematic debugging → fix → re-validate. Escalate to user after 3 attempts. |
-| `/reviewer` rejects with Critical findings | `/iac-dev` | Reviewer provides exact findings + affected files. `/iac-dev` fixes only the flagged issues, then re-submit to `/reviewer`. |
-| `/reviewer` rejects with Warnings only | User decides | Present warnings. User chooses: fix (→ `/iac-dev`) or accept and proceed (→ `/platform-tester` or `/pr-agent`). |
-| `/platform-tester` finds issues in test creation | `/iac-dev` | Tester explains what can't be tested and why. `/iac-dev` fixes the source issue. |
-| Plan-reviewer rejects plan | `/architect` | Reviewer provides annotated feedback. Architect revises the plan sections that were flagged. |
-| PR creation fails | Stay in `/pr-agent` | Check branch state, resolve conflicts, retry. Escalate to user if blocked. |
+| Failure | Loop Back To | Max Iterations | What Must Happen |
+|---------|-------------|----------------|-----------------|
+| Plan-reviewer finds critical issues | `/architect` | 3 | Reviewer provides annotated feedback. Architect revises flagged sections and resubmits. |
+| Task validation fails (fmt, validate) | Stay in executing agent | 3 | Systematic debugging → fix → re-validate. |
+| `/reviewer` returns `fail` | Executing agent | 3 | Reviewer provides exact findings + affected files. Agent fixes only flagged issues, resubmits. |
+| `/reviewer` returns `warn` only | Continue; present at Phase 4 | N/A | Warnings collected and shown to user during Phase 4 review. |
+| Test review fails | `/platform-tester` | 3 | Tester fixes test issues and resubmits to reviewer. |
+| PR creation fails | Stay in `/pr-agent` | 3 | Check branch state, resolve conflicts, retry. |
+| Any failure after max iterations | Escalate to user | N/A | Pause task + dependent tasks. Present failure with classification. |
 
-### Failure Classification
+## Failure Classification
 
 When escalating a failure to the user, classify it:
 
@@ -127,7 +238,7 @@ Agents must include the classification when escalating:
 **Failure loop rules:**
 - The rejecting agent must include: what failed, which files, and what needs to change
 - The fixing agent must reference the rejection feedback explicitly
-- Maximum 2 rejection loops on the same issue before escalating to user
+- Maximum 3 fix-review loops per task before escalating to user
 - Never skip the rejection — always loop back, never push forward with known issues
 
 ## Conflict Resolution (priority order)
@@ -140,18 +251,23 @@ When agents, rules, or skills produce conflicting guidance:
 4. **Specific rule wins over general** — `standards-terraform.mdc` on Terraform topics beats `standards-aws-security.mdc` on Terraform coding style (but security constraints still apply)
 5. **If still ambiguous** → Escalate to user with the conflict clearly stated
 
-### Consistency Requirements
+## Consistency Requirements
 
 - Decisions made in the Plan phase are binding during Build — no silent changes
-- If `/iac-dev` discovers the plan's decision is unimplementable, it must stop and explain why (not substitute)
+- If an executing agent discovers the plan's decision is unimplementable, it must stop and explain why (not substitute)
 - Terminology is consistent: if the plan says "payment-db", every agent uses "payment-db" (not "payments-rds" or "pay-aurora")
 - Resource names, module paths, and variable names from the plan are used verbatim
 
-### Parallel Execution Principle
+## Parallel Execution
 
-Parallelism is allowed only when: (1) no shared writes, (2) no unsafe shared state, and (3) no execution dependency violation. If any condition fails, tasks must be sequentialized. The Task Manager enforces this via the Parallel Execution Safety analysis; the orchestrator respects wave ordering.
+Parallelism is allowed only when: (1) no shared writes, (2) no unsafe shared state, and (3) no execution dependency violation. If any condition fails, tasks must be sequentialized.
 
-### Skill Boundaries
+The Task Manager enforces this via the Parallel Execution Safety analysis. The orchestrator respects wave ordering from the Execution Strategy and must not:
+- Parallelize tasks that Task Manager marked as sequential
+- Allow write-write conflicts (must be resolved before execution begins)
+- Ignore read-write conflict flags
+
+## Skill Boundaries
 
 | Skill | Decides | Does NOT Decide |
 |-------|---------|-----------------|
@@ -173,18 +289,6 @@ Parallelism is allowed only when: (1) no shared writes, (2) no unsafe shared sta
 
 When two skills overlap (e.g., EKS networking touches both `aws/` and `eks/`), the more specific skill owns the decision.
 
-## Model Assignment Strategy
-
-The `/task-manager` assigns a recommended AI model per task in the `## Execution Strategy` section. The orchestrator communicates these recommendations when suggesting agent invocations.
-
-| Complexity | Model | When |
-|------------|-------|------|
-| `heavy` | `opus` | Architecture decisions, complex modules, cross-cutting concerns, security |
-| `medium` | `sonnet` | Standard implementation, moderate logic |
-| `light` | `sonnet` | Boilerplate, fmt/validate, simple config |
-
-**Escalation rule:** If a task fails twice during execution → recommend upgrading from `sonnet` to `opus` on retry. Model assignment is advisory — the user selects the model when invoking each agent.
-
 ## Critical Question Protocol
 
 Execution agents (`/iac-dev`, `/devops`, `/k8s-expert`) must stop and ask the user when encountering any of these proactive triggers during implementation:
@@ -199,10 +303,83 @@ Execution agents (`/iac-dev`, `/devops`, `/k8s-expert`) must stop and ask the us
 
 **Rule:** Never guess, infer, or substitute silently. A paused task is always better than a wrong implementation. This extends the existing reactive stops (file scope, missing dependency, 3 failures) into proactive territory.
 
+## Blocker Classification
+
+All issues discovered during automated phases (1, 3) are classified into one of three levels:
+
+| Level | Definition | Action |
+|-------|-----------|--------|
+| **Fixable** | Known issue with a clear fix; agent can resolve autonomously | Stays in review loop; agent fixes and re-submits |
+| **Risky** | Issue is resolvable but touches security, shared state, or architecture decisions | Warn and continue; include in Phase 4 review summary |
+| **Critical** | Cannot be resolved without user input | STOP — pause execution + all dependent tasks, escalate to user |
+
+**An issue is Critical if any of these are true:**
+- Missing required input that no agent can provide (e.g., credentials, environment choice)
+- Ambiguous requirement affecting architecture (two valid interpretations, plan doesn't clarify)
+- Conflicting constraints that cannot be simultaneously satisfied
+- Security or compliance violation not covered by the plan's Security Considerations
+- Same issue persists after max loop iterations (3 plan-review or 3 fix-review)
+
+Without this classification, automated loops either over-escalate (interrupting the user unnecessarily) or under-escalate (making silent bad decisions). Agents must classify every issue they encounter.
+
+## Safety Rules
+
+- Phase 1 review loop: max 3 iterations between architect and plan-reviewer
+- Phase 3 fix-review loop: max 3 iterations per task
+- Critical blockers always escalate to the user — never auto-resolve
+- Platform tests always run in the final wave, after all dev tasks
+- Test tasks never run in parallel with development tasks
+- Automation must not bypass CLI or infrastructure safety rules (`agent-cli-core.mdc` and domain files)
+- File ownership map from Execution Strategy is binding — agents write only to assigned files
+- Orchestrator must not parallelize tasks that Task Manager marked as sequential
+- Write-write conflicts must be resolved before execution begins
+- Read-write conflicts must be flagged to the user
+- Model switching happens at phase transitions or task spawning, not mid-task
+- No automated execution before Phase 2 user approval
+- No PR creation before Phase 4 user approval
+- **Task identity:** each task has a stable Task ID (T1, T2, ...) from the Execution Strategy. All retries, reviews, artifacts, and status updates reference this ID. This makes debugging trivial and ensures logs/artifacts align cleanly across loops.
+- **Task idempotency:** every task must be safe to re-run — re-running produces the same result, existing outputs are safely overwritten or reconciled, no duplicate side effects. Idempotency + dependency enforcement (wave freezing, BLOCKED status) = safe re-execution even after partial failure. Tasks must be idempotent with respect to: (1) **file system state** (mandatory — overwrite cleanly, no append-only outputs), and (2) **external system state** (read-only toward external systems, or mock/isolate; `terraform plan` is read-only, `terraform apply` is never run by agents). Non-idempotent tasks must be explicitly marked by the task-manager.
+- **Resume semantics:** after a critical blocker, two paths exist: **Execution Resume** (same strategy version — resume from frozen wave, completed tasks preserved, failed task retried) or **Plan Revision** (new strategy version — execution restarts from Phase 3, valid completed tasks preserved, invalidated tasks re-run).
+
+## Plan State Model
+
+The `.plan.md` header (defined in `standards-plan.mdc`) tracks the current workflow state. The fields relevant to orchestration are:
+
+| Field | Values | Updated By |
+|-------|--------|-----------|
+| **Phase** | `1-Planning` / `2-Approval` / `3-Execution` / `4-Review` / `5-PR` / `Complete` | Each agent at phase transitions |
+| **Status** | `Draft` / `In Review` / `Approved` / `In Progress` / `Blocked` / `Completed` | Each agent at status changes |
+| **Strategy Version** | Integer starting at `1`, or `—` before Execution Strategy exists | Task-manager (create), orchestrator (on revision) |
+| **Wave** | Current wave number, or `—` outside Phase 3 | Orchestrator during Phase 3 |
+| **Active Tasks** | Running task IDs, or `—` outside Phase 3 | Orchestrator during Phase 3 |
+| **Blocked Tasks** | Blocked task IDs, or `—` | Orchestrator on critical blocker |
+
+**Versioning rule:** The `Execution Strategy Version` starts at `1` when the task-manager first creates the strategy. It increments on every plan revision (user requests changes in Phase 2, or plan is modified after a critical blocker in Phase 3). The orchestrator executes **only the latest approved version**.
+
+**Resume vs Revision:**
+- **Execution Resume** (same version): orchestrator continues from the frozen wave. Completed tasks are not re-run. The version number does not change.
+- **Plan Revision** (new version): version increments. Orchestrator re-reads the strategy and evaluates task validity before restarting Phase 3.
+
+**Task validity after plan revision:** A completed task from the previous version is VALID only if: (1) its inputs are unchanged (the files in `Reads` and the tasks in `Depends On` have not changed in the new version), AND (2) its output contract remains the same (the `Output` and `Writes` columns are identical). If either condition fails, the task must be re-executed.
+
+Agents update these fields as they transition between phases. On session resume, read these fields to determine where to pick up.
+
+## Execution Contract
+
+**The Execution Strategy is a binding contract. The orchestrator must execute it without reinterpretation.**
+
+The orchestrator is **muscle, not brain**:
+- It follows the Execution Strategy strictly — task order, wave grouping, model assignment, skill mapping, file ownership
+- It does NOT reinterpret dependencies, reassign models/skills, override parallel safety, or change task sequencing
+- It does NOT make architecture, design, or scoping decisions — those belong to `/architect` and `/task-manager`
+- If the plan is ambiguous or unexecutable, the orchestrator STOPS and escalates — it does not improvise
+
 ## Rules
 
-- Never auto-switch agents — only suggest and let the user invoke
-- One agent persona active at a time
+- **Automated phases (1, 3, 5):** orchestrator auto-switches agents, models, and context — no user prompt required for each transition
+- **Manual phases (2, 4):** no automated execution; user has full control
+- **Manual invocation:** when user invokes an agent via slash command outside the 5-phase flow, standard routing applies (one agent, user controls transitions)
+- One agent persona active at a time (in automated phases, the orchestrator manages the sequence)
 - All agents inherit `agent-cli-core.mdc`, `agent-cli-terraform.mdc`, `agent-cli-kubernetes.mdc`, `agent-cli-aws.mdc`, `workflow-interactive-gate.mdc`, `workflow-verification-gate.mdc`, and `workflow-token-governance.mdc`
 - All agents follow `standards-context-engineering.mdc` for session management
 - Agent personas are defined in `agents/` — commands are thin wrappers
@@ -225,3 +402,14 @@ Quality agents persist their output as structured files so downstream agents and
 - On re-review (failure loop), the artifact is **overwritten** with fresh results
 - `/pr-agent` reads artifacts to populate the PR description; missing artifacts are noted as "not performed"
 - CI checks (when configured) can gate merge on artifact `status` field
+
+## Common Shortcuts
+
+These shortcuts bypass the full 5-phase flow. Use only when the scope is small and well-understood.
+
+- **Quick fix**: `/iac-dev` → `/reviewer` → `/pr-agent` (skip architect + task-manager for small changes)
+- **Analysis only**: `/k8s-expert` or `/reviewer` alone (no code changes)
+- **CI/CD work**: `/architect` → `/devops` → `/reviewer` → `/pr-agent`
+- **Simple plan**: `/architect` → approve → `/iac-dev`; task-manager phase may be skipped only when no parallelism, no shared files, and no infra/state risk exists
+
+When using shortcuts, model assignment reverts to advisory (user selects model). The orchestrator does not enter Execution Mode for shortcut flows.

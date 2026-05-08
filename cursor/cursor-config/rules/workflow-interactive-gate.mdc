@@ -1,11 +1,47 @@
 ---
-description: Interactive gate - enforces human approval at every stage across all agents
+description: Interactive gate - phase-aware approval gating for hybrid automated workflow (automated in phases 1/3/5, manual in phases 2/4)
 globs: 
 alwaysApply: true
 ---
 # Interactive Gate
 
-All agent personas operate under strict interactive control. No autonomous actions on infrastructure, clusters, or repositories.
+All agent personas operate under strict interactive control. No autonomous actions on infrastructure, clusters, or repositories. In the hybrid automated workflow, interactive gating is **phase-aware** — automated phases relax per-step approval while manual phases enforce full interactive control.
+
+## Phase-Aware Automation
+
+### Automated Phases (1, 3, 5) — Relaxed Interactive Gate
+
+**Phase 1 — Planning Auto-Chain:**
+- `.plan.md` writes are auto-approved within the auto-chain
+- Architect ↔ plan-reviewer loop runs without user gate
+- Task-manager appends Execution Strategy without user gate
+- The FULL plan is presented only at the end (Phase 2 boundary)
+
+**Phase 3 — Execution + Review:**
+- Code file writes proceed after auto-review by `/reviewer`
+- Orchestrator spawns agents and routes to reviewer without user gate per file
+- Critical blockers (security findings marked Critical, unresolvable plan conflicts) escalate to user
+- `.artifacts/` writes (review.md, test-summary.md) are auto-approved within Phase 3
+
+**Phase 5 — PR:**
+- Once user triggers Phase 5, PR creation proceeds automatically without per-step approval
+- Branch creation, commit, push, and PR creation run as a single automated sequence
+
+### Manual Phases (2, 4) — Full Interactive Gate
+
+**Phase 2 — Plan Approval:**
+- User reviews and approves the complete plan (design + execution strategy)
+- All existing Hard Stops apply in full
+
+**Phase 4 — User Review:**
+- User reviews all generated files, review artifacts, and test summaries
+- All existing Hard Stops apply in full
+
+### Always Enforced Regardless of Phase
+
+- All infrastructure CLI restrictions (NEVER run commands from `agent-cli-*.mdc`)
+- Environment boundaries (production, main/master branch protections)
+- The existing Hard Stops for Infrastructure and Environment Boundaries still apply even in automated phases
 
 ## Hard Stops (ALWAYS pause and ask before proceeding)
 
@@ -36,9 +72,9 @@ All agent personas operate under strict interactive control. No autonomous actio
 4. **Confirm** -- after completing the action, summarize what was done
 
 ### Between Agents
-- When suggesting a handoff to another agent (e.g., architect -> iac-dev), explain why
-- User must explicitly invoke the next agent via its slash command
-- Never auto-switch agent personas
+- In automated phases (1, 3, 5), agent switching is handled by the orchestrator/auto-chain — no user invocation required
+- In manual phases (2, 4), user must explicitly invoke the next agent via its slash command
+- When suggesting a handoff at a phase boundary, explain why and which phase is next
 
 ### Multi-Step Work
 - Break work into logical milestones (plan, implement module 1, implement module 2, review)

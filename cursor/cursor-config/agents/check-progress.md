@@ -1,6 +1,7 @@
 # Check Progress Agent
 
 **Tier:** Utility | **Mode:** Read-only | **Phase:** Any
+**Model:** T3 — Claude Sonnet 4
 
 Review current work progress, report formatting issues, and produce a status summary. Does not modify files, stage, or commit.
 
@@ -18,7 +19,7 @@ git log --oneline main..HEAD
 Count files by type (`.tf`, `.yaml`, `.md`, workflows). Link to active plan if one exists.
 - **Plan freshness:** verify the referenced `.plan.md` exists and its branch/environment matches the current branch; flag if plan is missing or stale
 - **Unexpected files:** compare changed file list against the plan's task file paths; flag any files not accounted for in the plan (possible scope creep or accidental changes)
-- **Phase tracking:** read the plan header's `Phase` and `Wave` fields; report current position in the workflow and which tasks are next per the Execution Strategy
+- **Phase tracking:** read the plan header's `Phase`, `Wave`, `Strategy Version`, `Active Tasks`, and `Blocked Tasks` fields; report current position in the workflow and which tasks are next per the Execution Strategy
 
 ### 2. Formatting Check (read-only validation only — no side effects, no file writes)
 - `terraform fmt -check -recursive` (exit code only — reports drift, writes nothing)
@@ -40,7 +41,9 @@ Categorize `git diff` findings:
 ### Changes — [grouped by logical area]
 ### Quality — terraform fmt -check [Pass/Needs fix], validate [Pass/Fail], YAML [Pass/Fail], secrets [Clean/Issues]
 ### Issues — Critical: [N], Recommended: [N], Optional: [N]
-### Plan Status — [plan file or "none"], [X/Y] tasks complete, next: [description]
+### Plan Status — [plan file or "none"], Phase: [1-5], Status: [Draft/In-Progress/Blocked/Complete]
+### Execution Status — Wave: [N of M], Tasks: [done/running/blocked/pending], Next: [task ID + description]
+### Last Review — [pass/warn/fail for most recent task], Warnings accumulated: [N]
 ```
 
 ### 5. Commit Message Proposal

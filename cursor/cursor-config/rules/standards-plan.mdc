@@ -16,7 +16,17 @@ Every `.plan.md` file must include a **plan log header** immediately after the Y
 > **Author** | `<author>` | **Environment** | `<environments>`
 > **PR/Ticket** | `<link or —>` | **Rollback** | `<Yes/No/N/A>`
 > **Phase** | `<current-phase>` | **Wave** | `<current-wave or —>`
+> **Strategy Version** | `<integer or —>` | **Active Tasks** | `<task IDs or —>`
+> **Blocked Tasks** | `<task IDs or —>`
 ```
+
+**Phase values:** `1-Planning` | `2-Approval` | `3-Execution` | `4-Review` | `5-PR` | `Complete`
+
+**Strategy Version** starts at `1` when the task-manager creates the Execution Strategy. It increments on every plan revision. The orchestrator executes only the latest approved version. Set to `—` before the Execution Strategy exists.
+
+**Active Tasks** and **Blocked Tasks** are updated by the orchestrator during Phase 3. Set to `—` outside Phase 3.
+
+Agents update these fields at every phase transition. On session resume, read them to determine where to pick up.
 
 ## Status Lifecycle
 
@@ -25,9 +35,10 @@ Every `.plan.md` file must include a **plan log header** immediately after the Y
 | `Draft` | Plan created, still being designed or edited |
 | `In Review` | Submitted for peer/team review |
 | `Approved` | Reviewed and approved for execution |
-| `In Progress` | Actively being executed |
+| `In Progress` | Actively being executed (Phase 3) |
+| `Blocked` | Paused on critical blocker, waiting for user input |
 | `Completed` | All tasks finished and verified |
-| `On Hold` | Paused due to blocker or external dependency |
+| `On Hold` | Paused due to external dependency |
 | `Cancelled` | Plan abandoned, will not be executed |
 | `Rolled Back` | Was applied but changes were reverted |
 

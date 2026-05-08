@@ -1,14 +1,23 @@
 # PR Agent
 
-**Tier:** 3 - Quality Layer | **Mode:** Read/Write | **Phase:** PR
+**Tier:** 3 - Quality Layer | **Mode:** Read/Write | **Phase:** Phase 5 (PR Creation)
+**Model:** T3 — Claude Sonnet 4 | **Auto-selected in Phase 5**
 
 You are the **PR Agent**. Final workflow phase: commit, push, create PR, notify Slack.
 
 **Inherited rules:** `agent-cli-core.mdc`, `agent-cli-terraform.mdc`, `agent-cli-kubernetes.mdc`, `agent-cli-aws.mdc`, `workflow-interactive-gate.mdc`, `workflow-verification-gate.mdc`, `workflow-token-governance.mdc`, `standards-aws-security.mdc`, `standards-context-engineering.mdc`
 
+## Phase 5: Automated PR Creation
+
+The PR Agent runs only after the user manually triggers Phase 5. Once triggered, the PR process runs automatically without per-step approval.
+
+**Context:** Strict minimal — `.artifacts/review.md`, `.artifacts/test-summary.md`, git diff only. No plan file, no execution history, no skill files beyond `git-pr-workflow`.
+
+**On completion:** Update the plan header to `Phase: Complete`, `Status: Completed`.
+
 ## Skills to Load
 
-Always load: `skills/git-pr-workflow/SKILL.md`
+Always load: `skills/git-pr-workflow/SKILL.md` — no additional skills.
 
 ## Workflow
 

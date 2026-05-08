@@ -1,16 +1,82 @@
 ---
-description: Token governance - hard resource constraints enforced across all agents (v2.2)
+description: AI/LLM model orchestration and token governance - two-level cost optimization for hybrid automated workflow enforced across all agents (v4.0)
 globs: 
 alwaysApply: true
 ---
-# Token Governance
+# AI/LLM Model Orchestration & Token Governance
 
-Token governance is **resource control** — hard constraints, not suggestions. Overrides context expansion decisions.
+Two-level cost optimization for AI usage — **Level 1** controls cost at planning time (model selection + skill pre-mapping per task), **Level 2** controls cost at execution time (token budget per session). Both levels are **hard constraints**, not suggestions.
 
-- `standards-context-engineering.mdc` defines WHAT to include
-- `workflow-token-governance.mdc` defines HOW MUCH (this rule)
+- `workflow-orchestrator.mdc` defines model assignment rules (Level 1a source of truth)
+- `agents/task-manager.md` defines skill pre-mapping per task (Level 1b source of truth)
+- `workflow-token-governance.mdc` defines token budget enforcement (Level 2 — this rule)
+- `standards-context-engineering.mdc` defines WHAT to include in context
 
-## Core Invariants
+## Level 1 — Planning-Time Cost Optimization
+
+Level 1 decisions are made once by `/task-manager` during plan decomposition and apply to every subsequent execution session. Two mechanisms:
+
+### Level 1a — Model Selection
+
+The `/task-manager` assigns a specific AI model version per task based on complexity. Three tiers, each pinned to a model version:
+
+| Tier | Complexity | Model | Version | Use When | Typical Agents |
+|------|------------|-------|---------|----------|----------------|
+| **T1** | `heavy` | Claude Opus (high) | **4.6** | Architecture decisions, complex modules, cross-cutting concerns, security review | `/architect`, `/reviewer`, complex `/iac-dev` |
+| **T2** | `medium` | Claude Sonnet | **4.5** | Standard implementation, moderate logic, multi-file changes | `/iac-dev`, `/devops`, `/k8s-expert` |
+| **T2-alt** | `medium` | GPT Codex | **5.3** | Alternative for standard implementation (user preference) | `/iac-dev`, `/devops` |
+| **T3** | `light` | Claude Sonnet | **4** | Boilerplate, fmt/validate, simple config, PR creation, progress checks | `/pr-agent`, `/platform-tester`, `/check-progress` |
+
+**Version pinning:** These versions are current as of May 2026. Update this table when upgrading to newer model generations.
+
+**Escalation path:** T3 → T2 → T1. If a task fails twice at its assigned tier → recommend upgrading one tier on retry (e.g., Sonnet 4 → Sonnet 4.5 → Opus 4.6 high). Auto-escalation applies in Phase 3 (automated execution + review); user-confirmed escalation in manual phases (2, 4).
+
+**Model selection mode:**
+- **Automated phases (1, 3, 5):** Model is auto-selected by the orchestrator/auto-chain based on the tier table above. NOT advisory — the orchestrator enforces the assigned model.
+- **Manual phases (2, 4) or direct agent invocation:** Model remains user-selected. The tier table is advisory — the user picks the model when invoking each agent.
+
+Full classification rules, upgrade triggers, and escalation logic: see `workflow-orchestrator.mdc` § Model Assignment Strategy.
+
+### Level 1b — Skill Pre-Mapping
+
+The `/task-manager` assigns specific skills per task in the `Skills` column of the task breakdown table. This determines which skill files an executing agent loads — and critically, which it does **not** load.
+
+**Why this reduces tokens:** Without pre-mapping, an agent must decide at runtime which skills are relevant — often loading speculatively or broadly. With pre-mapping, the decision is made once at planning time (zero execution tokens), and each execution session starts with a precise, minimal skill set.
+
+**Rules:**
+- The `Skills` column lists shorthand names (e.g., `terraform, aws`) — the executing agent loads only these
+- Agents MUST NOT load skills outside their task's pre-mapped set unless they encounter an unplanned domain boundary (which triggers the Critical Question Protocol — stop and ask)
+- Skill Loading Protocol (Level 2) further narrows each loaded skill to CORE_DECISIONS or specific sections
+
+## Context Optimization Protocol
+
+Context must be reset at every phase boundary. No conversation history carries across phases — only the minimal artifacts required by the receiving phase.
+
+### Required Resets
+
+| Transition | Context Passed | Everything Else |
+|------------|---------------|-----------------|
+| Architect → Task Manager | `.plan.md` only | Discarded |
+| User approval → Execution | Approved `.plan.md` only | Discarded |
+| Per task execution | Fresh session: assigned files, pre-mapped skills, assigned model only | Discarded |
+| Task → Review (within Phase 3) | Changed files + relevant plan section only | Discarded |
+| Review → Test creation | Platform Tests section from plan + created/changed files only | Discarded |
+| Test/Review → PR creation | Review artifacts (`.artifacts/review.md`), test summary (`.artifacts/test-summary.md`), `git diff` only | Discarded |
+
+### Review Loop Context
+
+Review failure loops (e.g., `/reviewer` rejects → `/iac-dev` fixes → re-review) pass only:
+- Findings from the rejecting agent
+- Affected file paths and their current content
+- Relevant task context from the plan
+
+**Never** carry full conversation history across review loops.
+
+## Level 2 — Execution-Time Cost Optimization (Token Governance)
+
+Level 2 applies within each agent session, constraining how much context the model consumes regardless of which model was selected (Level 1a) or which skills were pre-mapped (Level 1b).
+
+### Core Invariants
 
 1. **No growth under pressure** — if budget is stressed, context size MUST NOT increase
 2. **Monotonicity** — once threshold exceeded, next step MUST NOT increase token count (formal upper bound)
@@ -18,7 +84,7 @@ Token governance is **resource control** — hard constraints, not suggestions. 
 4. **Shrink before expand** — adding new context requires shrinking existing context first
 5. **Prevention over compression** — targeted reads, line ranges, diffs > bulk loading then compressing
 
-## Threshold Enforcement
+### Threshold Enforcement
 
 | Budget Used | Enforcement |
 |-------------|-------------|
@@ -28,7 +94,7 @@ Token governance is **resource control** — hard constraints, not suggestions. 
 | **85%** | MUST NOT read new files, load skills, or expand context; minimal output only |
 | **90%** | MANDATORY session reset with summarized context transfer |
 
-## Phase-Aware Budget Allocation
+### Phase-Aware Budget Allocation
 
 | Phase | Context Budget | Output Budget | Rationale |
 |-------|---------------|---------------|-----------|
@@ -37,7 +103,7 @@ Token governance is **resource control** — hard constraints, not suggestions. 
 | Review | 30% | 70% | Focused validation, detailed findings |
 | Test/PR | 20% | 80% | Reference-only, results-heavy |
 
-## Tool Output Discipline
+### Tool Output Discipline
 
 - `terraform plan`: carry change summary (adds/changes/destroys + resource names), not full plan
 - `git diff`: carry file names + key changes, not entire diffs
@@ -45,13 +111,50 @@ Token governance is **resource control** — hard constraints, not suggestions. 
 - Error messages: **verbatim** (never summarize)
 - Success confirmations: one line ("terraform validate: Success")
 
-## Skill Loading Protocol
+### Skill Loading Protocol (enforces Level 1b at execution time)
+
+Level 1b (skill pre-mapping) determines **which** skills to load; this protocol determines **how much** of each skill to load.
 
 Skills use `<!-- CORE_DECISIONS -->` and `<!-- REFERENCE -->` markers:
 
 1. **Design decisions** → read header + Decision Entry Points + Cross-Cutting Rules (stop at `<!-- REFERENCE -->`)
 2. **Implementation** → read only the specific `## SECTION` listed in Decision Entry Points table
 3. **Never** read an entire 500+ line skill in one pass
+4. **Never** load skills outside the task's pre-mapped `Skills` column without stopping to ask (Critical Question Protocol)
+
+## How the Two Levels Interact
+
+```
+Phase 1 — Planning (automated)
+     │  /architect designs → plan-reviewer validates → /task-manager decomposes
+     │  Level 1a: assigns model per task (T1/T2/T3)
+     │  Level 1b: pre-maps skills per task
+     │
+     ▼  ── CONTEXT RESET ── pass only: .plan.md ──
+Phase 2 — User Approval (manual)
+     │  User reviews complete plan + execution strategy
+     │
+     ▼  ── CONTEXT RESET ── pass only: approved .plan.md ──
+Phase 3 — Execution + Review (automated)
+     │  Per task: fresh session (assigned files + skills + model)
+     │  Level 2: token governance constrains context within session
+     │     ├── Threshold enforcement (50% → 70% → 85% → 90%)
+     │     ├── Phase-aware budget allocation
+     │     └── Skill loading protocol (CORE_DECISIONS / specific sections)
+     │  Auto-review by /reviewer after each task
+     │     └── Review loops: findings + affected files only
+     │
+     ▼  ── CONTEXT RESET ── pass only: changed files + artifacts ──
+Phase 4 — User Review (manual)
+     │  User reviews all generated files and artifacts
+     │
+     ▼  ── CONTEXT RESET ── pass only: review artifacts + test summary + git diff ──
+Phase 5 — PR (automated)
+     │  /pr-agent commits, pushes, creates PR, notifies Slack
+     │
+     ▼
+Result: right model × right skills × minimal tokens × phase-isolated context = optimized AI spend
+```
 
 ## Anti-Patterns (NEVER)
 
@@ -60,3 +163,7 @@ Skills use `<!-- CORE_DECISIONS -->` and `<!-- REFERENCE -->` markers:
 - Repeat plan/requirement text already in `.plan.md` on disk — reference by path
 - Carry completed task context forward — summarize to 2-3 lines
 - Compress file paths, error messages, resource names, or command syntax — these stay verbatim
+- Use T1 (Opus 4.6) for `light`/`medium` tasks without escalation justification (Level 1a violation)
+- Load skills outside the task's pre-mapped `Skills` column without triggering Critical Question Protocol (Level 1b violation)
+- Ignore token thresholds because the task uses a cheaper model (Level 2 always applies)
+- Carry context across phase boundaries without reset (context optimization violation)
