@@ -261,3 +261,14 @@ resource "kubernetes_manifest" "network_policy" {
 | Datadog metrics missing | Egress to agent blocked | Add global allow for Datadog ports |
 | Cross-namespace blocked | Missing `namespaceSelector` | Add explicit namespace selector in source/destination |
 | `calicoctl get networkpolicy` empty | Wrong namespace or API mismatch | Use `kubectl get networkpolicies.crd.projectcalico.org -n <ns>` |
+
+---
+
+## References
+
+- [Calico Documentation](https://docs.tigera.io/calico/latest/about)
+- [Calico Network Policy](https://docs.tigera.io/calico/latest/network-policy)
+- [Calico on EKS](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks)
+- [Tigera Operator](https://docs.tigera.io/calico/latest/getting-started/kubernetes/operator)
+- [Kubernetes Network Policy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [Calico GlobalNetworkPolicy](https://docs.tigera.io/calico/latest/reference/resources/globalnetworkpolicy)

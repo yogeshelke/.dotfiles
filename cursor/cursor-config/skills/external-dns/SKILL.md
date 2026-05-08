@@ -270,3 +270,13 @@ metadata:
 | Orphaned records after delete | `policy: upsert-only` doesn't clean up | Switch to `policy: sync` or manually delete |
 | Conflict with another controller | Duplicate TXT owner records | Ensure unique `txt-owner-id` per cluster/controller |
 | Records in wrong zone | Zone type filter | Add `--aws-zone-type` flag to restrict |
+
+---
+
+## References
+
+- [ExternalDNS GitHub Repository](https://github.com/kubernetes-sigs/external-dns)
+- [ExternalDNS — AWS Route53 Tutorial](https://github.com/kubernetes-sigs/external-dns/blob/master/docs/tutorials/aws.md)
+- [ExternalDNS — Gateway API Support](https://github.com/kubernetes-sigs/external-dns/blob/master/docs/tutorials/gateway-api.md)
+- [ExternalDNS Helm Chart](https://artifacthub.io/packages/helm/external-dns/external-dns)
+- [AWS Route53 Documentation](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/Welcome.html)

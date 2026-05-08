@@ -304,3 +304,15 @@ This enables per-team log access without sharing the full cluster log stream.
 | `aws.rds.write_latency` | > 10ms P99 | Warning |
 | `aws.rds.replica_lag` | > 1000ms | Critical |
 | `aws.rds.deadlocks` | > 0 sustained | Warning |
+
+---
+
+## References
+
+- [Amazon Aurora Documentation](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_AuroraOverview.html)
+- [Aurora PostgreSQL Best Practices](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraPostgreSQL.BestPractices.html)
+- [Aurora Serverless v2](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.html)
+- [Terraform aws_rds_cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster)
+- [cyrilgdn/postgresql Provider](https://registry.terraform.io/providers/cyrilgdn/postgresql/latest/docs)
+- [RDS IAM Authentication](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.IAMDBAuth.html)
+- [AWS Secrets Manager with RDS](https://docs.aws.amazon.com/secretsmanager/latest/userguide/rotating-secrets_rds.html)

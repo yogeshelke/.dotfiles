@@ -595,3 +595,14 @@ Velero is **not** a solution for:
 | CSI snapshot config | VolumeSnapshotClass name, CSI driver, deletion policy, Velero plugin installed |
 | IAM configuration | IAM role ARN, trust policy (Pod Identity or IRSA), S3 + EC2 + KMS permissions |
 | Restore operation | Restore name, source backup, target namespaces, resource count, PVC bindings, completion status |
+
+---
+
+## References
+
+- [Velero Documentation](https://velero.io/docs/)
+- [Velero AWS Plugin](https://github.com/vmware-tanzu/velero-plugin-for-aws)
+- [Velero CSI Snapshots](https://velero.io/docs/main/csi/)
+- [Velero Helm Chart](https://artifacthub.io/packages/helm/vmware-tanzu/velero)
+- [Velero Backup Schedules](https://velero.io/docs/main/backup-reference/)
+- [Velero Restore Reference](https://velero.io/docs/main/restore-reference/)

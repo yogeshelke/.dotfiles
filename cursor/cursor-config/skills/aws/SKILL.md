@@ -249,3 +249,14 @@ See `references/detailed-service-guides.md` for full MLOps pipeline patterns.
 
 - `references/detailed-service-guides.md` — full service-by-service best practices
 - `references/documentation-links.md` — official AWS documentation URLs
+
+## References
+
+- [AWS Well-Architected Framework](https://docs.aws.amazon.com/wellarchitected/latest/framework/welcome.html)
+- [AWS Architecture Center](https://aws.amazon.com/architecture/)
+- [AWS Service Documentation](https://docs.aws.amazon.com/)
+- [AWS Pricing Calculator](https://calculator.aws/)
+- [AWS IAM Best Practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html)
+- [AWS Security Best Practices](https://docs.aws.amazon.com/security/)
+- [AWS CLI Command Reference](https://docs.aws.amazon.com/cli/latest/reference/)
+- [Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)

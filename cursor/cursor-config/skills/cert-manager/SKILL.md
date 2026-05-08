@@ -554,3 +554,15 @@ IF cert expired (renewal never succeeded):
 - **Secret distribution** — cert-manager creates secrets in one namespace; cross-namespace distribution requires additional tooling (Reflector, ExternalSecrets)
 - **mTLS mesh** — service-to-service mTLS at scale is a service mesh concern (Istio, Linkerd); cert-manager handles individual certificates, not mesh-wide identity
 - **Certificate monitoring** — cert-manager exposes metrics; alerting belongs in Datadog skill, not here
+
+---
+
+## References
+
+- [cert-manager Documentation](https://cert-manager.io/docs/)
+- [cert-manager Installation](https://cert-manager.io/docs/installation/)
+- [ACME Issuer (Let's Encrypt)](https://cert-manager.io/docs/configuration/acme/)
+- [DNS01 Challenge Providers](https://cert-manager.io/docs/configuration/acme/dns01/)
+- [cert-manager + AWS Route53](https://cert-manager.io/docs/configuration/acme/dns01/route53/)
+- [cert-manager Helm Chart](https://artifacthub.io/packages/helm/cert-manager/cert-manager)
+- [cert-manager + Gateway API](https://cert-manager.io/docs/usage/gateway/)

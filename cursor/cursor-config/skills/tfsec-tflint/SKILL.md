@@ -226,3 +226,16 @@ settings:
 | tfsec finds in vendored modules | Scanning `modules/.terraform/` | Add `--exclude-path .terraform` |
 | terraform-docs not updating README | Missing inject markers | Add `<!-- BEGIN_TF_DOCS -->` markers to README |
 | pre-commit hooks slow | Running on all files | Use `files` regex or run on changed files only in CI |
+
+---
+
+## References
+
+- [TFLint Documentation](https://github.com/terraform-linters/tflint)
+- [TFLint AWS Ruleset](https://github.com/terraform-linters/tflint-ruleset-aws)
+- [tfsec (now Trivy)](https://aquasecurity.github.io/tfsec/)
+- [Trivy — Terraform Scanning](https://aquasecurity.github.io/trivy/latest/docs/scanner/misconfiguration/terraform/)
+- [pre-commit-terraform](https://github.com/antonbabenko/pre-commit-terraform)
+- [terraform-docs](https://terraform-docs.io/)
+- [Checkov](https://www.checkov.io/1.Welcome/What%20is%20Checkov.html)
+- [SARIF Format for GitHub Code Scanning](https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/sarif-support-for-code-scanning)

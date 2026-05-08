@@ -274,11 +274,14 @@ All workflows must:
 
 ---
 
-## Reference Documentation
+## References
 
-- **GitHub Actions**: https://docs.github.com/en/actions
-- **Workflow Syntax**: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions
-- **OIDC for AWS**: https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services
-- **Security Hardening**: https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions
-- **Environments**: https://docs.github.com/en/actions/deployment/targeting-different-environments
-- **gh CLI**: https://cli.github.com/manual/
+- [GitHub Actions Documentation](https://docs.github.com/en/actions)
+- [GitHub Actions Marketplace](https://github.com/marketplace?type=actions)
+- [GitHub Actions — Starter Workflows](https://github.com/actions/starter-workflows)
+- [GitHub Actions Security Hardening](https://docs.github.com/en/actions/security-for-github-actions/security-hardening-for-github-actions)
+- [GitHub OIDC for Cloud Providers](https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/about-security-hardening-with-openid-connect)
+- [Reusable Workflows](https://docs.github.com/en/actions/sharing-automations/reusing-workflows)
+- [GitHub Environments](https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-deployments/managing-environments-for-deployment)
+- [GitHub Actions — Workflow Syntax](https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions)
+- [gh CLI Manual](https://cli.github.com/manual/)

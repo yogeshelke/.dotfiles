@@ -290,3 +290,14 @@ provisioning/terraform/aws/
 - `references/cli-commands-reference.md` — Full CLI command reference
 - `references/modules-and-providers.md` — Module design, provider config, registry
 - `references/documentation-links.md` — Official Terraform documentation URLs
+
+## References
+
+- [Terraform Language Documentation](https://developer.hashicorp.com/terraform/language)
+- [Terraform AWS Provider Registry](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
+- [Terraform Module Registry](https://registry.terraform.io/browse/modules)
+- [terraform-aws-modules (community)](https://github.com/terraform-aws-modules)
+- [Terraform Best Practices](https://developer.hashicorp.com/terraform/cloud-docs/recommended-practices)
+- [Terraform State Management](https://developer.hashicorp.com/terraform/language/state)
+- [Terraform Import](https://developer.hashicorp.com/terraform/cli/import)
+- [Terraform Moved Blocks](https://developer.hashicorp.com/terraform/language/modules/develop/refactoring)

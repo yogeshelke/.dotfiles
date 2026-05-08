@@ -160,3 +160,11 @@ Channel: `#ae_devops`
 | Slack format | 3-line message (repo, changes, PR URL) |
 
 For different teams/channels, modify `--reviewer` and channel accordingly.
+
+## References
+
+- [GitHub CLI (gh) Manual](https://cli.github.com/manual/)
+- [gh pr create](https://cli.github.com/manual/gh_pr_create)
+- [Conventional Commits](https://www.conventionalcommits.org/)
+- [GitHub Pull Request Documentation](https://docs.github.com/en/pull-requests)
+- [GitHub Branch Protection Rules](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-a-branch-protection-rule)

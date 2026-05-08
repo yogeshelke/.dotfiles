@@ -233,3 +233,13 @@ resource "wiz_connector_aws" "this" {
 | Missing cluster in Wiz dashboard | Connector not registered | Check `wiz_kubernetes_cluster` resource; verify API connectivity |
 | False positive admission blocks | Legitimate workload pattern | Add policy exception in Wiz console or switch rule to Audit |
 | High webhook latency | Wiz API slow or webhook overloaded | Check resource limits; consider `timeoutSeconds` increase |
+
+---
+
+## References
+
+- [Wiz Documentation](https://docs.wiz.io/)
+- [Wiz Kubernetes Admission Controller](https://docs.wiz.io/wiz-docs/docs/kubernetes-admission-controller)
+- [Wiz Terraform Provider](https://registry.terraform.io/providers/AxtonGrams/wiz/latest/docs)
+- [Wiz Helm Charts](https://charts.wiz.io/)
+- [Kubernetes Admission Webhooks](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)

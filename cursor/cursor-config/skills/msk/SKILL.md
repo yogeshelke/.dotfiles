@@ -633,3 +633,14 @@ IF intermittent timeouts:
 - **Only applicable for mTLS/SCRAM clusters** — do not use with IAM-authenticated clusters
 - Per-context prefix-based access pattern
 - Depends on cluster being ready (use `depends_on` or data source)
+
+---
+
+## References
+
+- [Amazon MSK Documentation](https://docs.aws.amazon.com/msk/latest/developerguide/what-is-msk.html)
+- [MSK Serverless](https://docs.aws.amazon.com/msk/latest/developerguide/serverless.html)
+- [Kafka ACL Documentation](https://kafka.apache.org/documentation/#security_authz)
+- [Confluent Schema Registry](https://docs.confluent.io/platform/current/schema-registry/index.html)
+- [Terraform AWS MSK Module](https://registry.terraform.io/modules/terraform-aws-modules/msk-kafka-cluster/aws/latest)
+- [mongey/kafka Terraform Provider](https://registry.terraform.io/providers/Mongey/kafka/latest/docs)
