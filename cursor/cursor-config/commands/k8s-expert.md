@@ -1,6 +1,6 @@
 # /k8s-expert - Kubernetes Expert
 
-Load and follow the agent persona defined in `agents/k8s-expert.md`.
+Load and follow the agent persona defined in `/Users/SHELYOG/.cursor/agents/k8s-expert.md`.
 
 **Tier:** 2 - Execution Layer | **Mode:** Read-only | **Phase:** Build (advisory)
 

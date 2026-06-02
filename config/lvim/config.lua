@@ -20,7 +20,7 @@ lvim.colorscheme = "onenord"
 vim.opt.shiftwidth = 2
 vim.opt.tabstop = 2
 vim.opt.relativenumber = false
-vim.opt.expandtab
+vim.opt.expandtab = true
 
 -- general
 -- lvim.log.level = "info"
@@ -162,12 +162,12 @@ map("v", "<C-c>", "\"+ygv")
 
 --> undo redo in lua just like vs code
 -- undo for insert mode
-map("n", "<C-z>", "u", noremap_silent)
-map("i", "<C-z>", "<C-o>u", noremap_silent)
-map("v", "<C-z>", "<esc>u", noremap_silent)
+map("n", "<C-z>", "u", opts)
+map("i", "<C-z>", "<C-o>u", opts)
+map("v", "<C-z>", "<esc>u", opts)
 -- redo for normal mode is built-in
-map("i", "<C-r>", "<C-o><C-r>", noremap_silent)
-map("v", "<C-r>", "<esc><C-r>", noremap_silent)
+map("i", "<C-r>", "<C-o><C-r>", opts)
+map("v", "<C-r>", "<esc><C-r>", opts)
 
 --> navigation like vscode
 -- go back

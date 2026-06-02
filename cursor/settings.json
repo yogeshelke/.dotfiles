@@ -47,5 +47,6 @@
         "git merge": true
     },
     "workbench.colorTheme": "Nord",
-    "terminal.integrated.lineHeight": 1.1
+    "terminal.integrated.lineHeight": 1.1,
+    "window.autoDetectColorScheme": false
 }

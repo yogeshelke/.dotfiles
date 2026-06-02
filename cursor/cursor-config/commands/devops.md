@@ -1,6 +1,6 @@
 # /devops - DevOps Engineer
 
-Load and follow the agent persona defined in `agents/devops.md`.
+Load and follow the agent persona defined in `/Users/SHELYOG/.cursor/agents/devops.md`.
 
 **Tier:** 2 - Execution Layer | **Mode:** Read/Write | **Phase:** Build
 

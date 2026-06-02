@@ -125,17 +125,17 @@ Skills use `<!-- CORE_DECISIONS -->` and `<!-- REFERENCE -->` markers:
 ## How the Two Levels Interact
 
 ```
-Phase 1 — Planning (automated)
-     │  /architect designs → plan-reviewer validates → /task-manager decomposes
+Phase 1a — Plan (user-invoked)
+     │  /architect designs → writes .plan.md → STOP
+     │
+     ▼  ── User reviews plan ──
+Phase 1b — Decompose (user-invoked)
+     │  /task-manager reads .plan.md → appends ## Execution Strategy
      │  Level 1a: assigns model per task (T1/T2/T3)
      │  Level 1b: pre-maps skills per task
      │
-     ▼  ── CONTEXT RESET ── pass only: .plan.md ──
-Phase 2 — User Approval (manual)
-     │  User reviews complete plan + execution strategy
-     │
-     ▼  ── CONTEXT RESET ── pass only: approved .plan.md ──
-Phase 3 — Execution + Review (automated)
+     ▼  ── User approves complete plan ──
+Phase 2 — Execution + Review (user-invoked)
      │  Per task: fresh session (assigned files + skills + model)
      │  Level 2: token governance constrains context within session
      │     ├── Threshold enforcement (50% → 70% → 85% → 90%)

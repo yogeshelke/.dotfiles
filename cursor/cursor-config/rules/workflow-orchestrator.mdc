@@ -7,31 +7,32 @@ alwaysApply: true
 
 This project uses a hybrid automated workflow for cloud platform engineering. The orchestrator operates in two modes: **Routing Mode** (directing user intent to the right phase/agent) and **Execution Mode** (automating approved plans through build, review, and test cycles). Agents are defined in `agents/` and invoked via slash commands in `commands/`.
 
-## 5-Phase Workflow
+## Workflow
 
 ```
-Phase 1 — Automated Planning:     Architect ↔ Plan-Reviewer → Task Manager → STOP
-Phase 2 — Manual User Approval:   User reviews plan + execution strategy → approve or reject
-Phase 3 — Automated Execution:    Orchestrator spawns tasks → auto-review → test creation → STOP
-Phase 4 — Manual Final Review:    User reviews all output → approve or request fixes
-Phase 5 — Automated PR Creation:  User triggers → PR Agent runs autonomously
+Phase 1a — Plan:           /architect → produces .plan.md → STOP (user reviews)
+Phase 1b — Decompose:      /task-manager → appends ## Execution Strategy → STOP (user approves)
+Phase 2  — Build:          /iac-dev (or /devops, /k8s-expert) implements per Execution Strategy
+Phase 2b — Review:         /reviewer → writes .artifacts/review.md → loop with /iac-dev if fail (max 3)
+Phase 2c — Test (opt.):    /platform-tester → writes .artifacts/test-summary.md
+Phase 3  — User review:    User reviews all output → approve or request fixes
+Phase 4  — PR:             /pr-agent commits, pushes, creates PR, notifies Slack
 ```
 
-Automated phases (1, 3, 5): orchestrator controls agent switching, model selection, and context scoping.
-Manual phases (2, 4): user has full control; no automated execution.
+**No auto-chain.** Each agent is invoked explicitly by the user. The user is the human reviewer between Phase 1a and 1b, and again before Phase 2. This replaces the previous fragile "auto-chain" model that depended on agents reading other agents' files mid-session.
 
 ## Available Agents
 
 | Command | Agent | Tier | Phase | Mode |
 |---------|-------|------|-------|------|
-| `/architect` | AWS Cloud Architect | T1 | Phase 1 | Read-only |
+| `/architect` | AWS Cloud Architect | T1 | Phase 1a | Read-only |
 | `/task-manager` | Task Manager | T2 | Phase 1b | Read/Write (`.plan.md` only) |
-| `/iac-dev` | IaC Developer | T1/T2 | Phase 3 | Read/Write |
-| `/k8s-expert` | Kubernetes Expert | T1/T2 | Phase 3 | Read-only |
-| `/devops` | DevOps Engineer | T1/T2 | Phase 3 | Read/Write |
-| `/reviewer` | Security Reviewer | T1 | Phase 3b | Read-only |
-| `/platform-tester` | Platform Tester | T2 | Phase 3c | Read/Write |
-| `/pr-agent` | PR Agent | T3 | Phase 5 | Read/Write |
+| `/iac-dev` | IaC Developer | T1/T2 | Phase 2 | Read/Write |
+| `/k8s-expert` | Kubernetes Expert | T1/T2 | Phase 2 | Read-only |
+| `/devops` | DevOps Engineer | T1/T2 | Phase 2 | Read/Write |
+| `/reviewer` | Security Reviewer | T1 | Phase 2b | Read-only |
+| `/platform-tester` | Platform Tester | T2 | Phase 2c | Read/Write |
+| `/pr-agent` | PR Agent | T3 | Phase 4 | Read/Write |
 | `/check-progress` | Progress Check | Utility | Any | Read-only |
 
 ## Orchestrator Modes
@@ -85,42 +86,31 @@ You may skip routing and act directly ONLY when:
 - The user explicitly says "just do it" or "skip the workflow"
 - The task is a simple question that needs no agent (e.g., "what region is this cluster in?")
 
-## Phase 1: Automated Planning
+## Phase 1: Planning (two user-invoked agents)
 
-Planning runs as an automated chain. The orchestrator controls agent switching and model selection throughout.
+### 1a. Architect (`/architect`)
 
-### 1a. Architect
+- User invokes `/architect` with their request
+- Architect creates the plan as a `.plan.md` file using the format from `standards-plan.mdc`
+- Architect produces ONLY the design plan (Context, Architecture, Decisions, Implementation Tasks, Security, Cost, Resilience, Testing, Success Criteria, Non-Goals, Risks & Rollback, Open Questions)
+- Architect does NOT review its own plan and does NOT decompose into tasks
+- Architect ends with: *"Plan complete. Run `/task-manager` next."*
+- → **STOP. User reviews the plan.**
 
-- Orchestrator routes new work to `/architect` with T1 model (Claude Opus 4.6 high)
-- Architect creates the plan including a mandatory **Platform Tests** section
-- If platform tests are not required, architect must explicitly state why
+### 1b. Task Manager (`/task-manager`)
 
-### 1b. Architect ↔ Plan-Reviewer Loop
-
-```
-Architect → Plan-Reviewer → Architect (max 3 iterations)
-```
-
-- Plan-Reviewer evaluates the plan and returns: pass, warn, or critical
-- On pass or warn-only: plan proceeds to Task Manager
-- On critical findings: architect revises the flagged sections and resubmits
-- After 3 iterations with unresolved critical blockers → escalate to user
-- The orchestrator tracks iteration count and enforces the cap
-
-### 1c. Task Manager
-
-- Orchestrator auto-switches to Task Manager with T2 model (Claude Sonnet 4.5)
-- Context reset: Task Manager receives only the finalized `.plan.md`
-- Task Manager produces the `## Execution Strategy` section containing:
+- After reviewing the plan, the user invokes `/task-manager`
+- Task Manager reads the existing `.plan.md` and appends `## Execution Strategy` containing:
   - Task breakdown table (ID, Name, Type, Agent, Model, Skills, Reads, Writes, Code Depends On, Execution Depends On, Complexity, Output, Validation)
   - Dependency graph (mermaid)
   - Execution waves
   - File ownership map
   - Parallel execution safety score
   - Model and skill assignment per task
-  - Read/write file scope per task
-  - Test sequencing plan (test tasks always in final wave)
-- Task Manager completes → **STOP for Phase 2**
+  - Test sequencing (test tasks always in final wave)
+- Task Manager updates plan header: `Strategy Version: 1`, `Phase: 2-Approval`
+- Task Manager ends with: *"Execution strategy complete. When approved, run `/iac-dev` to begin implementation."*
+- → **STOP. User approves the complete plan.**
 
 ## Phase 3: Automated Execution & Review
 
@@ -182,7 +172,7 @@ AI model selection is **automatic** in orchestrator-driven phases (1, 3, 5) and 
 
 | Tier | Complexity | Model | Version | Auto-Selected In | Typical Agents |
 |------|------------|-------|---------|------------------|----------------|
-| **T1** | `heavy` | Claude Opus (high) | **4.6** | Phase 1 (architect, plan-reviewer), Phase 3b (reviewer) | `/architect`, `/reviewer`, complex `/iac-dev` |
+| **T1** | `heavy` | Claude Opus (high) | **4.6** | Phase 1a (architect), Phase 2b (reviewer) | `/architect`, `/reviewer`, complex `/iac-dev` |
 | **T2** | `medium` | Claude Sonnet | **4.5** | Phase 1c (task-manager), Phase 3a (execution), Phase 3c (tester) | `/iac-dev`, `/devops`, `/k8s-expert`, `/platform-tester`, `/task-manager` |
 | **T2-alt** | `medium` | GPT Codex | **5.3** | Phase 3a (user preference) | `/iac-dev`, `/devops` |
 | **T3** | `light` | Claude Sonnet | **4** | Phase 5 (PR) | `/pr-agent`, `/check-progress` |
@@ -318,14 +308,13 @@ All issues discovered during automated phases (1, 3) are classified into one of 
 - Ambiguous requirement affecting architecture (two valid interpretations, plan doesn't clarify)
 - Conflicting constraints that cannot be simultaneously satisfied
 - Security or compliance violation not covered by the plan's Security Considerations
-- Same issue persists after max loop iterations (3 plan-review or 3 fix-review)
+- Same issue persists after max loop iterations (3 fix-review)
 
 Without this classification, automated loops either over-escalate (interrupting the user unnecessarily) or under-escalate (making silent bad decisions). Agents must classify every issue they encounter.
 
 ## Safety Rules
 
-- Phase 1 review loop: max 3 iterations between architect and plan-reviewer
-- Phase 3 fix-review loop: max 3 iterations per task
+- Phase 2b fix-review loop: max 3 iterations between `/iac-dev` and `/reviewer` per task
 - Critical blockers always escalate to the user — never auto-resolve
 - Platform tests always run in the final wave, after all dev tasks
 - Test tasks never run in parallel with development tasks

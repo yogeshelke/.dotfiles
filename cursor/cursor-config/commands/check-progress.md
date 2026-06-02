@@ -1,6 +1,6 @@
 # /check-progress - Progress Check
 
-Load and follow the agent persona defined in `agents/check-progress.md`.
+Load and follow the agent persona defined in `/Users/SHELYOG/.cursor/agents/check-progress.md`.
 
 **Tier:** Utility | **Mode:** Read-only | **Phase:** Any
 

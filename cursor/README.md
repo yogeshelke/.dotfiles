@@ -22,74 +22,63 @@ Phase 5 → Delivery       (PR pipeline)
 
 Planning is deterministic. Execution is deterministic under fixed inputs, models, and environment. Re-execution is safe (tasks are idempotent + dependency-enforced). Only human judgment gates are non-deterministic — and those are the two manual phases.
 
-### 5-Phase Hybrid Workflow
+### Simplified Workflow
 
-| Phase | Mode | What Happens |
-|-------|------|-------------|
-| **1. Planning** | AUTO | Architect creates plan → plan-reviewer validates (max 3 loops) → task-manager builds execution strategy |
-| **2. Approval** | MANUAL | User reviews plan + execution strategy. Approve or request changes. |
-| **3. Execution** | AUTO | Orchestrator spawns agents per task → auto-review → tests after dev complete |
-| **4. Final Review** | MANUAL | User reviews all generated files and artifacts |
-| **5. PR Creation** | AUTO | User triggers → PR agent runs with minimal context |
+| Phase | Invoked By | What Happens |
+|-------|-----------|-------------|
+| **1a. Plan** | `/architect` | Designs and writes the `.plan.md` (Context, Architecture, Decisions, Implementation Tasks, Security, Cost, etc.) |
+| **1b. Decompose** | `/task-manager` | Reads the approved plan, appends `## Execution Strategy` (task breakdown, waves, model/skill assignment) |
+| **2. Build** | `/iac-dev` (or `/devops`, `/k8s-expert`) | Implements per Execution Strategy |
+| **2b. Review** | `/reviewer` | Security review, writes `.artifacts/review.md`. Fix-review loop with `/iac-dev` (max 3) |
+| **2c. Test** (optional) | `/platform-tester` | Creates tests, writes `.artifacts/test-summary.md` |
+| **3. PR** | `/pr-agent` | Commits, pushes, creates PR, notifies Slack |
+
+**Each agent is invoked explicitly by the user.** The user is the human reviewer between Phase 1a and 1b, and again before Phase 2. There is no auto-chain — Cursor's architecture doesn't reliably support agents reading other agents' files mid-session, so we don't pretend it does.
 
 ### Workflow Diagram
 
 ```mermaid
 flowchart LR
-    subgraph P1["Phase 1: Planning (AUTO)"]
-        direction TB
-        A1["/architect — T1: Opus 4.6<br/>creates plan + Platform Tests"]
-        A1 --> A2["plan-reviewer — max 3 loops"]
-        A2 --> A3["/task-manager — T2: Sonnet 4.5<br/>tasks, waves, model + skill assignment"]
-    end
+    A1["/architect<br/>T1: Opus 4.6<br/>writes .plan.md"]
+    U1{{"User reviews<br/>plan"}}
+    A2["/task-manager<br/>T2: Sonnet 4.5<br/>appends Execution Strategy"]
+    U2{{"User approves<br/>complete plan"}}
+    B1["/iac-dev<br/>per-task model<br/>implements"]
+    B2["/reviewer<br/>T1: Opus 4.6<br/>writes review.md"]
+    B3["/platform-tester<br/>T2: Sonnet 4.5<br/>writes test-summary.md"]
+    U3{{"User reviews<br/>all output"}}
+    P1["/pr-agent<br/>T3: Sonnet 4<br/>commits + PR + Slack"]
 
-    P2{{"Phase 2<br/>User Approval<br/>(MANUAL)"}}
-
-    subgraph P3["Phase 3: Execution + Review (AUTO)"]
-        direction TB
-        C1["orchestrator<br/>spawns agents per task"]
-        C1 --> C2["exec agents in parallel and sequence<br/>as planned by task-manager<br/>per-task model + skills + context"]
-        C2 --> C3["/reviewer — T1: Opus 4.6<br/>pass / warn / fail — max 3 loops"]
-        C3 --> C4["/platform-tester — T2: Sonnet 4.5<br/>creates tests after dev tasks complete"]
-        C4 --> C5["/reviewer — T1: Opus 4.6<br/>reviews tests — max 3 loops"]
-    end
-
-    P4{{"Phase 4<br/>Final Review<br/>(MANUAL)"}}
-
-    subgraph P5["Phase 5: PR (AUTO)"]
-        direction TB
-        E1["/pr-agent — T3: Sonnet 4<br/>minimal context, artifacts + git diff"]
-    end
-
-    P1 --> P2 --> P3 --> P4 --> P5
+    A1 --> U1 --> A2 --> U2 --> B1 --> B2 -->|pass/warn| B3 --> U3 --> P1
+    B2 -->|fail max 3| B1
 ```
 
 ### Role Separation
 
 ```
-/architect       = WHAT to build (Phase 1)
-/task-manager    = HOW to break it into executable work (Phase 1b)
-/orchestrator    = Routes + coordinates (Phases 1→3→5)
-/iac-dev etc.    = DO the work (Phase 3)
-/reviewer        = VERIFY the work (Phase 3b)
-/pr-agent        = Ship the work (Phase 5)
+/architect       = WHAT to build              (Phase 1a)
+/task-manager    = HOW to break it into work  (Phase 1b)
+/iac-dev etc.    = DO the work                (Phase 2)
+/reviewer        = VERIFY the work            (Phase 2b)
+/platform-tester = TEST the work (optional)   (Phase 2c)
+/pr-agent        = SHIP the work              (Phase 3)
 ```
+
+The user is the gate between every phase — invokes each agent explicitly.
 
 ### Agent Ecosystem
 
 | Command | Agent | Phase | Model | Specialization |
 |---------|-------|-------|-------|----------------|
-| `/architect` | AWS Cloud Architect | Phase 1 | T1: Opus 4.6 | Architecture design, infrastructure planning |
-| `/task-manager` | Task Manager | Phase 1b | T2: Sonnet 4.5 | Decomposition, execution waves, model/skill assignment |
-| `/iac-dev` | IaC Developer | Phase 3 | Per-task | Terraform, Helm, YAML implementation |
-| `/k8s-expert` | Kubernetes Expert | Phase 3 | Per-task | EKS, pods, networking analysis |
-| `/devops` | DevOps Engineer | Phase 3 | Per-task | CI/CD, GitHub Actions, monitoring |
-| `/reviewer` | Security Reviewer | Phase 3b | T1: Opus 4.6 | Security audit, automated review loops |
-| `/platform-tester` | Platform Tester | Phase 3c | T2: Sonnet 4.5 | Test automation after dev tasks complete |
-| `/pr-agent` | PR Agent | Phase 5 | T3: Sonnet 4 | Git workflow, PR creation, Slack notifications |
-| `/check-progress` | Progress Check | Any | T3: Sonnet 4 | Status and phase check |
-
-**Orchestrator:** Two modes — **Routing** (routes user intent to the right phase/agent) and **Execution** (Phase 3 — reads the plan, spawns agents per task with assigned model/skills/context). The Execution Strategy is a binding contract — the orchestrator executes it without reinterpretation (muscle, not brain).
+| `/architect` | AWS Cloud Architect | Phase 1a | T1: Opus 4.6 | Architecture design, writes `.plan.md` |
+| `/task-manager` | Task Manager | Phase 1b | T2: Sonnet 4.5 | Decomposition, waves, model/skill assignment |
+| `/iac-dev` | IaC Developer | Phase 2 | Per-task | Terraform, Helm, YAML implementation |
+| `/k8s-expert` | Kubernetes Expert | Phase 2 | Per-task | EKS, pods, networking analysis (read-only) |
+| `/devops` | DevOps Engineer | Phase 2 | Per-task | CI/CD, GitHub Actions, monitoring |
+| `/reviewer` | Security Reviewer | Phase 2b | T1: Opus 4.6 | Security audit, writes `review.md` |
+| `/platform-tester` | Platform Tester | Phase 2c | T2: Sonnet 4.5 | Test creation, writes `test-summary.md` |
+| `/pr-agent` | PR Agent | Phase 3 | T3: Sonnet 4 | Git, PR creation, Slack notification |
+| `/check-progress` | Progress Check | Any | T3: Sonnet 4 | Status check |
 
 ## Quick Start
 
@@ -107,23 +96,27 @@ MCP: `cp ~/.dotfiles/cursor/mcp.json.template ~/.cursor/mcp.json` — edit with 
 ### 2. Standard Workflow
 
 ```
-Phase 1 (AUTO):    /architect → plan-review loop → task-manager
-Phase 2 (MANUAL):  User reviews and approves plan + execution strategy
-Phase 3 (AUTO):    Orchestrator executes tasks → auto-review → tests
-Phase 4 (MANUAL):  User reviews all generated files
-Phase 5 (AUTO):    User triggers → /pr-agent creates PR automatically
+1. /architect           → writes .plan.md, stops
+2. (you review)
+3. /task-manager        → appends Execution Strategy, stops
+4. (you approve)
+5. /iac-dev             → implements per Execution Strategy
+6. /reviewer            → security review, writes .artifacts/review.md
+7. /platform-tester     → (optional) creates tests
+8. (you review output)
+9. /pr-agent            → commit, push, PR, Slack
 ```
 
 ### 3. Shortcuts
 
 | Pattern | Flow |
 |---------|------|
-| **New infrastructure** | Full 5-phase: `/architect` → approve → auto-execute → review → PR |
-| **Quick config change** | `/iac-dev` → `/reviewer` → `/pr-agent` (skip Phase 1) |
-| **CI/CD work** | `/architect` → `/devops` → `/reviewer` → `/pr-agent` |
-| **Troubleshooting** | `/k8s-expert` or `/devops` (analysis only) |
+| **New infrastructure** | Full flow: `/architect` → `/task-manager` → approve → `/iac-dev` → `/reviewer` → `/pr-agent` |
+| **Quick config change** | `/iac-dev` → `/reviewer` → `/pr-agent` (skip planning) |
+| **CI/CD work** | `/architect` → `/task-manager` → `/devops` → `/reviewer` → `/pr-agent` |
+| **Troubleshooting** | `/k8s-expert` or `/devops` (analysis only, no PR) |
 
-Shortcuts bypass the full 5-phase flow. Safety rules and review gates still apply.
+Shortcuts skip planning when the change is small enough to not need a plan. Safety rules and review gates still apply.
 
 ## How It Works
 
@@ -158,10 +151,9 @@ commands/architect.md  ──→  agents/architect.md  (persona activated)
 
 | Mechanism | Where | Limit |
 |-----------|-------|-------|
-| Plan review loop | Phase 1 (architect ↔ plan-reviewer) | Max 3 iterations |
-| Fix-review loop | Phase 3 (exec agent ↔ reviewer) | Max 3 iterations per task |
-| Model escalation | Phase 3 (on 2 failures at same tier) | T3 → T2 → T1 |
-| Critical blocker | Any automated phase | Always escalates to user |
+| Fix-review loop | Phase 2b (`/iac-dev` ↔ `/reviewer`) | Max 3 iterations per task |
+| Model escalation | Phase 2 (on 2 failures at same tier) | T3 → T2 → T1 |
+| Critical blocker | Any phase | Stop and ask user |
 
 **Blocker classification:** Every issue is classified as **Fixable** (stays in loop), **Risky** (warn + continue, include in Phase 4 summary), or **Critical** (must stop — missing input, ambiguous requirement, security violation, or max loops exhausted).
 
@@ -209,13 +201,12 @@ Every `.plan.md` tracks workflow state in its header. This is the single source 
 | Event | Fields Updated | Updated By |
 |-------|---------------|-----------|
 | Architect creates plan | `Status: Draft`, `Phase: 1-Planning` | `/architect` |
-| Plan-reviewer passes | `Status: In Review` | plan-reviewer |
-| Task-manager creates strategy | `Strategy Version: 1` | `/task-manager` |
-| System stops for approval | `Phase: 2-Approval` | `/task-manager` |
-| User approves | `Status: Approved` | User |
-| Orchestrator starts execution | `Status: In Progress`, `Phase: 3-Execution`, `Wave: 1` | orchestrator |
-| Task starts | `Active Tasks: T1, T2` | orchestrator |
-| Task completes | `Active Tasks` updated (remove completed) | orchestrator |
+| User reviews plan | `Status: In Review` | User |
+| Task-manager creates strategy | `Strategy Version: 1`, `Phase: 2-Approval` | `/task-manager` |
+| User approves complete plan | `Status: Approved` | User |
+| Build starts | `Status: In Progress`, `Phase: 3-Execution`, `Wave: 1` | `/iac-dev` |
+| Task starts | `Active Tasks: T1, T2` | `/iac-dev` |
+| Task completes | `Active Tasks` updated (remove completed) | `/iac-dev` |
 | Wave advances | `Wave` incremented | orchestrator |
 | Critical blocker | `Status: Blocked`, `Blocked Tasks: T3` | orchestrator |
 | User resolves blocker | `Status: In Progress`, `Blocked Tasks: —` | orchestrator |
@@ -300,16 +291,15 @@ YAML frontmatter (`status`, `date`, `branch`) for machine parsing. CI checks can
 ```
 .cursor/
 ├── README.md                        # This file
-├── agents/                          # Agent persona definitions (11)
-│   ├── architect.md                 # Phase 1: architecture planning (T1)
-│   ├── plan-reviewer.md            # Phase 1: plan review loop (T1)
+├── agents/                          # Agent persona definitions
+│   ├── architect.md                 # Phase 1a: architecture planning (T1)
 │   ├── task-manager.md             # Phase 1b: task decomposition (T2)
-│   ├── orchestrator.md             # Dual-role: router + executor
-│   ├── iac-dev.md                  # Phase 3: Terraform/Helm implementation
-│   ├── k8s-expert.md              # Phase 3: Kubernetes analysis
-│   ├── devops.md                   # Phase 3: CI/CD + observability
-│   ├── reviewer.md                 # Phase 3b: security review (T1)
-│   ├── platform-tester.md          # Phase 3c: test creation (T2)
+│   ├── orchestrator.md             # Routing: maps user intent → command
+│   ├── iac-dev.md                  # Phase 2: Terraform/Helm implementation
+│   ├── k8s-expert.md              # Phase 2: Kubernetes analysis
+│   ├── devops.md                   # Phase 2: CI/CD + observability
+│   ├── reviewer.md                 # Phase 2b: security review (T1)
+│   ├── platform-tester.md          # Phase 2c: test creation (T2)
 │   ├── pr-agent.md                 # Phase 5: PR workflow (T3)
 │   └── check-progress.md          # Utility: progress check (T3)
 ├── commands/                        # Slash command wrappers (9)

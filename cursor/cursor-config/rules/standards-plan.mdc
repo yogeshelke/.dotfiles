@@ -1,9 +1,11 @@
 ---
-description: Plan file standards - enforces status header on all .plan.md files
+description: Plan file standards - enforces status header, section order, and format on all .plan.md files. Always active so agents see the required format BEFORE creating a plan file.
 globs: "**/*.plan.md"
-alwaysApply: false
+alwaysApply: true
 ---
 # Plan File Standards
+
+**CRITICAL FORMAT REQUIREMENT:** Every `.plan.md` file MUST use the exact format defined in this rule. The user reviews plans against this format and `/task-manager` requires it to append the execution strategy. Read this rule BEFORE writing any `.plan.md` content.
 
 Every `.plan.md` file must include a **plan log header** immediately after the YAML frontmatter and before the main heading.
 
@@ -71,6 +73,8 @@ Every `.plan.md` must follow this section sequence. The order is intentional —
 > **Author** | `<author>` | **Environment** | `<environments>`
 > **PR/Ticket** | `<link or —>` | **Rollback** | `<Yes/No/N/A>`
 > **Phase** | `<current-phase>` | **Wave** | `<current-wave or —>`
+> **Strategy Version** | `<integer or —>` | **Active Tasks** | `<task IDs or —>`
+> **Blocked Tasks** | `<task IDs or —>`
 
 # <Plan Title>
 
@@ -88,8 +92,7 @@ Every `.plan.md` must follow this section sequence. The order is intentional —
 ## Risks & Rollback         — Failure scenarios, rollback procedures
 ## Open Questions           — Unresolved items requiring user input
 
-## Plan Review Notes        — Appended by plan-reviewer (auto-chained)
-## Execution Strategy       — Appended by /task-manager (auto-chained)
+## Execution Strategy       — Appended by `/task-manager` (user-invoked after architect)
 ```
 
 ### Decisions Table
@@ -106,7 +109,7 @@ Capture key choices and their rationale. Prevents decision loss as plans evolve 
 
 ## Execution Strategy Section
 
-After plan-reviewer review, `/task-manager` appends a `## Execution Strategy` section to the `.plan.md`. This section is structured and machine-readable. The template:
+After the user reviews the architect's plan, they invoke `/task-manager` which appends a `## Execution Strategy` section to the `.plan.md`. This section is structured and machine-readable. The template:
 
 ```markdown
 ## Execution Strategy
@@ -149,6 +152,105 @@ T1 → T2 → [final task]
 - Only `/task-manager` writes this section — no other agent modifies it
 - The section is appended after the architect's content — `/task-manager` never modifies content above it
 - The user approves the complete plan (architecture + execution strategy) before execution begins
+
+## Compliant Plan Example (for reference)
+
+This is what a correctly formatted `.plan.md` header and section structure looks like:
+
+```markdown
+> **Plan** | `add-aurora-cluster`
+> **Status** | `Draft` | **Priority** | `P2`
+> **Created** | `2026-05-08` | **Updated** | `2026-05-08`
+> **Author** | `SHELYOG` | **Environment** | `staging, production`
+> **PR/Ticket** | `—` | **Rollback** | `Yes`
+> **Phase** | `1-Planning` | **Wave** | `—`
+> **Strategy Version** | `—` | **Active Tasks** | `—`
+> **Blocked Tasks** | `—`
+
+# Add Aurora PostgreSQL Cluster
+
+## Context
+
+The payment service needs a managed PostgreSQL database...
+
+## Architecture
+
+(diagrams, service interactions)
+
+## Decisions
+
+| # | Decision | Rationale | Date | Revisable? |
+|---|----------|-----------|------|------------|
+| 1 | Aurora Serverless v2 over provisioned | Cost scales to zero in dev | 2026-05-08 | Yes |
+| 2 | Single-writer, multi-reader | Read-heavy workload pattern | 2026-05-08 | No |
+
+## Task Dependency Table
+
+| Task | Name | Type | Depends On | Agent | Parallel Group |
+|------|------|------|------------|-------|----------------|
+| T1 | Create RDS module | terraform | — | /iac-dev | Wave 1 |
+
+## Implementation Tasks
+
+(granular steps with file paths)
+
+## Security Considerations
+
+(IAM, encryption, networking)
+
+## Cost Impact
+
+(instance types, monthly estimates)
+
+## Resilience
+
+N/A — non-critical staging environment; production DR addressed in separate plan.
+
+## Testing
+
+terraform validate + terraform plan on both environments.
+
+## Success Criteria
+
+- terraform validate passes on modules/rds/
+- terraform plan shows expected resources (cluster, instances, security groups)
+
+## Non-Goals
+
+- Application-level connection pooling (handled by app team)
+- Read replica auto-scaling (deferred to Phase 2)
+
+## Risks & Rollback
+
+- Risk: Aurora endpoint DNS propagation delay (mitigated by pre-creating Route53 records)
+- Rollback: terraform destroy of RDS module resources
+
+## Open Questions
+
+- Confirm instance class for production (db.r6g.large vs db.r6g.xlarge)
+```
+
+**Key points:** Header is blockquote (`>`), sections use exact standard names, no numbering, Decisions table has 5 columns, all sections present.
+
+## Format Compliance Checklist
+
+Before writing a `.plan.md`, verify ALL of the following. The user and `/task-manager` reject non-compliant plans:
+
+- [ ] **Plan log header** uses blockquote format (`> **Plan** | ...`), NOT a table
+- [ ] **All header fields present:** Plan, Status, Priority, Created, Updated, Author, Environment, PR/Ticket, Rollback, Phase, Wave, Strategy Version, Active Tasks, Blocked Tasks
+- [ ] **Section headings** use the exact names from "Plan Section Order" above — no numbering (`## 1. Overview` is wrong; `## Context` is correct), no renaming
+- [ ] **All required sections present** — omit none; use "N/A" with justification if a section doesn't apply
+- [ ] **Decisions table** present with `| # | Decision | Rationale | Date | Revisable? |` format
+- [ ] **Success Criteria** section with measurable acceptance conditions
+- [ ] **Open Questions** section for anything requiring user input
+
+## Common Format Violations (NEVER do these)
+
+- Using a markdown table for the plan header instead of blockquote format
+- Numbering sections (`## 1. Overview`, `## 2. Architecture`) instead of using standard names
+- Omitting sections (Decisions, Success Criteria, Resilience, Testing, Non-Goals, Risks & Rollback)
+- Inventing custom section names not in the standard order
+- Putting plan review notes or execution strategy inline instead of as appended sections
 
 ## Rules
 - Always set status when creating or updating a plan
